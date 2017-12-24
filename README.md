@@ -3,9 +3,9 @@
 This library is an implementation of the [JSON-LD 1.0](http://json-ld.org/) specification in Go.
 It supports both URDNA2015 and URGNA2012 RDF dataset normalisation algorithms.
 
-## MAINTAINER CHANGE NOTIFICATION ##
-
-We are planning to add new features to this library, including support for Linked Data Signatures, content-addressable JSON-LD, etc. In order to facilitate this development, the maintainer of JSON-goLD (@kazarena) is going to copy this repository to the GitHub organisation of his company (@piprate). See the details and further discussion [here](https://github.com/kazarena/json-gold/issues/20). Feedback welcome.
+The [original library](https://github.com/kazarena/json-gold) was written by Stan Nazarenko
+([@kazarena](https://github.com/kazarena)). See the full list of contributors
+[here](https://github.com/piprate/json-gold/blob/master/CONTRIBUTORS.md).
 
 ## Testing & Compliance ##
 
