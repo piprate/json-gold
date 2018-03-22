@@ -1,4 +1,11 @@
-# JSON-goLD
+# JSON-goLD [![Documentations][shield-godoc]][godoc] [![Travis CI results][shield-travis]][travis] [![GoCover.io][shield-gocover]][gocover]
+
+[travis]: https://travis-ci.org/piprate/json-gold
+[shield-travis]: https://api.travis-ci.org/piprate/json-gold.svg?branch=master
+[godoc]: https://godoc.org/github.com/piprate/json-gold/ld
+[shield-godoc]: https://img.shields.io/badge/godoc-reference-5272B4.svg
+[gocover]: https://gocover.io/github.com/piprate/json-gold/ld
+[shield-gocover]: https://gocover.io/_badge/github.com/piprate/json-gold/ld
 
 This library is an implementation of the [JSON-LD 1.0](http://json-ld.org/) specification in Go.
 It supports both URDNA2015 and URGNA2012 RDF dataset normalisation algorithms.
