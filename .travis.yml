@@ -1,0 +1,21 @@
+language: go
+
+go:
+  - 1.9
+  - tip
+
+install:
+  - |
+    # fix path issue in forks
+    if [ "$TRAVIS_REPO_SLUG" != "piprate/json-gold" ]; then 
+      echo "Need to fix path for forks"
+      cd $HOME/gopath/src/github.com
+      mv $(dirname $TRAVIS_REPO_SLUG) piprate
+      cd piprate/json-gold
+      export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/piprate/json-gold
+      pwd
+    fi
+  - go get -v -t ./...
+
+script:
+  - go test -v -race -cover ./...
