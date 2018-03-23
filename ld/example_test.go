@@ -16,9 +16,149 @@ package ld_test
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/piprate/json-gold/ld"
 )
+
+func init() {
+	if os.Getenv("CI") == "true" {
+		log.Print("mocking network in CI environment")
+		mockTransport := make(muxRoundTripper)
+		mockTransport.AddFunc("json-ld.org", mockJsonLdOrg)
+		mockTransport.AddFunc("schema.org", mockSchemaOrg)
+		mockTransport.Add("*", http.DefaultTransport) // as fallback
+		http.DefaultTransport = mockTransport         // override default transport
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (rt roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return rt(r)
+}
+
+type muxRoundTripper map[string]http.RoundTripper
+
+func (mux muxRoundTripper) Add(domain string, rt http.RoundTripper) {
+	mux[domain] = rt
+}
+
+func (mux muxRoundTripper) AddFunc(domain string, fn roundTripFunc) {
+	mux[domain] = fn
+}
+
+func (mux muxRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	if tr, found := mux[r.URL.Host]; found {
+		return tr.RoundTrip(r) // RoundTripper with match domain
+	}
+	if tr, found := mux["*"]; found {
+		return tr.RoundTrip(r) // default RoundTripper
+	}
+	return nil, fmt.Errorf("no http.RoundTripper found for domain %s",
+		r.URL.Host)
+}
+
+func mockJsonLdOrg(r *http.Request) (resp *http.Response, err error) {
+	if r.URL.Host != "json-ld.org" {
+		err = fmt.Errorf("mock client only handle json-ld.org, not %s",
+			r.URL.Host)
+		return
+	}
+	if !strings.HasPrefix(r.URL.Path, "/test-suite/tests/") {
+		err = fmt.Errorf("mock client only handle /test-suite/tests/*, not %s",
+			r.URL.Path)
+		return
+	}
+	path := strings.TrimPrefix(r.URL.Path, "/test-suite/tests/")
+	f, err := os.Open("./testdata/" + path)
+	if err != nil {
+		return nil, fmt.Errorf("error openning testdata for mock transport: %s",
+			err)
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("error getting file stat in mock transport: %s",
+			err)
+	}
+
+	// mock header
+	header := make(http.Header)
+	header.Add("Content-Length", fmt.Sprintf("%d", s.Size()))
+	header.Add("Content-Type", "application/ld+json")
+	header.Add("Date", s.ModTime().Format(time.RFC1123))
+
+	// mock response
+	resp = &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         r.Proto,
+		ProtoMajor:    r.ProtoMajor,
+		ProtoMinor:    r.ProtoMinor,
+		ContentLength: s.Size(),
+		Request:       r,
+		Header:        header,
+		Body:          f,
+	}
+	return
+}
+
+func mockSchemaOrg(r *http.Request) (resp *http.Response, err error) {
+	if r.URL.Host != "schema.org" {
+		err = fmt.Errorf("mock client only handle schema.org, not %s",
+			r.URL.Host)
+		return
+	}
+
+	path := r.URL.Path
+	if path == "/" {
+		path = "/index.json"
+	}
+
+	f, err := os.Open("./testdata/schema.org" + path)
+	if err != nil {
+		return nil, fmt.Errorf("error openning testdata for mock transport: %s",
+			err)
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("error getting file stat in mock transport: %s",
+			err)
+	}
+
+	// mock header
+	header := make(http.Header)
+	header.Add("Content-Length", fmt.Sprintf("%d", s.Size()))
+	header.Add("Content-Type", "application/ld+json")
+	header.Add("Date", s.ModTime().Format(time.RFC1123))
+
+	// mock response
+	resp = &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         r.Proto,
+		ProtoMajor:    r.ProtoMajor,
+		ProtoMinor:    r.ProtoMinor,
+		ContentLength: s.Size(),
+		Request:       r,
+		Header:        header,
+		Body:          f,
+	}
+	return
+}
+
+func mockNetwork(options *ld.JsonLdOptions, transport roundTripFunc) *ld.JsonLdOptions {
+	mockClient := &http.Client{
+		Transport: transport,
+	}
+	options.DocumentLoader = ld.NewDefaultDocumentLoader(mockClient)
+	return options
+}
 
 func ExampleJsonLdProcessor_Expand_online() {
 	proc := ld.NewJsonLdProcessor()
