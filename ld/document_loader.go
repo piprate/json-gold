@@ -22,6 +22,9 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"time"
+
+	"github.com/pquerna/cachecontrol"
 )
 
 const (
@@ -255,4 +258,135 @@ func (cdl *CachingDocumentLoader) PreloadWithMapping(urlMap map[string]string) e
 		cdl.cache[srcURL] = doc
 	}
 	return nil
+}
+
+type cachedRemoteDocument struct {
+	remoteDocument *RemoteDocument
+	expireTime     time.Time
+	neverExpires   bool
+}
+
+// RFC7324CachingDocumentLoader respects RFC7324 caching headers in order to
+// cache effectively
+type RFC7324CachingDocumentLoader struct {
+	httpClient *http.Client
+	cache      map[string]*cachedRemoteDocument
+}
+
+// NewRFC7324CachingDocumentLoader creates a new RFC7324CachingDocumentLoader
+func NewRFC7324CachingDocumentLoader(httpClient *http.Client) *RFC7324CachingDocumentLoader {
+	rval := &RFC7324CachingDocumentLoader{
+		httpClient: httpClient,
+		cache:      make(map[string]*cachedRemoteDocument),
+	}
+
+	if httpClient == nil {
+		rval.httpClient = http.DefaultClient
+	}
+
+	return rval
+}
+
+// LoadDocument returns a RemoteDocument containing the contents of the JSON resource
+// from the given URL.
+func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocument, error) {
+	entry, ok := rcdl.cache[u]
+	now := time.Now()
+
+	// First we check if we hit in the cache, and the cache entry is valid
+	// We need to check if expireTime >= now, so we negate the comparison below
+	if ok && (entry.neverExpires || !entry.expireTime.Before(now)) {
+		return entry.remoteDocument, nil
+	}
+
+	parsedURL, err := url.Parse(u)
+	if err != nil {
+		return nil, NewJsonLdError(LoadingDocumentFailed, err)
+	}
+
+	var documentBody io.Reader
+	var finalURL, contextURL string
+
+	// We use neverExpires, shouldCache, and expireTime at the end of this method
+	// to create an object to store in the cache. Set them to sane default values now
+	neverExpires := false
+	shouldCache := false
+	expireTime := time.Now()
+
+	protocol := parsedURL.Scheme
+	if protocol != "http" && protocol != "https" {
+		// Can't use the HTTP client for those!
+		finalURL = u
+		var file *os.File
+		file, err = os.Open(u)
+		if err != nil {
+			return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		}
+		defer file.Close()
+		documentBody = file
+		neverExpires = true
+		shouldCache = true
+	} else {
+
+		req, err := http.NewRequest("GET", u, nil)
+		// We prefer application/ld+json, but fallback to application/json
+		// or whatever is available
+		req.Header.Add("Accept", acceptHeader)
+
+		res, err := rcdl.httpClient.Do(req)
+
+		if err != nil {
+			return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return nil, NewJsonLdError(LoadingDocumentFailed,
+				fmt.Sprintf("Bad response status code: %d", res.StatusCode))
+		}
+
+		finalURL = res.Request.URL.String()
+
+		contentType := res.Header.Get("Content-Type")
+		linkHeader := res.Header.Get("Link")
+
+		if len(linkHeader) > 0 && contentType != "application/ld+json" {
+			header := ParseLinkHeader(linkHeader)[linkHeaderRel]
+			if len(header) > 1 {
+				return nil, NewJsonLdError(MultipleContextLinkHeaders, nil)
+			} else if len(header) == 1 {
+				contextURL = header[0]["target"]
+			}
+		}
+
+		reasons, resExpireTime, err := cachecontrol.CachableResponse(req, res, cachecontrol.Options{})
+		// If there are no errors parsing cache headers and there are no reasons not to cache, then we cache
+		if err == nil && len(reasons) == 0 {
+			shouldCache = true
+			expireTime = resExpireTime
+		}
+
+		documentBody = res.Body
+	}
+	if err != nil {
+		return nil, NewJsonLdError(LoadingDocumentFailed, err)
+	}
+	document, err := DocumentFromReader(documentBody)
+	if err != nil {
+		return nil, err
+	}
+	remoteDoc := &RemoteDocument{DocumentURL: finalURL, Document: document, ContextURL: contextURL}
+
+	// If we went down a branch that marked shouldCache true then lets add the cache entry into
+	// the cache
+	if shouldCache {
+		cacheEntry := &cachedRemoteDocument{
+			remoteDocument: remoteDoc,
+			expireTime:     expireTime,
+			neverExpires:   neverExpires,
+		}
+		rcdl.cache[u] = cacheEntry
+	}
+
+	return remoteDoc, nil
 }
