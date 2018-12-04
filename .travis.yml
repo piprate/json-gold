@@ -4,6 +4,9 @@ go:
   - 1.9
   - tip
 
+env:
+  - GO111MODULE=on
+
 install:
   - |
     # fix path issue in forks
