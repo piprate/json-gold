@@ -1,4 +1,9 @@
-# JSON-goLD ChangeLog
+# JSON-goLD Change Log
+
+## v0.1.1 - 2018-12-12
+
+- RFC7324 compliant caching
+- Go 1.11 module support
 
 ## v0.1.0 - 2017-12-24
 
