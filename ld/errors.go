@@ -84,5 +84,8 @@ func (e JsonLdError) Error() string {
 
 // NewJsonLdError creates a new instance of JsonLdError.
 func NewJsonLdError(code ErrorCode, details interface{}) *JsonLdError {
+	if err, isError := details.(error); isError {
+		details = err.Error()
+	}
 	return &JsonLdError{Code: code, Details: details}
 }
