@@ -167,6 +167,12 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string) (*Con
 			} else if vocabString, isString := vocabValue.(string); isString {
 				if IsAbsoluteIri(vocabString) {
 					result.values["@vocab"] = vocabValue
+				} else if vocabString == "" {
+					if baseVal, hasBase := result.values["@base"]; hasBase {
+						result.values["@vocab"] = baseVal
+					} else {
+						return nil, NewJsonLdError(InvalidVocabMapping, "@vocab is empty but @base is not specified")
+					}
 				} else {
 					return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be an absolute IRI")
 				}
