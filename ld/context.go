@@ -1012,22 +1012,27 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 	td := c.GetTermDefinition(activeProperty)
 	// 1)
 	if td != nil && td["@type"] == "@id" {
-		// TODO: i'm pretty sure value should be a string if the @type is
-		// @id
-		var err error
-		rval["@id"], err = c.ExpandIri(value.(string), true, false, nil, nil)
-		if err != nil {
-			return nil, err
+		if strVal, isString := value.(string); isString {
+			var err error
+			rval["@id"], err = c.ExpandIri(strVal, true, false, nil, nil)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			rval["@value"] = value
 		}
 		return rval, nil
 	}
 	// 2)
 	if td != nil && td["@type"] == "@vocab" {
-		// TODO: same as above
-		var err error
-		rval["@id"], err = c.ExpandIri(value.(string), true, true, nil, nil)
-		if err != nil {
-			return nil, err
+		if strVal, isString := value.(string); isString {
+			var err error
+			rval["@id"], err = c.ExpandIri(strVal, true, true, nil, nil)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			rval["@value"] = value
 		}
 		return rval, nil
 	}
