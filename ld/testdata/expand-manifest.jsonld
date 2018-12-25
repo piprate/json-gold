@@ -559,6 +559,250 @@
       "input": "expand-0078-in.jsonld",
       "expect": "expand-0078-out.jsonld"
     }, {
+      "@id": "#t0079",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand @graph container",
+      "purpose": "Use of @graph containers",
+      "input": "expand-0079-in.jsonld",
+      "expect": "expand-0079-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0080",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @set] container",
+      "purpose": "Use of [@graph, @set] containers",
+      "input": "expand-0080-in.jsonld",
+      "expect": "expand-0080-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0081",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Does not create an @graph container if value is a graph",
+      "purpose": "Don't double-expand an already expanded graph",
+      "input": "expand-0081-in.jsonld",
+      "expect": "expand-0081-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0082",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @index] container",
+      "purpose": "Use of @graph containers with @index",
+      "input": "expand-0082-in.jsonld",
+      "expect": "expand-0082-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0083",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @index, @set] container",
+      "purpose": "Use of @graph containers with @index and @set",
+      "input": "expand-0083-in.jsonld",
+      "expect": "expand-0083-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0084",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand [@graph, @index] container if value is a graph",
+      "purpose": "Does not create a new graph object if indexed value is already a graph object",
+      "input": "expand-0084-in.jsonld",
+      "expect": "expand-0084-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0085",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @id] container",
+      "purpose": "Use of @graph containers with @id",
+      "input": "expand-0085-in.jsonld",
+      "expect": "expand-0085-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0086",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @id, @set] container",
+      "purpose": "Use of @graph containers with @id and @set",
+      "input": "expand-0086-in.jsonld",
+      "expect": "expand-0086-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0087",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand [@graph, @id] container if value is a graph",
+      "purpose": "Does not create a new graph object if indexed value is already a graph object",
+      "input": "expand-0087-in.jsonld",
+      "expect": "expand-0087-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0088",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand native values to IRIs",
+      "purpose": "Value Expansion does not expand native values, such as booleans, to a node object",
+      "input": "expand-0088-in.jsonld",
+      "expect": "expand-0088-out.jsonld"
+    }, {
+      "@id": "#t0089",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "empty @base applied to the base option",
+      "purpose": "Use of an empty @base is applied to the base option",
+      "option": {
+        "base": "http://example/base/"
+      },
+      "input": "expand-0089-in.jsonld",
+      "expect": "expand-0089-out.jsonld"
+    }, {
+      "@id": "#t0090",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "relative @base overrides base option and document location",
+      "purpose": "Use of a relative @base overrides base option and document location",
+      "option": {
+        "base": "http://example/base/"
+      },
+      "input": "expand-0090-in.jsonld",
+      "expect": "expand-0090-out.jsonld"
+    }, {
+      "@id": "#t0091",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "relative and absolute @base overrides base option and document location",
+      "purpose": "Use of a relative and absolute @base overrides base option and document location",
+      "option": {
+        "base": "http://example/base/"
+      },
+      "input": "expand-0091-in.jsonld",
+      "expect": "expand-0091-out.jsonld"
+    }, {
+      "@id": "#t0092",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Various relative IRIs as properties with with @vocab: ''",
+      "purpose": "Pathological relative property IRIs",
+      "input": "expand-0092-in.jsonld",
+      "expect": "expand-0092-out.jsonld"
+    }, {
+      "@id": "#t0093",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand @graph container (multiple objects)",
+      "purpose": "Use of @graph containers",
+      "input": "expand-0093-in.jsonld",
+      "expect": "expand-0093-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0094",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @set] container (multiple objects)",
+      "purpose": "Use of [@graph, @set] containers",
+      "input": "expand-0094-in.jsonld",
+      "expect": "expand-0094-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0095",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Does not create an @graph container if value is a graph (multiple objects)",
+      "purpose": "Don't double-expand an already expanded graph",
+      "input": "expand-0095-in.jsonld",
+      "expect": "expand-0095-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0096",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @index] container (multiple indexed objects)",
+      "purpose": "Use of @graph containers with @index",
+      "input": "expand-0096-in.jsonld",
+      "expect": "expand-0096-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0097",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @index, @set] container (multiple objects)",
+      "purpose": "Use of @graph containers with @index and @set",
+      "input": "expand-0097-in.jsonld",
+      "expect": "expand-0097-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0098",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand [@graph, @index] container if value is a graph (multiple objects)",
+      "purpose": "Does not create a new graph object if indexed value is already a graph object",
+      "input": "expand-0098-in.jsonld",
+      "expect": "expand-0098-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0099",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @id] container (multiple objects)",
+      "purpose": "Use of @graph containers with @id",
+      "input": "expand-0099-in.jsonld",
+      "expect": "expand-0099-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0100",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @id, @set] container (multiple objects)",
+      "purpose": "Use of @graph containers with @id and @set",
+      "input": "expand-0100-in.jsonld",
+      "expect": "expand-0100-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0101",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand [@graph, @id] container if value is a graph (multiple objects)",
+      "purpose": "Does not create a new graph object if indexed value is already a graph object",
+      "input": "expand-0101-in.jsonld",
+      "expect": "expand-0101-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0102",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand @graph container if value is a graph (multiple objects)",
+      "purpose": "Does not create a new graph object if indexed value is already a graph object",
+      "input": "expand-0102-in.jsonld",
+      "expect": "expand-0102-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0103",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand @graph container if value is a graph (multiple graphs)",
+      "purpose": "Does not create a new graph object if indexed value is already a graph object",
+      "input": "expand-0103-in.jsonld",
+      "expect": "expand-0103-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0104",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Does not create an @graph container if value is a graph (mixed graph and object)",
+      "purpose": "Don't double-expand an already expanded graph",
+      "input": "expand-0104-in.jsonld",
+      "expect": "expand-0104-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0105",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand [@graph, @index] container if value is a graph (mixed graph and object)",
+      "purpose": "Does not create a new graph object if indexed value is already a graph object",
+      "input": "expand-0105-in.jsonld",
+      "expect": "expand-0105-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0106",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "Do not expand [@graph, @id] container if value is a graph (mixed graph and object)",
+      "purpose": "Does not create a new graph object if indexed value is already a graph object",
+      "input": "expand-0106-in.jsonld",
+      "expect": "expand-0106-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0107",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @index] container (indexes with multiple objects)",
+      "purpose": "Use of @graph containers with @index",
+      "input": "expand-0107-in.jsonld",
+      "expect": "expand-0107-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0108",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "expand [@graph, @id] container (multiple ids and objects)",
+      "purpose": "Use of @graph containers with @id",
+      "input": "expand-0108-in.jsonld",
+      "expect": "expand-0108-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
       "@id": "#tc001",
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "adding new term",
@@ -597,6 +841,54 @@
       "purpose": "Expansion using a scoped context uses term scope for selecting proper term",
       "input": "expand-c005-in.jsonld",
       "expect": "expand-c005-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc006",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "adding new term",
+      "purpose": "scoped context on @type",
+      "input": "expand-c006-in.jsonld",
+      "expect": "expand-c006-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc007",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "overriding a term",
+      "purpose": "scoped context on @type",
+      "input": "expand-c007-in.jsonld",
+      "expect": "expand-c007-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc008",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "alias of @type",
+      "purpose": "scoped context on @type",
+      "input": "expand-c008-in.jsonld",
+      "expect": "expand-c008-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc009",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "deep @context affects nested nodes",
+      "purpose": "scoped context on @type",
+      "input": "expand-c009-in.jsonld",
+      "expect": "expand-c009-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc010",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "scoped context layers on intemediate contexts",
+      "purpose": "scoped context on @type",
+      "input": "expand-c010-in.jsonld",
+      "expect": "expand-c010-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc011",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "orders @type terms when applying scoped contexts",
+      "purpose": "scoped context on @type",
+      "input": "expand-c011-in.jsonld",
+      "expect": "expand-c011-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
    }, {
       "@id": "#tm001",
@@ -653,11 +945,11 @@
       "purpose": "Expansion using @container: @type",
       "input": "expand-m007-in.jsonld",
       "expect": "expand-m007-out.jsonld",
-      "option": {"base": "http://example.org/", "processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tm008",
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
-      "name": "adding new term",
+      "name": "When type is in a type map",
       "purpose": "scoped context on @type",
       "input": "expand-m008-in.jsonld",
       "expect": "expand-m008-out.jsonld",
@@ -665,42 +957,66 @@
     }, {
       "@id": "#tm009",
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
-      "name": "overriding a term",
-      "purpose": "scoped context on @type",
+      "name": "language map with @none",
+      "purpose": "index on @language",
       "input": "expand-m009-in.jsonld",
       "expect": "expand-m009-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tm010",
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
-      "name": "alias of @type",
-      "purpose": "scoped context on @type",
+      "name": "language map with alias of @none",
+      "purpose": "index on @language",
       "input": "expand-m010-in.jsonld",
       "expect": "expand-m010-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tm011",
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
-      "name": "deep @context affects nested nodes",
-      "purpose": "scoped context on @type",
+      "name": "id map with @none",
+      "purpose": "index on @id",
       "input": "expand-m011-in.jsonld",
       "expect": "expand-m011-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tm012",
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
-      "name": "scoped context layers on intemediate contexts",
-      "purpose": "scoped context on @type",
+      "name": "type map with alias of @none",
+      "purpose": "index on @type",
       "input": "expand-m012-in.jsonld",
       "expect": "expand-m012-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tm013",
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
-      "name": "When type is in a type map",
-      "purpose": "scoped context on @type",
+      "name": "index map with @none",
+      "purpose": "index on @graph and @index",
       "input": "expand-m013-in.jsonld",
       "expect": "expand-m013-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm014",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "index map with alias @none",
+      "purpose": "index on @graph and @index",
+      "input": "expand-m014-in.jsonld",
+      "expect": "expand-m014-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm015",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "index map with alias @none",
+      "purpose": "index on @graph and @index",
+      "input": "expand-m015-in.jsonld",
+      "expect": "expand-m015-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm016",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "index map with alias @none",
+      "purpose": "index on @graph and @index",
+      "input": "expand-m016-in.jsonld",
+      "expect": "expand-m016-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
    }, {
       "@id": "#tn001",
@@ -758,6 +1074,38 @@
       "input": "expand-n007-in.jsonld",
       "expect": "expand-n007-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tp001",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@version may be specified after first context",
+      "purpose": "If processing mode is not set through API, it is set by the first context containing @version.",
+      "option": {"specVersion": "json-ld-1.1"},
+      "input": "expand-p001-in.jsonld",
+      "expect": "expand-p001-out.jsonld"
+    }, {
+      "@id": "#tp002",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@version setting [1.0, 1.1, 1.0]",
+      "purpose": "If processing mode is not set through API, it is set by the first context containing @version.",
+      "option": {"specVersion": "json-ld-1.1"},
+      "input": "expand-p002-in.jsonld",
+      "expect": "expand-p002-out.jsonld"
+    }, {
+      "@id": "#tp003",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@version setting [1.1, 1.0]",
+      "purpose": "If processing mode is not set through API, it is set by the first context containing @version.",
+      "option": {"specVersion": "json-ld-1.1"},
+      "input": "expand-p003-in.jsonld",
+      "expect": "expand-p003-out.jsonld"
+    }, {
+      "@id": "#tp004",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@version setting [1.1, 1.0, 1.1]",
+      "purpose": "If processing mode is not set through API, it is set by the first context containing @version.",
+      "option": {"specVersion": "json-ld-1.1"},
+      "input": "expand-p004-in.jsonld",
+      "expect": "expand-p004-out.jsonld"
    }, {
       "@id": "#tl001",
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],

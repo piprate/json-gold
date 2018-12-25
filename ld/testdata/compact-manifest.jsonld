@@ -629,6 +629,247 @@
       "context": "compact-0076-context.jsonld",
       "expect": "compact-0076-out.jsonld"
     }, {
+      "@id": "#t0077",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a @graph container",
+      "purpose": "Compact a @graph container",
+      "input": "compact-0077-in.jsonld",
+      "context": "compact-0077-context.jsonld",
+      "expect": "compact-0077-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0078",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a [@graph, @set] container",
+      "purpose": "Compact with [@graph, @set]",
+      "input": "compact-0078-in.jsonld",
+      "context": "compact-0078-context.jsonld",
+      "expect": "compact-0078-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0079",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a @graph container having @index",
+      "purpose": "Verify that having both @graph and @index allows @graph container compaction",
+      "input": "compact-0079-in.jsonld",
+      "context": "compact-0079-context.jsonld",
+      "expect": "compact-0079-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0080",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Do not compact a graph having @id with a term having an @graph container",
+      "purpose": "Graph compaction works only on simple graphs",
+      "input": "compact-0080-in.jsonld",
+      "context": "compact-0080-context.jsonld",
+      "expect": "compact-0080-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0081",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a [@graph, @index] container",
+      "purpose": "Compact a @graph container with @index",
+      "input": "compact-0081-in.jsonld",
+      "context": "compact-0081-context.jsonld",
+      "expect": "compact-0081-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0082",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a [@graph, @index, @set] container",
+      "purpose": "Compact a @graph container with @index and @set",
+      "input": "compact-0082-in.jsonld",
+      "context": "compact-0082-context.jsonld",
+      "expect": "compact-0082-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0083",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "[@graph, @index] does not compact graph with @id",
+      "purpose": "Graph compaction with @graph and @index works only on simple graphs",
+      "input": "compact-0083-in.jsonld",
+      "context": "compact-0083-context.jsonld",
+      "expect": "compact-0083-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0084",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a simple graph with a [@graph, @id] container",
+      "purpose": "Compact a simple graph using a @graph container with @id",
+      "input": "compact-0084-in.jsonld",
+      "context": "compact-0084-context.jsonld",
+      "expect": "compact-0084-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0085",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a named graph with a [@graph, @id] container",
+      "purpose": "Compact a named graph using a @graph container with @id",
+      "input": "compact-0085-in.jsonld",
+      "context": "compact-0085-context.jsonld",
+      "expect": "compact-0085-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0086",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a simple graph with a [@graph, @id, @set] container",
+      "purpose": "Compact a simple graph using a @graph container with @id and @set",
+      "input": "compact-0086-in.jsonld",
+      "context": "compact-0086-context.jsonld",
+      "expect": "compact-0086-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0087",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a named graph with a [@graph, @id, @set] container",
+      "purpose": "Compact a named graph using a @graph container with @id and @set",
+      "input": "compact-0087-in.jsonld",
+      "context": "compact-0087-context.jsonld",
+      "expect": "compact-0087-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0088",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact a graph with @index using a [@graph, @id] container",
+      "purpose": "Compact a @graph container with @id and @set, discarding an @index value",
+      "input": "compact-0088-in.jsonld",
+      "context": "compact-0088-context.jsonld",
+      "expect": "compact-0088-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0089",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Language map term selection with complications",
+      "purpose": "Test appropriate property use given language maps with @vocab, a default language, no language, and competing terms",
+      "input": "compact-0089-in.jsonld",
+      "context": "compact-0089-context.jsonld",
+      "expect": "compact-0089-out.jsonld"
+    }, {
+      "@id": "#t0090",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact input with @graph container to output without @graph container",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0090-in.jsonld",
+      "context": "compact-0090-context.jsonld",
+      "expect": "compact-0090-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0091",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact input with @graph container to output without @graph container with compactArrays unset",
+      "purpose": "Ensure @graph appears properly in output with compactArrays unset",
+      "input": "compact-0091-in.jsonld",
+      "context": "compact-0091-context.jsonld",
+      "expect": "compact-0091-out.jsonld",
+      "option": {"compactArrays": false, "processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0092",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact input with [@graph, @set] container to output without [@graph, @set] container",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0092-in.jsonld",
+      "context": "compact-0092-context.jsonld",
+      "expect": "compact-0092-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0093",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact input with [@graph, @set] container to output without [@graph, @set] container with compactArrays unset",
+      "purpose": "Ensure @graph appears properly in output with compactArrays unset",
+      "input": "compact-0093-in.jsonld",
+      "context": "compact-0093-context.jsonld",
+      "expect": "compact-0093-out.jsonld",
+      "option": {"compactArrays": false, "processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0094",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact input with [@graph, @set] container to output without [@graph, @set] container",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0094-in.jsonld",
+      "context": "compact-0094-context.jsonld",
+      "expect": "compact-0094-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0095",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Relative propererty IRIs with @vocab: ''",
+      "purpose": "Complex use cases for relative IRI compaction or properties",
+      "input": "compact-0095-in.jsonld",
+      "context": "compact-0095-context.jsonld",
+      "expect": "compact-0095-out.jsonld"
+    }, {
+      "@id": "#t0096",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact @graph container (multiple objects)",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0096-in.jsonld",
+      "context": "compact-0096-context.jsonld",
+      "expect": "compact-0096-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0097",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact [@graph, @set] container (multiple objects)",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0097-in.jsonld",
+      "context": "compact-0097-context.jsonld",
+      "expect": "compact-0097-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0098",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact [@graph, @index] container (multiple indexed objects)",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0098-in.jsonld",
+      "context": "compact-0098-context.jsonld",
+      "expect": "compact-0098-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0099",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact [@graph, @index, @set] container (multiple indexed objects)",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0099-in.jsonld",
+      "context": "compact-0099-context.jsonld",
+      "expect": "compact-0099-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0100",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact [@graph, @id] container (multiple indexed objects)",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0100-in.jsonld",
+      "context": "compact-0100-context.jsonld",
+      "expect": "compact-0100-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0101",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact [@graph, @id, @set] container (multiple indexed objects)",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0101-in.jsonld",
+      "context": "compact-0101-context.jsonld",
+      "expect": "compact-0101-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0102",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact [@graph, @index] container (multiple indexes and objects)",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0102-in.jsonld",
+      "context": "compact-0102-context.jsonld",
+      "expect": "compact-0102-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0103",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact [@graph, @id] container (multiple ids and objects)",
+      "purpose": "Ensure @graph appears properly in output",
+      "input": "compact-0103-in.jsonld",
+      "context": "compact-0103-context.jsonld",
+      "expect": "compact-0103-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
       "@id": "#tc001",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
       "name": "adding new term",
@@ -672,6 +913,69 @@
       "input": "compact-c005-in.jsonld",
       "context": "compact-c005-context.jsonld",
       "expect": "compact-c005-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc006",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "adding new term",
+      "purpose": "scoped context on @type",
+      "input": "compact-c006-in.jsonld",
+      "context": "compact-c006-context.jsonld",
+      "expect": "compact-c006-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc007",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "overriding a term",
+      "purpose": "scoped context on @type",
+      "input": "compact-c007-in.jsonld",
+      "context": "compact-c007-context.jsonld",
+      "expect": "compact-c007-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc008",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "alias of @type",
+      "purpose": "scoped context on @type",
+      "input": "compact-c008-in.jsonld",
+      "context": "compact-c008-context.jsonld",
+      "expect": "compact-c008-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc009",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "deep @context affects nested nodes",
+      "purpose": "scoped context on @type",
+      "input": "compact-c009-in.jsonld",
+      "context": "compact-c009-context.jsonld",
+      "expect": "compact-c009-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc010",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "scoped context layers on intemediate contexts",
+      "purpose": "scoped context on @type",
+      "input": "compact-c010-in.jsonld",
+      "context": "compact-c010-context.jsonld",
+      "expect": "compact-c010-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc011",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "applies context for all values",
+      "purpose": "scoped context on @type",
+      "input": "compact-c011-in.jsonld",
+      "context": "compact-c011-context.jsonld",
+      "expect": "compact-c011-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tc012",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "orders @type terms when applying scoped contexts",
+      "purpose": "scoped context on @type",
+      "input": "compact-c012-in.jsonld",
+      "context": "compact-c012-context.jsonld",
+      "expect": "compact-c012-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
    }, {
       "@id": "#tm001",
@@ -730,7 +1034,7 @@
     }, {
       "@id": "#tm007",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
-      "name": "adding new term",
+      "name": "When type is in a type map",
       "purpose": "scoped context on @type",
       "input": "compact-m007-in.jsonld",
       "context": "compact-m007-context.jsonld",
@@ -739,8 +1043,8 @@
     }, {
       "@id": "#tm008",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
-      "name": "overriding a term",
-      "purpose": "scoped context on @type",
+      "name": "@index map with @none node definition",
+      "purpose": "index on @index",
       "input": "compact-m008-in.jsonld",
       "context": "compact-m008-context.jsonld",
       "expect": "compact-m008-out.jsonld",
@@ -748,8 +1052,8 @@
     }, {
       "@id": "#tm009",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
-      "name": "alias of @type",
-      "purpose": "scoped context on @type",
+      "name": "@index map with @none value",
+      "purpose": "index on @index",
       "input": "compact-m009-in.jsonld",
       "context": "compact-m009-context.jsonld",
       "expect": "compact-m009-out.jsonld",
@@ -757,8 +1061,8 @@
     }, {
       "@id": "#tm010",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
-      "name": "deep @context affects nested nodes",
-      "purpose": "scoped context on @type",
+      "name": "@index map with @none value using alias of @none",
+      "purpose": "index on @index",
       "input": "compact-m010-in.jsonld",
       "context": "compact-m010-context.jsonld",
       "expect": "compact-m010-out.jsonld",
@@ -766,8 +1070,8 @@
     }, {
       "@id": "#tm011",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
-      "name": "scoped context layers on intemediate contexts",
-      "purpose": "scoped context on @type",
+      "name": "@language map with no @language",
+      "purpose": "index on @language",
       "input": "compact-m011-in.jsonld",
       "context": "compact-m011-context.jsonld",
       "expect": "compact-m011-out.jsonld",
@@ -775,11 +1079,74 @@
     }, {
       "@id": "#tm012",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
-      "name": "When type is in a type map",
-      "purpose": "scoped context on @type",
+      "name": "language map with no @language using alias of @none",
+      "purpose": "index on @language",
       "input": "compact-m012-in.jsonld",
       "context": "compact-m012-context.jsonld",
       "expect": "compact-m012-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm013",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "id map using @none",
+      "purpose": "index on @id",
+      "input": "compact-m013-in.jsonld",
+      "context": "compact-m013-context.jsonld",
+      "expect": "compact-m013-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm014",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "id map using @none with alias",
+      "purpose": "index on @id",
+      "input": "compact-m014-in.jsonld",
+      "context": "compact-m014-context.jsonld",
+      "expect": "compact-m014-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm015",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "type map using @none with alias",
+      "purpose": "index on @type",
+      "input": "compact-m015-in.jsonld",
+      "context": "compact-m015-context.jsonld",
+      "expect": "compact-m015-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm016",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "type map using @none with alias",
+      "purpose": "index on @type",
+      "input": "compact-m016-in.jsonld",
+      "context": "compact-m016-context.jsonld",
+      "expect": "compact-m016-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm017",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "graph index map using @none",
+      "purpose": "index on @graph and @index",
+      "input": "compact-m017-in.jsonld",
+      "context": "compact-m017-context.jsonld",
+      "expect": "compact-m017-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm018",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "graph id map using @none",
+      "purpose": "index on @graph and @id",
+      "input": "compact-m018-in.jsonld",
+      "context": "compact-m018-context.jsonld",
+      "expect": "compact-m018-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tm019",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "graph id map using alias of @none",
+      "purpose": "index on @graph and @id",
+      "input": "compact-m019-in.jsonld",
+      "context": "compact-m019-context.jsonld",
+      "expect": "compact-m019-out.jsonld",
       "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tn001",
@@ -874,8 +1241,8 @@
     }, {
       "@id": "#tp001",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
-      "name": "Compact IRI may use an expanded term definition in 1.0",
-      "purpose": "Terms with an expanded term definition may be used for creating compact IRIs",
+      "name": "Compact IRI will not use an expanded term definition in 1.0",
+      "purpose": "Terms with an expanded term definition are not used for creating compact IRIs",
       "option": {"processingMode": "json-ld-1.0", "specVersion": "json-ld-1.1"},
       "input": "compact-p001-in.jsonld",
       "context": "compact-p001-context.jsonld",
@@ -934,6 +1301,15 @@
       "input": "compact-p007-in.jsonld",
       "context": "compact-p007-context.jsonld",
       "expect": "compact-p007-out.jsonld"
+    }, {
+      "@id": "#tp008",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Compact IRI does not use term with definition including @prefix: false",
+      "purpose": "Expanded term definition may set prefix explicitly in 1.1",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"},
+      "input": "compact-p008-in.jsonld",
+      "context": "compact-p008-context.jsonld",
+      "expect": "compact-p008-out.jsonld"
     }, {
       "@id": "#tr001",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
