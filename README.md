@@ -16,9 +16,9 @@ The [original library](https://github.com/kazarena/json-gold) was written by Sta
 
 ## Testing & Compliance ##
 
-As of December 1, 2017:
+As of December 26, 2018:
 
-* all JSON-LD 1.0 tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass
+* all JSON-LD 1.0 tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass, with one exception: [framing test #tg010](https://github.com/melville-wiley/json-ld.org/blob/3461fd0005cd8e338cd3729c4714163e9217e619/test-suite/tests/frame-manifest.jsonld#L530). See the discussion [here](https://github.com/json-ld/json-ld.org/pull/663). It appears that while it's meant to be a 1.0 test, the fix in pyLD was implemented in the 1.1 section of the framing code. This needs further investigation.
 * all RDF Dataset Normalisation tests from the [current test suite](https://json-ld.github.io/normalization/tests/index.html) pass
 * JSON-LD 1.1 spec is not currenty supported
 
