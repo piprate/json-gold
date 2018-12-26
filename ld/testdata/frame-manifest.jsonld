@@ -86,7 +86,7 @@
       "input": "frame-0010-in.jsonld",
       "frame": "frame-0010-frame.jsonld",
       "expect": "frame-0010-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": false}
+      "option": {"specVersion": "json-ld-1.1", "processingMode": "json-ld-1.0"}
     }, {
       "@id": "#t0011",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -167,7 +167,7 @@
       "input": "frame-0020-in.jsonld",
       "frame": "frame-0020-frame.jsonld",
       "expect": "frame-0020-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": false}
+      "option": {"specVersion": "json-ld-1.1", "processingMode": "json-ld-1.0"}
     }, {
       "@id": "#t0021",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -176,7 +176,7 @@
       "input": "frame-0021-in.jsonld",
       "frame": "frame-0021-frame.jsonld",
       "expect": "frame-0021-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": false}
+      "option": {"specVersion": "json-ld-1.1", "processingMode": "json-ld-1.0"}
     }, {
       "@id": "#t0022",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -400,7 +400,7 @@
       "input": "frame-0046-in.jsonld",
       "frame": "frame-0046-frame.jsonld",
       "expect": "frame-0046-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": false, "specVersion": "json-ld-1.1"}
+      "option": {"specVersion": "json-ld-1.1", "processingMode": "json-ld-1.0"}
     }, {
       "@id": "#t0047",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -424,11 +424,10 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
       "name": "Merge one graph and deep preserve another",
       "purpose": "@graph used within a property value frames embedded values from a named graph.",
-      "option": {"specVersion": "json-ld-1.1"},
       "input": "frame-0049-in.jsonld",
       "frame": "frame-0049-frame.jsonld",
       "expect": "frame-0049-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": false, "specVersion": "json-ld-1.1"}
+      "option": {"specVersion": "json-ld-1.1", "processingMode": "json-ld-1.0"}
     }, {
       "@id": "#t0050",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -442,11 +441,102 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
       "name": "Compacting values of @preserve",
       "purpose": "When compacting the value of a property using @preserve, use the term definition for term to properly compact the value of @preserve.",
-      "option": {"specVersion": "json-ld-1.1"},
+      "option": {"specVersion": "json-ld-1.1", "processingMode": "json-ld-1.1"},
       "input": "frame-0051-in.jsonld",
       "frame": "frame-0051-frame.jsonld",
       "expect": "frame-0051-out.jsonld"
     }, {
+      "@id": "#tg001",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Library framing example with @graph and omitGraph is true.",
+      "purpose": "Basic example used in playground and spec examples.",
+      "input": "frame-g001-in.jsonld",
+      "frame": "frame-g001-frame.jsonld",
+      "expect": "frame-g001-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1", "omitGraph": true}
+    }, {
+      "@id": "#tg002",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Simple embed",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g002-in.jsonld",
+      "frame": "frame-g002-frame.jsonld",
+      "expect": "frame-g002-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tg003",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Embed with direct circular reference",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g003-in.jsonld",
+      "frame": "frame-g003-frame.jsonld",
+      "expect": "frame-g003-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tg004",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Embed with indirect circular reference",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g004-in.jsonld",
+      "frame": "frame-g004-frame.jsonld",
+      "expect": "frame-g004-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tg005",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Embed with indirect circular reference via set",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g005-in.jsonld",
+      "frame": "frame-g005-frame.jsonld",
+      "expect": "frame-g005-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tg006",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Embed with nested indirect circular reference via set",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g006-in.jsonld",
+      "frame": "frame-g006-frame.jsonld",
+      "expect": "frame-g006-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tg007",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Multi-level simple embeds",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g007-in.jsonld",
+      "frame": "frame-g007-frame.jsonld",
+      "expect": "frame-g007-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tg008",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "A tangle of nastiness",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g008-in.jsonld",
+      "frame": "frame-g008-frame.jsonld",
+      "expect": "frame-g008-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    },{
+      "@id": "#tg009",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Recursive property embed w/o circular reference",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g009-in.jsonld",
+      "frame": "frame-g009-frame.jsonld",
+      "expect": "frame-g009-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    },{
+      "@id": "#tg010",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Multiple named graphs",
+      "purpose": "Test embedded graphs",
+      "input": "frame-g010-in.jsonld",
+      "frame": "frame-g010-frame.jsonld",
+      "expect": "frame-g010-out.jsonld",
+      "option": {"pruneBlankNodeIdentifiers": true}
+    },
+    {
       "@id": "#tp010",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
       "name": "property CURIE conflict (prune bnodes)",
@@ -454,7 +544,7 @@
       "input": "frame-0010-in.jsonld",
       "frame": "frame-0010-frame.jsonld",
       "expect": "frame-p010-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": true, "specVersion": "json-ld-1.1"}
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tp020",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -463,7 +553,7 @@
       "input": "frame-0020-in.jsonld",
       "frame": "frame-0020-frame.jsonld",
       "expect": "frame-p020-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": true, "specVersion": "json-ld-1.1"}
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tp021",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -472,7 +562,7 @@
       "input": "frame-0021-in.jsonld",
       "frame": "frame-0021-frame.jsonld",
       "expect": "frame-p021-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": true, "specVersion": "json-ld-1.1"}
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tp046",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -481,7 +571,7 @@
       "input": "frame-0046-in.jsonld",
       "frame": "frame-0046-frame.jsonld",
       "expect": "frame-p046-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": true, "specVersion": "json-ld-1.1"}
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tp049",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -490,7 +580,16 @@
       "input": "frame-0049-in.jsonld",
       "frame": "frame-0049-frame.jsonld",
       "expect": "frame-p049-out.jsonld",
-      "option": {"pruneBlankNodeIdentifiers": true, "specVersion": "json-ld-1.1"}
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tp050",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Prune blank nodes with alias of @id",
+      "purpose": "If @id is aliased in a frame, an unreferenced blank node is still pruned.",
+      "input": "frame-p050-in.jsonld",
+      "frame": "frame-p050-frame.jsonld",
+      "expect": "frame-p050-out.jsonld",
+      "option": {"processingMode": "json-ld-1.1", "specVersion": "json-ld-1.1"}
     }
   ]
 }
