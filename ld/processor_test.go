@@ -244,9 +244,14 @@ func TestSuite(t *testing.T) {
 				expectedFileName = testMap["result"].(string)
 			}
 
+			testName := testId
+			if strings.HasPrefix(testName, "#") {
+				testName = manifestURI + testName
+			}
+
 			td := &TestDefinition{
 				Id:               testId,
-				Name:             manifestURI + testId,
+				Name:             testName,
 				Type:             testType,
 				EvaluationType:   testEvaluationType,
 				InputURL:         inputURL,
@@ -402,7 +407,7 @@ func TestSuite(t *testing.T) {
 				options.Algorithm = "URGNA2012"
 				result, opError = proc.Normalize(input, options)
 			case "rdfn:Urdna2015EvalTest":
-				log.Println("Running URDNA2015 test", td.Id, ":", td.Name)
+				log.Println("Running URDNA2015 test", td.Name)
 
 				inputBytes, err := ioutil.ReadFile(td.InputFileName)
 				assert.NoError(t, err)
