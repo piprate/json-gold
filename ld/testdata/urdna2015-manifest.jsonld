@@ -555,6 +555,15 @@
       "approval": "rdft:Proposed",
       "action": "test058-in.nq",
       "result": "test058-urdna2015.nq"
+    },
+    {
+      "id": "manifest-urdna2015#test059",
+      "type": "rdfn:Urdna2015EvalTest",
+      "name": "n-quads parsing",
+      "comment": null,
+      "approval": "rdft:Proposed",
+      "action": "test059-in.nq",
+      "result": "test059-urdna2015.nq"
     }
   ]
 }
