@@ -412,7 +412,7 @@ func (jldp *JsonLdProcessor) fromRDF(input interface{}, opts *JsonLdOptions, ser
 		} else if opts.OutputForm == "flattened" {
 			return jldp.Flatten(rval, dataset.context, opts)
 		} else {
-			return nil, NewJsonLdError(UnknownError, "")
+			return nil, NewJsonLdError(UnknownError, fmt.Sprintf("Output form was unknown: %s", opts.OutputForm))
 		}
 	}
 	return rval, nil
