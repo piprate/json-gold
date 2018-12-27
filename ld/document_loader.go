@@ -83,7 +83,7 @@ func DocumentFromReader(r io.Reader) (interface{}, error) {
 func (dl *DefaultDocumentLoader) LoadDocument(u string) (*RemoteDocument, error) {
 	parsedURL, err := url.Parse(u)
 	if err != nil {
-		return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		return nil, NewJsonLdError(LoadingDocumentFailed, fmt.Sprintf("error parsing URL: %s", u))
 	}
 
 	var documentBody io.Reader
@@ -301,7 +301,7 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 
 	parsedURL, err := url.Parse(u)
 	if err != nil {
-		return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		return nil, NewJsonLdError(LoadingDocumentFailed, fmt.Sprintf("error parsing URL: %s", u))
 	}
 
 	var documentBody io.Reader
