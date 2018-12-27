@@ -82,7 +82,7 @@ func (jldp *JsonLdProcessor) Compact(input interface{}, context interface{},
 	}
 
 	if compactedMap, isMap := compacted.(map[string]interface{}); len(compactedMap) > 0 && isMap {
-		if contextList, isList := context.([]interface{}); isList && len(contextList) == 1 {
+		if contextList, isList := context.([]interface{}); isList && len(contextList) == 1 && opts.CompactArrays {
 			// if the context is an array with 1 element, compact the array
 			compactedMap["@context"] = contextList[0]
 		} else if contextMap, isMap := context.(map[string]interface{}); len(contextMap) > 0 || !isMap {
