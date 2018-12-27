@@ -394,7 +394,7 @@ func TestSuite(t *testing.T) {
 			case "jld:ToRDFTest":
 				log.Println("Running ToRDF test", td.Id, ":", td.Name)
 
-				options.Format = "application/nquads"
+				options.Format = "application/n-quads"
 				result, opError = proc.ToRDF(td.InputURL, options)
 			case "rdfn:Urgna2012EvalTest":
 				log.Println("Running URGNA2012 test", td.Id, ":", td.Name)
@@ -402,8 +402,8 @@ func TestSuite(t *testing.T) {
 				inputBytes, err := ioutil.ReadFile(td.InputFileName)
 				assert.NoError(t, err)
 				input := string(inputBytes)
-				options.InputFormat = "application/nquads"
-				options.Format = "application/nquads"
+				options.InputFormat = "application/n-quads"
+				options.Format = "application/n-quads"
 				options.Algorithm = "URGNA2012"
 				result, opError = proc.Normalize(input, options)
 			case "rdfn:Urdna2015EvalTest":
@@ -412,8 +412,8 @@ func TestSuite(t *testing.T) {
 				inputBytes, err := ioutil.ReadFile(td.InputFileName)
 				assert.NoError(t, err)
 				input := string(inputBytes)
-				options.InputFormat = "application/nquads"
-				options.Format = "application/nquads"
+				options.InputFormat = "application/n-quads"
+				options.Format = "application/n-quads"
 				options.Algorithm = "URDNA2015"
 				result, opError = proc.Normalize(input, options)
 			default:
