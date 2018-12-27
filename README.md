@@ -178,7 +178,7 @@ See complete code in [examples/to_rdf.go](examples/to_rdf.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
-options.Format = "application/nquads"
+options.Format = "application/n-quads"
 
 // this JSON-LD document was taken from http://json-ld.org/test-suite/tests/toRdf-0028-in.jsonld
 doc := map[string]interface{}{
@@ -229,7 +229,7 @@ See complete code in [examples/normalize.go](examples/normalize.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
-options.Format = "application/nquads"
+options.Format = "application/n-quads"
 options.Algorithm = "URDNA2015"
 
 doc := map[string]interface{}{

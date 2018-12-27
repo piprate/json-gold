@@ -259,7 +259,7 @@ func (na *NormalisationAlgorithm) Main(dataset *RDFDataset, opts *JsonLdOptions)
 	// 8) Return the normalized dataset.
 	// handle output format
 	if opts.Format != "" {
-		if opts.Format == "application/nquads" {
+		if opts.Format == "application/n-quads" || opts.Format == "application/nquads" {
 			rval := ""
 			for _, n := range normalized {
 				rval += n

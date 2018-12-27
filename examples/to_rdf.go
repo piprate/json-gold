@@ -25,7 +25,7 @@ import (
 func main() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
-	options.Format = "application/nquads"
+	options.Format = "application/n-quads"
 
 	// this JSON-LD document was taken from http://json-ld.org/test-suite/tests/toRdf-0028-in.jsonld
 	doc := map[string]interface{}{

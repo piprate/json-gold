@@ -23,7 +23,7 @@ import (
 func main() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
-	options.Format = "application/nquads"
+	options.Format = "application/n-quads"
 	options.Algorithm = "URDNA2015"
 
 	doc := map[string]interface{}{

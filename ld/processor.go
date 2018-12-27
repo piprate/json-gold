@@ -359,15 +359,16 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 }
 
 var rdfSerializers = map[string]RDFSerializer{
-	"application/nquads": &NQuadRDFSerializer{},
-	"text/turtle":        &TurtleRDFSerializer{},
+	"application/n-quads": &NQuadRDFSerializer{},
+	"application/nquads":  &NQuadRDFSerializer{}, // keep this option for backward compatibility
+	"text/turtle":         &TurtleRDFSerializer{},
 }
 
 // FromRDF converts an RDF dataset to JSON-LD.
 //
 // dataset: a serialized string of RDF in a format specified by the format option or an RDF dataset to convert.
 // opts: the options to use:
-//     [format] the format if input is not an array: 'application/nquads' for N-Quads (default).
+//     [format] the format if input is not an array: 'application/n-quads' for N-Quads (default).
 //     [useRdfType] true to use rdf:type, false to use @type (default: false).
 //     [useNativeTypes] true to convert XSD types into native types (boolean, integer, double),
 //     false not to (default: true).
@@ -380,7 +381,7 @@ func (jldp *JsonLdProcessor) FromRDF(dataset interface{}, opts *JsonLdOptions) (
 	// handle non specified serializer case
 	if _, isString := dataset.(string); opts.Format == "" && isString {
 		// attempt to parse the input as nquads
-		opts.Format = "application/nquads"
+		opts.Format = "application/n-quads"
 	}
 
 	serializer, hasSerializer := rdfSerializers[opts.Format]
@@ -423,7 +424,7 @@ func (jldp *JsonLdProcessor) fromRDF(input interface{}, opts *JsonLdOptions, ser
 // input: the JSON-LD input.
 // opts: the options to use:
 //     [base] the base IRI to use.
-//     [format] the format to use to output a string: 'application/nquads' for N-Quads (default).
+//     [format] the format to use to output a string: 'application/n-quads' for N-Quads (default).
 //
 func (jldp *JsonLdProcessor) ToRDF(input interface{}, opts *JsonLdOptions) (interface{}, error) {
 
@@ -485,7 +486,7 @@ func (jldp *JsonLdProcessor) Normalize(input interface{}, opts *JsonLdOptions) (
 
 	var dataset *RDFDataset
 	if opts.InputFormat != "" {
-		if opts.InputFormat != "application/nquads" {
+		if opts.InputFormat != "application/n-quads" && opts.InputFormat != "application/nquads" {
 			return nil, NewJsonLdError(UnknownFormat, "Unknown normalization input format")
 		}
 		serializer, hasSerializer := rdfSerializers[opts.Format]
