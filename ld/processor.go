@@ -81,12 +81,16 @@ func (jldp *JsonLdProcessor) Compact(input interface{}, context interface{},
 		}
 	}
 
-	contextMap, _ = context.(map[string]interface{})
-	contextList, _ := context.([]interface{})
-	contextIsNotEmpty := len(contextMap) > 0 || len(contextList) > 0
-	if compactedMap, isMap := compacted.(map[string]interface{}); contextIsNotEmpty && isMap {
-		// TODO: figure out if we can make "@context" appear at the start of the keySet
-		compactedMap["@context"] = context
+	if compactedMap, isMap := compacted.(map[string]interface{}); len(compactedMap) > 0 && isMap {
+		if contextList, isList := context.([]interface{}); isList && len(contextList) == 1 {
+			// if the context is an array with 1 element, compact the array
+			compactedMap["@context"] = contextList[0]
+		} else if contextMap, isMap := context.(map[string]interface{}); len(contextMap) > 0 || !isMap {
+			// otherwise keep the context as is
+			compactedMap["@context"] = context
+		} else {
+			// unless it's empty, then omit the context altogether
+		}
 	}
 
 	// 9)
