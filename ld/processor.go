@@ -347,7 +347,7 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 		return nil, err
 	}
 
-	compacted, _ := api.Compact(activeCtx, "", framed, true)
+	compacted, _ := api.Compact(activeCtx, "", framed, opts.CompactArrays)
 	if _, isList := compacted.([]interface{}); !isList {
 		compacted = []interface{}{compacted}
 	}
