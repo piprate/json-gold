@@ -72,12 +72,16 @@ func CopyContext(ctx *Context) *Context {
 // returns a new active context.
 // Refer to http://www.w3.org/TR/json-ld-api/#context-processing-algorithms for details
 func (c *Context) Parse(localContext interface{}) (*Context, error) {
-	return c.parse(localContext, make([]string, 0))
+	return c.parse(localContext, make([]string, 0), false)
 }
 
 // parse processes a local context, retrieving any URLs as necessary, and
-// returns a new active context
-func (c *Context) parse(localContext interface{}, remoteContexts []string) (*Context, error) {
+// returns a new active context.
+//
+// If parsingARemoteContext is true, localContext represents a remote context
+// that has been parsed and sent into this method. This must be set to know
+// whether to propagate the @base key from the context to the result.
+func (c *Context) parse(localContext interface{}, remoteContexts []string, parsingARemoteContext bool) (*Context, error) {
 	// 1. Initialize result to the result of cloning active context.
 	result := CopyContext(c)
 
@@ -126,7 +130,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string) (*Con
 			}
 
 			// 3.2.4
-			resultRef, err := result.parse(context, remoteContexts)
+			resultRef, err := result.parse(context, remoteContexts, true)
 			if err != nil {
 				return nil, err
 			}
@@ -142,7 +146,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string) (*Con
 
 		// 3.4
 		baseValue, basePresent := contextMap["@base"]
-		if len(remoteContexts) == 0 && basePresent {
+		if !parsingARemoteContext && basePresent {
 			if baseValue == nil {
 				delete(result.values, "@base")
 			} else if baseString, isString := baseValue.(string); isString {
