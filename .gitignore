@@ -28,3 +28,6 @@ _testmain.go
 
 # ignore the EARL report
 earl.jsonld
+
+# IDEA GLand
+/.idea
