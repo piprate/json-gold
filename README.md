@@ -7,24 +7,30 @@
 [gocover]: https://gocover.io/github.com/piprate/json-gold/ld
 [shield-gocover]: https://gocover.io/_badge/github.com/piprate/json-gold/ld
 
-This library is an implementation of the [JSON-LD 1.0](http://json-ld.org/) specification in Go.
+This library is an implementation of the [JSON-LD 1.1](http://json-ld.org/) specification in Go.
 It supports both URDNA2015 and URGNA2012 RDF dataset normalisation algorithms.
 
-The [original library](https://github.com/kazarena/json-gold) was written by Stan Nazarenko
-([@kazarena](https://github.com/kazarena)). See the full list of contributors
-[here](https://github.com/piprate/json-gold/blob/master/CONTRIBUTORS.md).
+## Conformance ##
 
-## Testing & Compliance ##
+This library aims to pass the official [test suite](https://json-ld.org/test-suite/) and conform with the following:
 
-As of December 26, 2018:
+- `JSON-LD 1.0`_,
+  W3C Recommendation,
+  2014-01-16, and any `errata`_
+- `JSON-LD 1.0 Processing Algorithms and API`_,
+  W3C Recommendation,
+  2014-01-16, and any `errata`_
+- `JSON-LD 1.1`_,
+  Final Community Group Report,
+  2018-06-07 or `newer <JSON-LD latest_>`_
+- `JSON-LD 1.1 Processing Algorithms and API`_,
+  W3C Editor's Draft,
+  2018-12-15 or `newer <JSON-LD Processing Algorithms and API latest_>`_
 
-* all JSON-LD 1.0 tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass, with one exception: [framing test #tg010](https://github.com/melville-wiley/json-ld.org/blob/3461fd0005cd8e338cd3729c4714163e9217e619/test-suite/tests/frame-manifest.jsonld#L530). See the discussion [here](https://github.com/json-ld/json-ld.org/pull/663). It appears that while it's meant to be a 1.0 test, the fix in pyLD was implemented in the 1.1 section of the framing code. This needs further investigation.
+As of January 1, 2019:
+
+* all JSON-LD 1.0 and 1.1 tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass, with one exception: [framing test #tg010](https://github.com/melville-wiley/json-ld.org/blob/3461fd0005cd8e338cd3729c4714163e9217e619/test-suite/tests/frame-manifest.jsonld#L530). See the discussion [here](https://github.com/json-ld/json-ld.org/pull/663). This needs further investigation.
 * all RDF Dataset Normalisation tests from the [current test suite](https://json-ld.github.io/normalization/tests/index.html) pass
-* JSON-LD 1.1 spec is not currenty supported
-
-## Inspiration ##
-
-This implementation was heavily influenced by [JSONLD-Java](https://github.com/jsonld-java/jsonld-java) with some techniques borrowed from [PyLD](https://github.com/digitalbazaar/pyld) and [gojsonld](https://github.com/linkeddata/gojsonld). Big thank you to the contributors of the forementioned libraries for figuring out implementation details of the core algorithms.
 
 ## Examples ##
 
@@ -245,3 +251,13 @@ doc := map[string]interface{}{
 
 normalizedTriples, err := proc.Normalize(doc, options)
 ```
+
+## Inspiration ##
+
+This implementation was heavily influenced by [JSONLD-Java](https://github.com/jsonld-java/jsonld-java) with some techniques borrowed from [PyLD](https://github.com/digitalbazaar/pyld) and [gojsonld](https://github.com/linkeddata/gojsonld). Big thank you to the contributors of the forementioned libraries for figuring out implementation details of the core algorithms.
+
+## History ##
+
+The [original library](https://github.com/kazarena/json-gold) was written by Stan Nazarenko
+([@kazarena](https://github.com/kazarena)). See the full list of contributors
+[here](https://github.com/piprate/json-gold/blob/master/CONTRIBUTORS.md).
