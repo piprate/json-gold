@@ -14,18 +14,21 @@ It supports both URDNA2015 and URGNA2012 RDF dataset normalisation algorithms.
 
 This library aims to pass the official [test suite](https://json-ld.org/test-suite/) and conform with the following:
 
-- `JSON-LD 1.0`_,
+- [JSON-LD 1.0](http://www.w3.org/TR/2014/REC-json-ld-20140116/),
   W3C Recommendation,
-  2014-01-16, and any `errata`_
-- `JSON-LD 1.0 Processing Algorithms and API`_,
+  2014-01-16, and any [errata](http://www.w3.org/2014/json-ld-errata)
+- [JSON-LD 1.0 Processing Algorithms and API](http://www.w3.org/TR/2014/REC-json-ld-api-20140116/),
   W3C Recommendation,
-  2014-01-16, and any `errata`_
-- `JSON-LD 1.1`_,
+  2014-01-16, and any [errata](http://www.w3.org/2014/json-ld-errata)
+- [JSON-LD 1.1](https://json-ld.org/spec/FCGS/json-ld/20180607/,
   Final Community Group Report,
-  2018-06-07 or `newer <JSON-LD latest_>`_
-- `JSON-LD 1.1 Processing Algorithms and API`_,
+  2018-06-07 or [newer JSON-LD latest](https://json-ld.org/spec/latest/json-ld/)
+- [JSON-LD 1.1 Processing Algorithms and API](https://json-ld.org/spec/ED/json-ld-api/20180215/),
   W3C Editor's Draft,
-  2018-12-15 or `newer <JSON-LD Processing Algorithms and API latest_>`_
+  2018-12-15 or [newer <JSON-LD Processing Algorithms and API latest](https://json-ld.org/spec/latest/json-ld-api/)
+- [JSON-LD Framing 1.1](https://json-ld.org/spec/latest/json-ld-framing/)
+  Draft Community Group Report
+  2018-09-05 or newer
 
 As of January 1, 2019:
 
