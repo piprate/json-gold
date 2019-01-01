@@ -321,6 +321,9 @@ func TestSuite(t *testing.T) {
 				if value, hasValue := testOpts["compactArrays"]; hasValue {
 					options.CompactArrays = value.(bool)
 				}
+				if value, hasValue := testOpts["omitGraph"]; hasValue {
+					options.OmitGraph = value.(bool)
+				}
 				if value, hasValue := testOpts["useNativeTypes"]; hasValue {
 					options.UseNativeTypes = value.(bool)
 				}

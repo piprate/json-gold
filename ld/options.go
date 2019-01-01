@@ -89,3 +89,28 @@ func NewJsonLdOptions(base string) *JsonLdOptions {
 		OutputForm:            "",
 	}
 }
+
+// Copy creates a deep copy of JsonLdOptions object.
+func (opt *JsonLdOptions) Copy() *JsonLdOptions {
+	return &JsonLdOptions{
+		Base:                  opt.Base,
+		CompactArrays:         opt.CompactArrays,
+		ExpandContext:         opt.ExpandContext,
+		ProcessingMode:        opt.ProcessingMode,
+		DocumentLoader:        opt.DocumentLoader,
+		Embed:                 opt.Embed,
+		Explicit:              opt.Explicit,
+		RequireAll:            opt.RequireAll,
+		FrameDefault:          opt.FrameDefault,
+		OmitDefault:           opt.OmitDefault,
+		OmitGraph:             opt.OmitGraph,
+		UseRdfType:            opt.UseRdfType,
+		UseNativeTypes:        opt.UseNativeTypes,
+		ProduceGeneralizedRdf: opt.ProduceGeneralizedRdf,
+		InputFormat:           opt.InputFormat,
+		Format:                opt.Format,
+		Algorithm:             opt.Algorithm,
+		UseNamespaces:         opt.UseNamespaces,
+		OutputForm:            opt.OutputForm,
+	}
+}

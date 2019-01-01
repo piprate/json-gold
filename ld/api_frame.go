@@ -473,6 +473,10 @@ func GetFrameFlag(frame map[string]interface{}, name string, theDefault bool) bo
 
 	if valueBool, isBool := value.(bool); isBool {
 		return valueBool
+	} else if value == "true" {
+		return true
+	} else if value == "false" {
+		return false
 	}
 
 	return theDefault
