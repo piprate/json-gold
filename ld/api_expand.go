@@ -282,7 +282,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 						if len(valueMap) != 0 {
 							return NewJsonLdError(InvalidIDValue, "@id value must be a an empty object for framing")
 						}
-						expandedValue = value
+						expandedValue = Arrayify(value)
 					} else if valueList, isList := value.([]interface{}); isList {
 						expandedValueList := make([]interface{}, 0)
 						for _, v := range valueList {
@@ -487,12 +487,14 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 			} else if expandedProperty == "@nest" {
 				// nested keys
 				nests = append(nests, key)
-			} else if expandedProperty == "@explicit" || // TODO: SPEC no mention of @explicit etc in spec
-				expandedProperty == "@default" ||
+			} else if expandedProperty == "@default" {
+				expandedValue, _ = api.Expand(activeCtx, expandedProperty, value, opts)
+			} else if expandedProperty == "@explicit" ||
 				expandedProperty == "@embed" ||
 				expandedProperty == "@requireAll" ||
 				expandedProperty == "@omitDefault" {
-				expandedValue, _ = api.Expand(activeCtx, expandedProperty, value, opts)
+				// these values are scalars
+				expandedValue = []interface{}{value}
 			}
 			// 7.4.12)
 			if expandedValue != nil {
