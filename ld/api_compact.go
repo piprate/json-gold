@@ -14,6 +14,8 @@
 
 package ld
 
+import "sort"
+
 // Compact operation compacts the given input using the context
 // according to the steps in the Compaction Algorithm:
 //
@@ -23,271 +25,385 @@ package ld
 // Returns an error if there was an error during compaction.
 func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element interface{},
 	compactArrays bool) (interface{}, error) {
-	// 2)
+
 	if elementList, isList := element.([]interface{}); isList {
-		// 2.1)
 		result := make([]interface{}, 0)
-		// 2.2)
 		for _, item := range elementList {
-			// 2.2.1)
 			compactedItem, err := api.Compact(activeCtx, activeProperty, item, compactArrays)
 			if err != nil {
 				return nil, err
 			}
-			// 2.2.2)
 			if compactedItem != nil {
 				result = append(result, compactedItem)
 			}
 		}
-		// 2.3)
-		if compactArrays && len(result) == 1 && activeCtx.GetContainer(activeProperty) == "" {
+
+		if compactArrays && len(result) == 1 && len(activeCtx.GetContainer(activeProperty)) == 0 {
 			return result[0], nil
 		}
-		// 2.4)
+
 		return result, nil
 	}
 
-	// 3)
-	if elem, isMap := element.(map[string]interface{}); isMap {
-		// 4
-		_, containsValue := elem["@value"]
-		_, containsID := elem["@id"]
-		if containsValue || containsID {
-			compactedValue := activeCtx.CompactValue(activeProperty, elem)
-			_, isMap := compactedValue.(map[string]interface{})
-			_, isList := compactedValue.([]interface{})
-			if !(isMap || isList) {
-				return compactedValue, nil
-			}
+	// use any scoped context on active_property
+	td := activeCtx.GetTermDefinition(activeProperty)
+	if ctx, hasCtx := td["@context"]; hasCtx {
+		newCtx, err := activeCtx.Parse(ctx)
+		if err != nil {
+			return nil, err
 		}
-		// 5)
+		activeCtx = newCtx
+	}
+
+	if elem, isMap := element.(map[string]interface{}); isMap {
+
+		// do value compaction on @values and subject references
+		if IsValue(elem) || IsSubjectReference(elem) {
+			compactedValue := activeCtx.CompactValue(activeProperty, elem)
+			return compactedValue, nil
+		}
+
 		insideReverse := activeProperty == "@reverse"
 
-		// 6)
 		result := make(map[string]interface{})
-		// 7)
+
+		// apply any context defined on an alias of @type
+		// if key is @type and any compacted value is a term having a local
+		// context, overlay that context
+		if typeVal, hasType := elem["@type"]; hasType {
+			// set scoped contexts from @type
+			types := make([]string, 0)
+			for _, t := range Arrayify(typeVal) {
+				if typeStr, isString := t.(string); isString {
+					compactedType := activeCtx.CompactIri(typeStr, nil, true, false)
+					types = append(types, compactedType)
+				}
+			}
+			// process in lexicographical order, see https://github.com/json-ld/json-ld.org/issues/616
+			sort.Strings(types)
+			for _, tt := range types {
+				td := activeCtx.GetTermDefinition(tt)
+				if ctx, hasCtx := td["@context"]; hasCtx {
+					newCtx, err := activeCtx.Parse(ctx)
+					if err != nil {
+						return nil, err
+					}
+					activeCtx = newCtx
+				}
+			}
+		}
+
+		// recursively process element keys in order
 		for _, expandedProperty := range GetOrderedKeys(elem) {
 			expandedValue := elem[expandedProperty]
 
-			// 7.1)
 			if expandedProperty == "@id" || expandedProperty == "@type" {
 				var compactedValue interface{}
 
-				// 7.1.1)
-				if expandedValueStr, isString := expandedValue.(string); isString {
-					compactedValue = activeCtx.CompactIri(expandedValueStr, nil, expandedProperty == "@type", false)
-				} else { // 7.1.2)
-					types := make([]interface{}, 0)
-					// 7.1.2.2)
-					for _, expandedTypeVal := range expandedValue.([]interface{}) {
-						expandedType := expandedTypeVal.(string)
-						types = append(types, activeCtx.CompactIri(expandedType, nil, true, false))
-					}
-					// 7.1.2.3)
-					if len(types) == 1 {
-						compactedValue = types[0]
-					} else {
-						compactedValue = types
-					}
+				compactedValues := make([]interface{}, 0)
+
+				for _, v := range Arrayify(expandedValue) {
+					cv := activeCtx.CompactIri(v.(string), nil, expandedProperty == "@type", false)
+					compactedValues = append(compactedValues, cv)
 				}
 
-				// 7.1.3)
+				if len(compactedValues) == 1 {
+					compactedValue = compactedValues[0]
+				} else {
+					compactedValue = compactedValues
+				}
+
 				alias := activeCtx.CompactIri(expandedProperty, nil, true, false)
-				// 7.1.4)
-				result[alias] = compactedValue
+				compValArray, isArray := compactedValue.([]interface{})
+				AddValue(result, alias, compactedValue, isArray && len(compValArray) == 0, true)
+
 				continue
 			}
 
-			// 7.2)
 			if expandedProperty == "@reverse" {
-				// 7.2.1)
+
 				compactedObject, _ := api.Compact(activeCtx, "@reverse", expandedValue, compactArrays)
 				compactedValue := compactedObject.(map[string]interface{})
-				// 7.2.2)
+
 				for _, property := range GetKeys(compactedValue) {
 					value := compactedValue[property]
-					// 7.2.2.1)
+
 					if activeCtx.IsReverseProperty(property) {
-						// 7.2.2.1.1)
-						valueList, isList := value.([]interface{})
-						if (activeCtx.GetContainer(property) == "@set" || !compactArrays) && !isList {
-							result[property] = []interface{}{value}
-						}
-						// 7.2.2.1.2)
-						if _, present := result[property]; !present {
-							result[property] = value
-						} else { // 7.2.2.1.3)
-							propertyValueList, isPropertyList := result[property].([]interface{})
-							if !isPropertyList {
-								propertyValueList = []interface{}{result[property]}
-							}
-							if isList {
-								propertyValueList = append(propertyValueList, valueList...)
-							} else {
-								propertyValueList = append(propertyValueList, value)
-							}
-							result[property] = propertyValueList
-						}
-						// 7.2.2.1.4)
+						useArray := activeCtx.HasContainerMapping(property, "@set") || !compactArrays
+
+						AddValue(result, property, value, useArray, true)
+
 						delete(compactedValue, property)
 					}
 
 				}
-				// 7.2.3)
+
 				if len(compactedValue) > 0 {
-					// 7.2.3.1)
-					alias := activeCtx.CompactIri("@reverse", nil, true, false)
-					// 7.2.3.2)
-					result[alias] = compactedValue
+					alias := activeCtx.CompactIri("@reverse", nil, false, false)
+					AddValue(result, alias, compactedValue, false, true)
 				}
-				// 7.2.4)
-				continue
-			}
-			// 7.3)
-			if expandedProperty == "@index" && activeCtx.GetContainer(activeProperty) == "@index" {
-				continue
-			} else if expandedProperty == "@index" || expandedProperty == "@value" ||
-				expandedProperty == "@language" { // 7.4)
-				// 7.4.1)
-				alias := activeCtx.CompactIri(expandedProperty, nil, true, false)
-				// 7.4.2)
-				result[alias] = expandedValue
+
 				continue
 			}
 
-			// NOTE: expanded value must be an array due to expansion
-			// algorithm.
+			if expandedProperty == "@preserve" {
+				// compact using activeProperty
+				compactedValue, _ := api.Compact(activeCtx, activeProperty, expandedValue, compactArrays)
+				if cva, isArray := compactedValue.([]interface{}); !(isArray && len(cva) == 0) {
+					AddValue(result, expandedProperty, compactedValue, false, true)
+				}
+				continue
+			}
 
-			// 7.5)
+			if expandedProperty == "@index" && activeCtx.HasContainerMapping(activeProperty, "@index") {
+				continue
+			} else if expandedProperty == "@index" || expandedProperty == "@value" || expandedProperty == "@language" {
+				alias := activeCtx.CompactIri(expandedProperty, nil, false, false)
+				AddValue(result, alias, expandedValue, false, true)
+				continue
+			}
+
+			// skip array processing for keywords that aren't @graph or @list
+			if expandedProperty != "@graph" && expandedProperty != "@list" && IsKeyword(expandedProperty) {
+				alias := activeCtx.CompactIri(expandedProperty, nil, false, false)
+				AddValue(result, alias, expandedValue, false, true)
+				continue
+			}
+
+			// NOTE: expanded value must be an array due to expansion algorithm.
+
 			expandedValueList, isList := expandedValue.([]interface{})
 			if isList && len(expandedValueList) == 0 {
-				// 7.5.1)
+
 				itemActiveProperty := activeCtx.CompactIri(expandedProperty, expandedValue, true, insideReverse)
-				// 7.5.2)
-				itemActivePropertyVal, present := result[itemActiveProperty]
-				if !present {
-					result[itemActiveProperty] = make([]interface{}, 0)
-				} else {
-					if _, isList := itemActivePropertyVal.([]interface{}); !isList {
-						result[itemActiveProperty] = []interface{}{itemActivePropertyVal}
+
+				nestResult := result
+				nestProperty, hasNest := activeCtx.GetTermDefinition(itemActiveProperty)["@nest"]
+				if hasNest {
+					if err := api.checkNestProperty(activeCtx, nestProperty.(string)); err != nil {
+						return nil, err
 					}
+					if _, isMap := result[nestProperty.(string)].(map[string]interface{}); !isMap {
+						result[nestProperty.(string)] = make(map[string]interface{})
+					}
+					nestResult = result[nestProperty.(string)].(map[string]interface{})
 				}
+
+				AddValue(nestResult, itemActiveProperty, make([]interface{}, 0), true, true)
 			}
 
-			// 7.6)
 			for _, expandedItem := range expandedValueList {
-				// 7.6.1)
 				itemActiveProperty := activeCtx.CompactIri(expandedProperty, expandedItem, true, insideReverse)
-				// 7.6.2)
-				container := activeCtx.GetContainer(itemActiveProperty)
+
+				isListContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@list")
+				isGraphContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@graph")
+				isSetContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@set")
+				isLanguageContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@language")
+				isIndexContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@index")
+				isIdContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@id")
+				isTypeContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@type")
+
+				// if itemActiveProperty is a @nest property, add values to nestResult, otherwise result
+				nestResult := result
+				nestProperty, hasNest := activeCtx.GetTermDefinition(itemActiveProperty)["@nest"]
+				if hasNest {
+					if err := api.checkNestProperty(activeCtx, nestProperty.(string)); err != nil {
+						return nil, err
+					}
+					if _, isMap := result[nestProperty.(string)].(map[string]interface{}); !isMap {
+						result[nestProperty.(string)] = make(map[string]interface{})
+					}
+					nestResult = result[nestProperty.(string)].(map[string]interface{})
+				}
 
 				// get @list value if appropriate
 				expandedItemMap, isMap := expandedItem.(map[string]interface{})
+				isGraph := IsGraph(expandedItemMap)
 				list, containsList := expandedItemMap["@list"]
 				isList := isMap && containsList
+				var inner interface{}
 
-				// 7.6.3)
-				var elementToCompact interface{}
 				if isList {
-					elementToCompact = list
+					inner = list
+				} else if isGraph {
+					inner = expandedItemMap["@graph"]
+				}
+
+				var elementToCompact interface{}
+				if isList || isGraph {
+					elementToCompact = inner
 				} else {
 					elementToCompact = expandedItem
 				}
-				compactedItem, _ := api.Compact(activeCtx, itemActiveProperty, elementToCompact, compactArrays)
 
-				// 7.6.4)
+				// recursively compact expanded item
+				compactedItem, err := api.Compact(activeCtx, itemActiveProperty, elementToCompact, compactArrays)
+				if err != nil {
+					return nil, err
+				}
+
 				if isList {
-					// 7.6.4.1)
+					compactedItem = Arrayify(compactedItem)
 
-					if _, isCompactedList := compactedItem.([]interface{}); !isCompactedList {
-						compactedItem = []interface{}{compactedItem}
-					}
-					// 7.6.4.2)
-					if container != "@list" {
-						// 7.6.4.2.1)
-						wrapper := make(map[string]interface{})
-						// TODO: SPEC: no mention of vocab = true
-						wrapper[activeCtx.CompactIri("@list", nil, true, false)] = compactedItem
+					if !isListContainer {
+
+						listAlias := activeCtx.CompactIri("@list", nil, false, false)
+						wrapper := map[string]interface{}{
+							listAlias: compactedItem,
+						}
 						compactedItem = wrapper
 
-						// 7.6.4.2.2)
 						if indexVal, containsIndex := expandedItemMap["@index"]; containsIndex {
-							// TODO: SPEC: no mention of vocab = true
-							wrapper[activeCtx.CompactIri("@index", nil, true, false)] = indexVal
+							indexAlias := activeCtx.CompactIri("@index", nil, false, false)
+							wrapper[indexAlias] = indexVal
 						}
-					} else if _, present := result[itemActiveProperty]; present { // 7.6.4.3)
+					} else if _, present := nestResult[itemActiveProperty]; present { // 7.6.4.3)
 						return nil, NewJsonLdError(CompactionToListOfLists,
 							"There cannot be two list objects associated with an active property that has a container mapping")
 					}
 				}
-				// 7.6.5)
-				if container == "@language" || container == "@index" {
-					// 7.6.5.1)
+
+				// graph object compaction
+				if isGraph {
+					asArray := !compactArrays || isSetContainer
+					if isGraphContainer && (isIdContainer || isIndexContainer && IsSimpleGraph(expandedItemMap)) {
+						var mapObject map[string]interface{}
+						if v, present := nestResult[itemActiveProperty]; present {
+							mapObject = v.(map[string]interface{})
+						} else {
+							mapObject = make(map[string]interface{})
+							nestResult[itemActiveProperty] = mapObject
+						}
+
+						// index on @id or @index or alias of @none
+						k := "@index"
+						if isIdContainer {
+							k = "@id"
+						}
+						mapKey := ""
+						if v, found := expandedItemMap[k]; found {
+							mapKey = v.(string)
+						} else {
+							mapKey = activeCtx.CompactIri("@none", nil, false, false)
+						}
+
+						// add compactedItem to map, using value of "@id" or a new blank node identifier
+						AddValue(mapObject, mapKey, compactedItem, asArray, true)
+					} else if isGraphContainer && IsSimpleGraph(expandedItemMap) {
+						AddValue(nestResult, itemActiveProperty, compactedItem, asArray, true)
+					} else {
+						// wrap using @graph alias, remove array if only one item and compactArrays not set
+						compactedItemArray, isArray := compactedItem.([]interface{})
+						if isArray && len(compactedItemArray) == 1 && compactArrays {
+							compactedItem = compactedItemArray[0]
+						}
+						graphAlias := activeCtx.CompactIri("@graph", nil, false, false)
+						compactedItemMap := map[string]interface{}{
+							graphAlias: compactedItem,
+						}
+						compactedItem = compactedItemMap
+
+						// include @id from expanded graph, if any
+						if val, hasID := expandedItemMap["@id"]; hasID {
+							idAlias := activeCtx.CompactIri("@id", nil, false, false)
+							compactedItemMap[idAlias] = val
+						}
+
+						// include @index from expanded graph, if any
+						if val, hasIndex := expandedItemMap["@index"]; hasIndex {
+							indexAlias := activeCtx.CompactIri("@index", nil, false, false)
+							compactedItemMap[indexAlias] = val
+						}
+
+						AddValue(nestResult, itemActiveProperty, compactedItem, asArray, true)
+					}
+				} else if isLanguageContainer || isIndexContainer || isIdContainer || isTypeContainer {
 
 					var mapObject map[string]interface{}
-					if v, present := result[itemActiveProperty]; present {
+					if v, present := nestResult[itemActiveProperty]; present {
 						mapObject = v.(map[string]interface{})
 					} else {
 						mapObject = make(map[string]interface{})
-						result[itemActiveProperty] = mapObject
+						nestResult[itemActiveProperty] = mapObject
 					}
 
-					// 7.6.5.2)
-					compactedItemMap, isMap := compactedItem.(map[string]interface{})
-					compactedItemValue, containsValue := compactedItemMap["@value"]
-					if container == "@language" && isMap && containsValue {
-						compactedItem = compactedItemValue
+					var mapKey string
+
+					if isLanguageContainer {
+						compactedItemMap, isMap := compactedItem.(map[string]interface{})
+						compactedItemValue, containsValue := compactedItemMap["@value"]
+						if isLanguageContainer && isMap && containsValue {
+							compactedItem = compactedItemValue
+						}
+						if v, found := expandedItemMap["@language"]; found {
+							mapKey = v.(string)
+						}
+					} else if isIndexContainer {
+						if v, found := expandedItemMap["@index"]; found {
+							mapKey = v.(string)
+						}
+					} else if isIdContainer {
+						idKey := activeCtx.CompactIri("@id", nil, false, false)
+						compactedItemMap := compactedItem.(map[string]interface{})
+						if compactedItemValue, containsValue := compactedItemMap[idKey]; containsValue {
+							mapKey = compactedItemValue.(string)
+							delete(compactedItemMap, idKey)
+						} else {
+							mapKey = ""
+						}
+					} else if isTypeContainer {
+						typeKey := activeCtx.CompactIri("@type", nil, false, false)
+
+						compactedItemMap := compactedItem.(map[string]interface{})
+						var types []interface{}
+						if compactedItemValue, containsValue := compactedItemMap[typeKey]; containsValue {
+							var isArray bool
+							types, isArray = compactedItemValue.([]interface{})
+							if !isArray {
+								types = []interface{}{compactedItemValue}
+							}
+
+							delete(compactedItemMap, typeKey)
+							if len(types) > 0 {
+								mapKey = types[0].(string)
+								types = types[1:]
+							}
+						} else {
+							types = make([]interface{}, 0)
+						}
+
+						if len(types) > 0 {
+							AddValue(compactedItemMap, typeKey, types, false, false)
+						}
 					}
 
-					// 7.6.5.3)
-					mapKey := expandedItemMap[container].(string)
-					// 7.6.5.4)
-					mapValue, hasMapKey := mapObject[mapKey]
-					if !hasMapKey {
-						mapObject[mapKey] = compactedItem
-					} else {
-						mapValueList, isList := mapValue.([]interface{})
-						var tmp []interface{}
-						if !isList {
-							tmp = []interface{}{mapValue}
-						} else {
-							tmp = mapValueList
-						}
-						tmp = append(tmp, compactedItem)
-						mapObject[mapKey] = tmp
+					if mapKey == "" {
+						mapKey = activeCtx.CompactIri("@none", nil, false, false)
 					}
-				} else { // 7.6.6)
-					// 7.6.6.1)
-					_, isList := compactedItem.([]interface{})
-					check := (!compactArrays || container == "@set" || container == "@list" ||
-						expandedProperty == "@list" || expandedProperty == "@graph") && !isList
-					if check {
-						compactedItem = []interface{}{compactedItem}
-					}
-					// 7.6.6.2)
-					itemActivePropertyVal, present := result[itemActiveProperty]
-					if !present {
-						result[itemActiveProperty] = compactedItem
-					} else {
-						itemActivePropertyValueList, isList := itemActivePropertyVal.([]interface{})
-						if !isList {
-							itemActivePropertyValueList = []interface{}{itemActivePropertyVal}
-							result[itemActiveProperty] = itemActivePropertyValueList
-						}
-						compactedItemList, isList := compactedItem.([]interface{})
-						if isList {
-							itemActivePropertyValueList = append(itemActivePropertyValueList, compactedItemList...)
-						} else {
-							itemActivePropertyValueList = append(itemActivePropertyValueList, compactedItem)
-						}
-						result[itemActiveProperty] = itemActivePropertyValueList
-					}
+
+					AddValue(mapObject, mapKey, compactedItem, isSetContainer, true)
+				} else {
+					compactedItemArray, isArray := compactedItem.([]interface{})
+
+					asArray := !compactArrays || isSetContainer || isListContainer ||
+						(isArray && len(compactedItemArray) == 0) || expandedProperty == "@list" ||
+						expandedProperty == "@graph"
+					AddValue(nestResult, itemActiveProperty, compactedItem, asArray, true)
 				}
 			}
 		}
-		// 8)
+
 		return result, nil
 	}
-	// 2)
+
 	return element, nil
+}
+
+// checkNestProperty ensures that the value of `@nest` in the term definition must
+// either be "@nest", or a term which resolves to "@nest".
+func (api *JsonLdApi) checkNestProperty(activeCtx *Context, nestProperty string) error {
+	if v, _ := activeCtx.ExpandIri(nestProperty, false, true, nil, nil); v != "@nest" {
+		return NewJsonLdError(InvalidNestValue, "nested property must have an @nest value resolving to @nest")
+	}
+	return nil
 }

@@ -453,7 +453,8 @@
       "input": "frame-g001-in.jsonld",
       "frame": "frame-g001-frame.jsonld",
       "expect": "frame-g001-out.jsonld",
-      "option": {"specVersion": "json-ld-1.1", "omitGraph": true}
+      "option": {"specVersion": "json-ld-1.1", "omitGraph": true},
+      "skip": true
     }, {
       "@id": "#tg002",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -489,7 +490,8 @@
       "input": "frame-g005-in.jsonld",
       "frame": "frame-g005-frame.jsonld",
       "expect": "frame-g005-out.jsonld",
-      "option": {"specVersion": "json-ld-1.1"}
+      "option": {"specVersion": "json-ld-1.1"},
+      "skip": true
     }, {
       "@id": "#tg006",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -516,7 +518,8 @@
       "input": "frame-g008-in.jsonld",
       "frame": "frame-g008-frame.jsonld",
       "expect": "frame-g008-out.jsonld",
-      "option": {"specVersion": "json-ld-1.1"}
+      "option": {"specVersion": "json-ld-1.1"},
+      "skip": true
     },{
       "@id": "#tg009",
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
@@ -534,7 +537,8 @@
       "input": "frame-g010-in.jsonld",
       "frame": "frame-g010-frame.jsonld",
       "expect": "frame-g010-out.jsonld",
-      "option": {"specVersion": "json-ld-1.1"}
+      "option": {"specVersion": "json-ld-1.1"},
+      "skip": true
     },
     {
       "@id": "#tp010",

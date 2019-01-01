@@ -226,7 +226,7 @@ func (jldp *JsonLdProcessor) Flatten(input interface{}, context interface{}, opt
 	nodeMap["@default"] = make(map[string]interface{})
 	// 2)
 	api := NewJsonLdApi()
-	if err = api.GenerateNodeMap(expanded, nodeMap, "@default", nil, "", nil, issuer); err != nil {
+	if _, err = api.GenerateNodeMap(expanded, nodeMap, "@default", issuer, "", nil); err != nil {
 		return nil, err
 	}
 
@@ -335,7 +335,10 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 	// context, otherwise.
 	api := NewJsonLdApi()
 
-	framed, err := api.Frame(expandedInput, expandedFrame, opts)
+	// FIXME should look for aliases of @graph
+	_, graphInFrame := frame.(map[string]interface{})["@graph"]
+
+	framed, bnodesToClear, err := api.Frame(expandedInput, expandedFrame, opts, !graphInFrame)
 	if err != nil {
 		return nil, err
 	}
@@ -351,10 +354,17 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 	if _, isList := compacted.([]interface{}); !isList {
 		compacted = []interface{}{compacted}
 	}
+
 	alias := activeCtx.CompactIri("@graph", nil, false, false)
 	rval := activeCtx.Serialize()
+
+	if opts.ProcessingMode == JsonLd_1_0 {
+		// don't prune blank nodes in JSON-LD 1.1 mode
+		bnodesToClear = make([]string, 0)
+	}
+
 	rval[alias] = compacted
-	RemovePreserve(activeCtx, rval, opts)
+	RemovePreserve(activeCtx, rval, bnodesToClear, opts.CompactArrays)
 	return rval, nil
 }
 

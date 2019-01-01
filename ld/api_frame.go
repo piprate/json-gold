@@ -14,14 +14,8 @@
 
 package ld
 
-// Embed is an enum representing allowed Embed flag options as per Framing spec
-type Embed int
-
-const (
-	Always Embed = 1 + iota
-	Never
-	Last
-	Link
+import (
+	"strings"
 )
 
 // EmbedNode represents embed meta info
@@ -30,33 +24,47 @@ type EmbedNode struct {
 	property string
 }
 
+type StackNode struct {
+	subject map[string]interface{}
+	graph   string
+}
+
 // FramingContext stores framing state
 type FramingContext struct {
 	embed        Embed
 	explicit     bool
+	requireAll   bool
 	omitDefault  bool
-	uniqueEmbeds map[string]*EmbedNode
-	subjectStack []string
+	uniqueEmbeds map[string]map[string]*EmbedNode
+	graphMap     map[string]interface{}
+	subjects     map[string]interface{}
+	graph        string
+	graphStack   []string // TODO: is this field needed?
+	subjectStack []*StackNode
+	bnodeMap     map[string]interface{}
 }
 
 // NewFramingContext creates and returns as new framing context.
 func NewFramingContext(opts *JsonLdOptions) *FramingContext {
 	context := &FramingContext{
-		embed:        Last,
+		embed:        EmbedLast,
 		explicit:     false,
+		requireAll:   false,
 		omitDefault:  false,
-		uniqueEmbeds: make(map[string]*EmbedNode),
-		subjectStack: make([]string, 0),
+		uniqueEmbeds: make(map[string]map[string]*EmbedNode),
+		graphMap: map[string]interface{}{
+			"@default": make(map[string]interface{}),
+		},
+		graph:        "@default",
+		graphStack:   make([]string, 0),
+		subjectStack: make([]*StackNode, 0),
+		bnodeMap:     make(map[string]interface{}),
 	}
 
 	if opts != nil {
-		// TODO: make embed field a selector instead of a boolean, as per new spec.
-		embedVal := Never
-		if opts.Embed {
-			embedVal = Last
-		}
-		context.embed = embedVal
+		context.embed = opts.Embed
 		context.explicit = opts.Explicit
+		context.requireAll = opts.RequireAll
 		context.omitDefault = opts.OmitDefault
 	}
 
@@ -71,15 +79,22 @@ func NewFramingContext(opts *JsonLdOptions) *FramingContext {
 // The input is used to build the framed output and is returned if there are no errors.
 //
 // Returns the framed output.
-func (api *JsonLdApi) Frame(input interface{}, frame []interface{}, opts *JsonLdOptions) ([]interface{}, error) {
-	issuer := NewIdentifierIssuer("_:b")
+func (api *JsonLdApi) Frame(input interface{}, frame []interface{}, opts *JsonLdOptions, merged bool) ([]interface{}, []string, error) {
 
 	// create framing state
 	state := NewFramingContext(opts)
 
-	nodes := make(map[string]interface{})
-	api.GenerateNodeMap(input, nodes, "@default", nil, "", nil, issuer)
-	nodeMap := nodes["@default"].(map[string]interface{})
+	// produce a map of all graphs and name each bnode
+	issuer := NewIdentifierIssuer("_:b")
+	if _, err := api.GenerateNodeMap(input, state.graphMap, "@default", issuer, "", nil); err != nil {
+		return nil, nil, err
+	}
+
+	if merged {
+		state.graphMap["@merged"] = api.mergeNodeMapGraphs(state.graphMap)
+		state.graph = "@merged"
+	}
+	state.subjects = state.graphMap[state.graph].(map[string]interface{})
 
 	framed := make([]interface{}, 0)
 
@@ -93,30 +108,72 @@ func (api *JsonLdApi) Frame(input interface{}, frame []interface{}, opts *JsonLd
 	} else {
 		frameParam = make(map[string]interface{})
 	}
-	framedVal, err := api.frame(state, nodeMap, nodeMap, frameParam, framed, "")
+	framedVal, err := api.matchFrame(state, GetOrderedKeys(state.subjects), frameParam, framed, "")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return framedVal.([]interface{}), nil
+
+	bnodesToClear := make([]string, 0)
+	for id, val := range state.bnodeMap {
+		if valArray, isArray := val.([]interface{}); isArray && len(valArray) == 1 {
+			bnodesToClear = append(bnodesToClear, id)
+		}
+	}
+	return framedVal.([]interface{}), bnodesToClear, nil
 }
 
-func createsCircularReference(id string, state *FramingContext) bool {
-	for _, i := range state.subjectStack {
-		if i == id {
+func createsCircularReference(id string, graph string, state *FramingContext) bool {
+	for i := len(state.subjectStack) - 1; i >= 0; i-- {
+		subject := state.subjectStack[i]
+		if subject.graph == graph && subject.subject["@id"] == id {
 			return true
 		}
 	}
 	return false
 }
 
-// frame subjects according to the given frame.
+func (api *JsonLdApi) mergeNodeMapGraphs(graphs map[string]interface{}) map[string]interface{} {
+	merged := make(map[string]interface{})
+
+	for _, name := range GetOrderedKeys(graphs) {
+		graph := graphs[name].(map[string]interface{})
+		for _, id := range GetOrderedKeys(graph) {
+			var mergedNode map[string]interface{}
+			mv, hasID := merged[id]
+			if !hasID {
+				mergedNode = map[string]interface{}{
+					"@id": id,
+				}
+				merged[id] = mergedNode
+			} else {
+				mergedNode = mv.(map[string]interface{})
+			}
+			node := graph[id].(map[string]interface{})
+			for _, property := range GetOrderedKeys(node) {
+				if IsKeyword(property) {
+					// copy keywords
+					mergedNode[property] = CloneDocument(node[property])
+				} else {
+					// merge objects
+					for _, v := range node[property].([]interface{}) {
+						AddValue(mergedNode, property, CloneDocument(v), true, false)
+					}
+				}
+			}
+		}
+	}
+
+	return merged
+}
+
+// matchFrame frames subjects according to the given frame.
+//
 // state: the current framing state
 // nodes:
-// nodeMap: node map
 // frame: the frame
 // parent: the parent subject or top-level array
-// property: the parent property, initialized to nil
-func (api *JsonLdApi) frame(state *FramingContext, nodes map[string]interface{}, nodeMap map[string]interface{},
+// property: the parent property, initialized to ""
+func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 	frame map[string]interface{}, parent interface{}, property string) (interface{}, error) {
 	// https://json-ld.org/spec/latest/json-ld-framing/#framing-algorithm
 
@@ -130,51 +187,49 @@ func (api *JsonLdApi) frame(state *FramingContext, nodes map[string]interface{},
 		return nil, err
 	}
 	explicitOn := GetFrameFlag(frame, "@explicit", state.explicit)
-	flags := make(map[string]interface{})
-	flags["@explicit"] = explicitOn
-	flags["@embed"] = embed
+	requireAll := GetFrameFlag(frame, "@requireAll", state.requireAll)
+	flags := map[string]interface{}{
+		"@explicit":   []interface{}{explicitOn},
+		"@requireAll": []interface{}{requireAll},
+		"@embed":      []interface{}{embed},
+	}
 
 	// 3.
 	// Create a list of matched subjects by filtering subjects against frame
 	// using the Frame Matching algorithm with state, subjects, frame, and requireAll.
-	matches, err := FilterNodes(nodes, frame)
+	matches, err := FilterSubjects(state, subjects, frame, requireAll)
 	if err != nil {
 		return nil, err
 	}
 
-	// 4.
-	// Set link the the value of link in state associated with graph name in state,
-	// creating a new empty dictionary, if necessary. TODO
-	//link := state.uniqueEmbeds;
-
 	// 5.
 	// For each id and associated node object node from the set of matched subjects, ordered by id:
 	for _, id := range GetOrderedKeys(matches) {
-		// 5.1
-		// Initialize output to a new dictionary with @id and id and add output to link associated with id.
+
+		// Note: In order to treat each top-level match as a
+		// compartmentalized result, clear the unique embedded subjects map
+		// when the property is None, which only occurs at the top-level.
+		if property == "" {
+			state.uniqueEmbeds = map[string]map[string]*EmbedNode{
+				state.graph: make(map[string]*EmbedNode),
+			}
+		} else if _, found := state.uniqueEmbeds[state.graph]; !found {
+			state.uniqueEmbeds[state.graph] = make(map[string]*EmbedNode)
+		}
+
+		// Initialize output to a new dictionary with @id and id
 		output := make(map[string]interface{})
 		output["@id"] = id
 
-		// 5.2
-		// If embed is @link and id is in link, node already exists in results.
-		// Add the associated node object from link to parent and do not perform
-		// additional processing for this node.
-		if embed == Link {
-			if idVal, containsId := state.uniqueEmbeds[id]; containsId {
-				parent = addFrameOutput(parent, property, idVal)
-				continue
-			}
-		}
-
-		// Occurs only at top level, compartmentalize each top-level match
-		if property == "" {
-			state.uniqueEmbeds = make(map[string]*EmbedNode)
+		// keep track of objects having blank nodes
+		if strings.HasPrefix(id, "_:") {
+			AddValue(state.bnodeMap, id, output, true, true)
 		}
 
 		// 5.3
 		// Otherwise, if embed is @never or if a circular reference would be created by an embed,
 		// add output to parent and do not perform additional processing for this node.
-		if embed == Never || createsCircularReference(id, state) {
+		if embed == EmbedNever || createsCircularReference(id, state.graph, state) {
 			parent = addFrameOutput(parent, property, output)
 			continue
 		}
@@ -182,92 +237,128 @@ func (api *JsonLdApi) frame(state *FramingContext, nodes map[string]interface{},
 		// 5.4
 		// Otherwise, if embed is @last, remove any existing embedded node from parent associated
 		// with graph name in state. Requires sorting of subjects.
-		if embed == Last {
-			if _, containsId := state.uniqueEmbeds[id]; containsId {
+		if embed == EmbedLast {
+			if _, containsId := state.uniqueEmbeds[state.graph][id]; containsId {
 				removeEmbed(state, id)
 			}
-			state.uniqueEmbeds[id] = &EmbedNode{
+			state.uniqueEmbeds[state.graph][id] = &EmbedNode{
 				parent:   parent,
 				property: property,
 			}
 		}
 
-		state.subjectStack = append(state.subjectStack, id)
+		subject := matches[id].(map[string]interface{})
 
-		// 5.5 If embed is @last or @always
+		state.subjectStack = append(state.subjectStack, &StackNode{
+			subject: subject,
+			graph:   state.graph,
+		})
 
-		// Skip 5.5.1
+		// subject is also the name of a graph
+		if _, isAlsoGraph := state.graphMap[id]; isAlsoGraph {
+			recurse := false
+			var subframe map[string]interface{}
+			if _, hasGraph := frame["@graph"]; !hasGraph {
+				recurse = state.graph != "@merged"
+				subframe = make(map[string]interface{})
+			} else {
+				if v, isMap := frame["@graph"].([]interface{})[0].(map[string]interface{}); isMap {
+					subframe = v
+				} else {
+					subframe = make(map[string]interface{})
+				}
+				recurse = !(id == "@merged" || id == "@default")
+			}
 
-		// 5.5.2 For each property and objects in node, ordered by property:
-		element := matches[id].(map[string]interface{})
-		for _, prop := range GetOrderedKeys(element) {
+			if recurse {
+				state.graphStack = append(state.graphStack, state.graph)
+				state.graph = id
+				// recurse into graph
+				subjects := GetOrderedKeys(state.graphMap[state.graph].(map[string]interface{}))
+				if _, err = api.matchFrame(state, subjects, subframe, output, "@graph"); err != nil {
+					return nil, err
+				}
+				// reset to current graph
+				state.graph = state.graphStack[len(state.graphStack)-1]
+				state.graphStack = state.graphStack[:len(state.graphStack)-1]
+			}
+		}
 
-			// 5.5.2.1 If property is a keyword, add property and objects to output.
+		// iterate over subject properties in order
+		for _, prop := range GetOrderedKeys(subject) {
+			// if property is a keyword, add property and objects to output.
 			if IsKeyword(prop) {
-				output[prop] = CloneDocument(element[prop])
+				output[prop] = CloneDocument(subject[prop])
+
+				if prop == "@type" {
+					// count bnode values of @type
+					for _, t := range subject[prop].([]interface{}) {
+						if strings.HasPrefix(t.(string), "_:") {
+							AddValue(state.bnodeMap, t.(string), output, true, true)
+						}
+					}
+				}
 				continue
 			}
 
-			// 5.5.2.2 Otherwise, if property is not in frame, and explicit is true, processors
-			// MUST NOT add any values for property to output, and the following steps are skipped.
+			// explicit is on and property isn't in frame, skip processing
 			framePropVal, containsProp := frame[prop]
 			if explicitOn && !containsProp {
 				continue
 			}
 
 			// add objects
-			value := element[prop].([]interface{})
-
 			// 5.5.2.3 For each item in objects:
-			for _, item := range value {
+			for _, item := range subject[prop].([]interface{}) {
 				itemMap, isMap := item.(map[string]interface{})
 				listValue, hasList := itemMap["@list"]
 				if isMap && hasList {
 					// add empty list
-					list := make(map[string]interface{})
-					list["@list"] = make([]interface{}, 0)
+					list := map[string]interface{}{
+						"@list": make([]interface{}, 0),
+					}
 					addFrameOutput(output, prop, list)
 
 					// add list objects
 					for _, listitem := range listValue.([]interface{}) {
-						// 5.5.2.3.1.1 recurse into subject reference
-						if IsNodeReference(listitem) {
-							tmp := make(map[string]interface{})
+						if IsSubjectReference(listitem) {
+							// recurse into subject reference
 							itemid := listitem.(map[string]interface{})["@id"].(string)
-							// TODO: nodes may need to be node_map,
-							// which is global
-							tmp[itemid] = nodeMap[itemid]
 
 							subframe := make(map[string]interface{})
 							if containsProp {
-								subframe = framePropVal.([]map[string]interface{})[0]
+								subframe = framePropVal.([]interface{})[0].(map[string]interface{})["@list"].(map[string]interface{})
 							} else {
 								subframe = flags
 							}
-							api.frame(state, tmp, nodeMap, subframe, list, "@list")
+							res, err := api.matchFrame(state, []string{itemid}, subframe, list, "@list")
+							if err != nil {
+								return nil, err
+							}
+							list = res.(map[string]interface{})
 						} else {
 							// include other values automatically (TODO:
 							// may need Clone(n)
 							addFrameOutput(list, "@list", listitem)
 						}
 					}
-				} else if IsNodeReference(item) { // recurse into subject reference
-					tmp := make(map[string]interface{})
-					itemid := item.(map[string]interface{})["@id"].(string)
-					// TODO: nodes may need to be node_map, which is
-					// global
-					tmp[itemid] = nodeMap[itemid]
+				} else {
 					subframe := make(map[string]interface{})
 					if containsProp {
 						subframe = framePropVal.([]interface{})[0].(map[string]interface{})
 					} else {
 						subframe = flags
 					}
-					api.frame(state, tmp, nodeMap, subframe, output, prop)
-				} else {
-					// include other values automatically (TODO: may
-					// need JsonLdUtils.clone(o))
-					addFrameOutput(output, prop, item)
+
+					if IsSubjectReference(item) { // recurse into subject reference
+						itemid := itemMap["@id"].(string)
+
+						if _, err = api.matchFrame(state, []string{itemid}, subframe, output, prop); err != nil {
+							return nil, err
+						}
+					} else if valueMatch(subframe, itemMap) {
+						addFrameOutput(output, prop, CloneDocument(item))
+					}
 				}
 			}
 
@@ -280,29 +371,61 @@ func (api *JsonLdApi) frame(state *FramingContext, nodes map[string]interface{},
 				continue
 			}
 
-			pf := frame[prop].([]interface{})
-			var propertyFrame map[string]interface{}
-			if len(pf) > 0 {
-				propertyFrame = pf[0].(map[string]interface{})
+			// if omit default is off, then include default values for
+			// properties that appear in the next frame but are not in
+			// the matching subject
+			var next map[string]interface{}
+			if pf, found := frame[prop].([]interface{}); found && len(pf) > 0 {
+				next = pf[0].(map[string]interface{})
+			} else {
+				next = make(map[string]interface{})
 			}
 
-			if propertyFrame == nil {
-				propertyFrame = make(map[string]interface{})
-			}
-
-			omitDefaultOn := GetFrameFlag(propertyFrame, "@omitDefault", state.omitDefault)
+			omitDefaultOn := GetFrameFlag(next, "@omitDefault", state.omitDefault)
 			if _, hasProp := output[prop]; !omitDefaultOn && !hasProp {
-				var def interface{} = "@null"
-				if defaultVal, hasDefault := propertyFrame["@default"]; hasDefault {
-					def = CloneDocument(defaultVal)
+				var preserve interface{} = "@null"
+				if defaultVal, hasDefault := next["@default"]; hasDefault {
+					preserve = CloneDocument(defaultVal)
 				}
-				if _, isList := def.([]interface{}); !isList {
-					def = []interface{}{def}
-				}
+				preserve = Arrayify(preserve)
 				output[prop] = []interface{}{
 					map[string]interface{}{
-						"@preserve": def,
+						"@preserve": preserve,
 					},
+				}
+			}
+		}
+
+		// embed reverse values by finding nodes having this subject as a
+		// value of the associated property
+		if reverse, hasReverse := frame["@reverse"]; hasReverse {
+			for _, reverseProp := range GetOrderedKeys(reverse.(map[string]interface{})) {
+				for subject, subjectValue := range state.subjects {
+					nodeValues := Arrayify(subjectValue.(map[string]interface{})[reverseProp])
+					for _, v := range nodeValues {
+						if v != nil && v.(map[string]interface{})["@id"] == id {
+							// node has property referencing this subject, recurse
+							outputReverse, hasReverse := output["@reverse"]
+							if !hasReverse {
+								outputReverse = make(map[string]interface{})
+								output["@reverse"] = outputReverse
+							}
+							AddValue(output["@reverse"], reverseProp, []interface{}{}, true, true)
+							var subframe map[string]interface{}
+							sf := reverse.(map[string]interface{})[reverseProp]
+							if sfArray, isArray := sf.([]interface{}); isArray {
+								subframe = sfArray[0].(map[string]interface{})
+							} else {
+								subframe = sf.(map[string]interface{})
+							}
+							res, err := api.matchFrame(state, []string{subject}, subframe, outputReverse.(map[string]interface{})[reverseProp], property)
+							if err != nil {
+								return nil, err
+							}
+							outputReverse.(map[string]interface{})[reverseProp] = res
+							break
+						}
+					}
 				}
 			}
 		}
@@ -310,6 +433,7 @@ func (api *JsonLdApi) frame(state *FramingContext, nodes map[string]interface{},
 		// add output to parent
 		parent = addFrameOutput(parent, property, output)
 
+		// pop matching subject from circular ref-checking stack
 		state.subjectStack = state.subjectStack[:len(state.subjectStack)-1]
 	}
 
@@ -362,9 +486,9 @@ func getFrameEmbed(frame map[string]interface{}, theDefault Embed) (Embed, error
 	}
 	if boolVal, isBoolean := value.(bool); isBoolean {
 		if boolVal {
-			return Last, nil
+			return EmbedLast, nil
 		} else {
-			return Never, nil
+			return EmbedNever, nil
 		}
 	}
 	if embedVal, isEmbed := value.(Embed); isEmbed {
@@ -373,34 +497,33 @@ func getFrameEmbed(frame map[string]interface{}, theDefault Embed) (Embed, error
 	if stringVal, isString := value.(string); isString {
 		switch stringVal {
 		case "@always":
-			return Always, nil
+			return EmbedAlways, nil
 		case "@never":
-			return Never, nil
+			return EmbedNever, nil
 		case "@last":
-			return Last, nil
-		case "@link":
-			return Link, nil
+			return EmbedLast, nil
 		default:
-			return Last, NewJsonLdError(SyntaxError, "invalid @embed value")
+			return EmbedLast, NewJsonLdError(SyntaxError, "invalid @embed value")
 		}
 	}
-	return Last, NewJsonLdError(SyntaxError, "invalid @embed value")
+	return EmbedLast, NewJsonLdError(SyntaxError, "invalid @embed value")
 }
 
 // removeEmbed removes an existing embed with the given id.
 func removeEmbed(state *FramingContext, id string) {
 	// get existing embed
-	links := state.uniqueEmbeds
+	links := state.uniqueEmbeds[state.graph]
 	embed := links[id]
 	parent := embed.parent
 	property := embed.property
 
 	// create reference to replace embed
-	node := make(map[string]interface{})
-	node["@id"] = id
+	subject := map[string]interface{}{
+		"@id": id,
+	}
 
 	// remove existing embed
-	if IsNode(parent) {
+	if _, isArray := parent.([]interface{}); isArray {
 		// replace subject with reference
 		newVals := make([]interface{}, 0)
 		parentMap := parent.(map[string]interface{})
@@ -408,12 +531,18 @@ func removeEmbed(state *FramingContext, id string) {
 		for _, v := range oldvals {
 			vMap, isMap := v.(map[string]interface{})
 			if isMap && vMap["@id"] == id {
-				newVals = append(newVals, node)
+				newVals = append(newVals, subject)
 			} else {
 				newVals = append(newVals, v)
 			}
 		}
 		parentMap[property] = newVals
+	} else {
+		// replace subject with reference
+		parentMap := parent.(map[string]interface{})
+		_, useArray := parentMap[property]
+		RemoveValue(parentMap, property, subject, useArray)
+		AddValue(parentMap, property, subject, useArray, true)
 	}
 	// recursively remove dependent dangling embeds
 	removeDependents(links, id)
@@ -442,13 +571,16 @@ func removeDependents(embeds map[string]*EmbedNode, id string) {
 	}
 }
 
-// FilterNodes returns a map of all of the nodes that match a parsed frame.
-func FilterNodes(nodes map[string]interface{}, frame map[string]interface{}) (map[string]interface{}, error) {
+// FilterSubjects returns a map of all of the nodes that match a parsed frame.
+func FilterSubjects(state *FramingContext, subjects []string, frame map[string]interface{}, requireAll bool) (map[string]interface{}, error) {
 	rval := make(map[string]interface{})
-	for id, elementVal := range nodes {
+	for _, id := range subjects {
+		// id, elementVal
+		elementVal := state.graphMap[state.graph].(map[string]interface{})[id]
 		element, _ := elementVal.(map[string]interface{})
 		if element != nil {
-			if res, err := FilterNode(element, frame); res {
+			res, err := FilterSubject(state, element, frame, requireAll)
+			if res {
 				if err != nil {
 					return nil, err
 				}
@@ -459,100 +591,165 @@ func FilterNodes(nodes map[string]interface{}, frame map[string]interface{}) (ma
 	return rval, nil
 }
 
-// FilterNode returns true if the given node matches the given frame.
-func FilterNode(node map[string]interface{}, frame map[string]interface{}) (bool, error) {
-	types, _ := frame["@type"]
-	frameIds, _ := frame["@id"]
+// FilterSubject returns true if the given node matches the given frame.
+//
+// Matches either based on explicit type inclusion where the node has any
+// type listed in the frame. If the frame has empty types defined matches
+// nodes not having a @type. If the frame has a type of {} defined matches
+// nodes having any type defined.
+//
+// Otherwise, does duck typing, where the node must have all of the
+// properties defined in the frame.
+func FilterSubject(state *FramingContext, subject map[string]interface{}, frame map[string]interface{}, requireAll bool) (bool, error) {
+	// check ducktype
+	wildcard := true
+	matchesSome := false
 
-	// https://json-ld.org/spec/latest/json-ld-framing/#frame-matching
-	//
-	// 1. Node matches if it has an @id property including any IRI or
-	// blank node in the @id property in frame.
-	if frameIds != nil {
-		if _, isString := frameIds.(string); isString {
-			nodeId, _ := node["@id"]
-			if nodeId == nil {
-				return false, nil
-			}
-			if DeepCompare(nodeId, frameIds, false) {
-				return true, nil
-			}
+	for _, k := range GetOrderedKeys(frame) {
+		v := frame[k]
+		matchThis := false
+
+		var nodeValues []interface{}
+		if kVal, found := subject[k]; found {
+			nodeValues = Arrayify(kVal)
 		} else {
-			frameIdList, isList := frameIds.([]interface{})
-			if !isList {
-				return false, NewJsonLdError(SyntaxError, "frame @id must be an array")
-			} else {
-				nodeId, _ := node["@id"]
-				if nodeId == nil {
-					return false, nil
+			nodeValues = make([]interface{}, 0)
+		}
+
+		vList, _ := v.([]interface{})
+		vMap, _ := v.(map[string]interface{})
+		isEmpty := (len(vList) + len(vMap)) == 0
+
+		if IsKeyword(k) {
+			// skip non-@id and non-@type
+			if k != "@id" && k != "@type" {
+				continue
+			}
+			wildcard = true
+
+			// check @id for a specific @id value
+			if k == "@id" {
+				// if @id is not a wildcard and is not empty, then match
+				// or not on specific value
+				frameID := Arrayify(frame["@id"])
+				if len(frameID) >= 0 {
+					_, isString := frameID[0].(string)
+					if !isEmptyObject(frameID[0]) || isString {
+						return inArray(nodeValues[0], frameID), nil
+					}
 				}
-				for _, j := range frameIdList {
-					if DeepCompare(nodeId, j, false) {
-						return true, nil
+				matchThis = true
+				continue
+			}
+
+			// check @type (object value means 'any' type, fall through to
+			// ducktyping)
+			if k == "@type" {
+				if isEmpty {
+					if len(nodeValues) > 0 {
+						// don't match on no @type
+						return false, nil
+					}
+					matchThis = true
+				} else {
+					frameType := frame["@type"].([]interface{})
+					if isEmptyObject(frameType[0]) {
+						matchThis = len(nodeValues) > 0
+					} else {
+						// match on a specific @type
+						r := make([]interface{}, 0)
+						for _, tv := range nodeValues {
+							for _, tf := range frameType {
+								if tv == tf {
+									r = append(r, tv)
+									// break early, as we just need one element to succeed
+									break
+								}
+							}
+						}
+						return len(r) > 0, nil
 					}
 				}
 			}
-		}
-		return false, nil
-	}
-	// 2. Node matches if frame has no non-keyword properties.TODO
-	// 3.1 If property is @type:
-	if types != nil {
-		typesList, isList := types.([]interface{})
-		if !isList {
-			return false, NewJsonLdError(SyntaxError, "frame @type must be an array")
-		}
-		nodeTypesVal, nodeHasType := node["@type"]
-		var nodeTypes []interface{}
-		if !nodeHasType {
-			nodeTypes = make([]interface{}, 0)
-		} else if nodeTypes, isList = nodeTypesVal.([]interface{}); !isList {
-			return false, NewJsonLdError(SyntaxError, "node @type must be an array")
-		}
-		// 3.1.1 Property matches if the @type property in frame includes any IRI in values.
-		for _, i := range nodeTypes {
-			for _, j := range typesList {
-				if DeepCompare(i, j, false) {
-					return true, nil
-				}
-			}
-		}
-		// TODO: 3.1.2
-		// 3.1.3 Otherwise, property matches if values is empty and the @type property in frame is match none.
-		if len(typesList) == 1 {
-			vMap, isMap := typesList[0].(map[string]interface{})
-			if isMap && len(vMap) == 0 {
-				return len(nodeTypes) > 0, nil
-			}
-		}
-		// 3.1.4 Otherwise, property does not match.
-		return false, nil
-	}
 
-	// 3.2
-	for _, key := range GetKeys(frame) {
-		_, nodeContainsKey := node[key]
-		if !IsKeyword(key) && !nodeContainsKey {
-			frameObject := frame[key]
-			if oList, isList := frameObject.([]interface{}); isList {
-				_default := false
-				for _, obj := range oList {
-					if oMap, isMap := obj.(map[string]interface{}); isMap {
-						if _, containsKey := oMap["@default"]; containsKey {
-							_default = true
+		}
+		// force a copy of this frame entry so it can be manipulated
+		var thisFrame interface{}
+		if x := Arrayify(frame[k]); len(x) > 0 {
+			thisFrame = x[0]
+		}
+		hasDefault := false
+		if thisFrame != nil {
+			_, hasDefault = thisFrame.(map[string]interface{})["@default"]
+		}
+
+		// no longer a wildcard pattern if frame has any non-keyword
+		// properties
+		wildcard = false
+
+		// skip, but allow match if node has no value for property, and
+		// frame has a default value
+		if len(nodeValues) == 0 && hasDefault {
+			continue
+		}
+
+		// if frame value is empty, don't match if subject has any value
+		if len(nodeValues) > 0 && isEmpty {
+			return false, nil
+		}
+
+		if thisFrame == nil {
+			// node does not match if values is not empty and the value of
+			// property in frame is match none.
+			if len(nodeValues) > 0 {
+				return false, nil
+			}
+			matchThis = true
+		} else if _, isMap := thisFrame.(map[string]interface{}); isMap {
+			// node matches if values is not empty and the value of
+			// property in frame is wildcard
+			matchThis = len(nodeValues) > 0
+		} else {
+			if IsValue(thisFrame) {
+				for _, nv := range nodeValues {
+					if valueMatch(thisFrame.(map[string]interface{}), nv.(map[string]interface{})) {
+						matchThis = true
+						break
+					}
+				}
+
+			} else if IsList(thisFrame) {
+				listValue := thisFrame.(map[string]interface{})["@list"].([]interface{})[0]
+				if len(nodeValues) > 0 && IsList(nodeValues[0]) {
+					nodeListValues := nodeValues[0].(map[string]interface{})["@list"]
+
+					if IsValue(listValue) {
+						for _, lv := range nodeListValues.([]interface{}) {
+							if valueMatch(listValue.(map[string]interface{}), lv.(map[string]interface{})) {
+								matchThis = true
+								break
+							}
+						}
+					} else if IsSubject(listValue) || IsSubjectReference(listValue) {
+						for _, lv := range nodeListValues.([]interface{}) {
+							if nodeMatch(state, listValue.(map[string]interface{}), lv.(map[string]interface{}), requireAll) {
+								matchThis = true
+								break
+							}
 						}
 					}
 				}
-				if _default {
-					continue
-				}
 			}
+		}
 
+		if !matchThis && requireAll {
 			return false, nil
 		}
+
+		matchesSome = matchesSome || matchThis
 	}
 
-	return true, nil
+	return wildcard || matchesSome, nil
 }
 
 // addFrameOutput adds framing output to the given parent.
@@ -561,14 +758,72 @@ func FilterNode(node map[string]interface{}, frame map[string]interface{}) (bool
 // output: the output to add.
 func addFrameOutput(parent interface{}, property string, output interface{}) interface{} {
 	if parentMap, isMap := parent.(map[string]interface{}); isMap {
-		propVal, hasProperty := parentMap[property]
-		if hasProperty {
-			parentMap[property] = append(propVal.([]interface{}), output)
-		} else {
-			parentMap[property] = []interface{}{output}
-		}
+		AddValue(parentMap, property, output, true, true)
 		return parentMap
 	}
 
 	return append(parent.([]interface{}), output)
+}
+
+func nodeMatch(state *FramingContext, pattern, value map[string]interface{}, requireAll bool) bool {
+	id, hasID := value["@id"]
+	if !hasID {
+		return false
+	}
+	nodeObject, found := state.subjects[id.(string)]
+	if !found {
+		return false
+	}
+	ok, _ := FilterSubject(state, nodeObject.(map[string]interface{}), pattern, requireAll)
+	return ok
+}
+
+// ValueMatch returns true if it is a value and matches the value pattern
+//
+// * `pattern` is empty
+// * @values are the same, or `pattern[@value]` is a wildcard,
+// * @types are the same or `value[@type]` is not None
+//     and `pattern[@type]` is `{}` or `value[@type]` is None
+//     and `pattern[@type]` is None or `[]`, and
+// * @languages are the same or `value[@language]` is not None
+//     and `pattern[@language]` is `{}`, or `value[@language]` is None
+//     and `pattern[@language]` is None or `[]`
+func valueMatch(pattern, value map[string]interface{}) bool {
+	v2v, _ := pattern["@value"]
+	t2v, _ := pattern["@type"]
+	l2v, _ := pattern["@language"]
+
+	if v2v == nil && t2v == nil && l2v == nil {
+		return true
+	}
+
+	var v2 []interface{}
+	if v2v != nil {
+		v2 = Arrayify(v2v)
+	}
+	var t2 []interface{}
+	if t2v != nil {
+		t2 = Arrayify(t2v)
+	}
+	var l2 []interface{}
+	if l2v != nil {
+		l2 = Arrayify(l2v)
+	}
+
+	v1, _ := value["@value"]
+	t1, _ := value["@type"]
+	l1, _ := value["@language"]
+
+	if !(inArray(v1, v2) || (len(v2) > 0 && isEmptyObject(v2[0]))) {
+		return false
+	}
+
+	if !((t1 == nil && len(t2) == 0) || (inArray(t1, t2)) || (t1 != nil && len(t2) > 0 && isEmptyObject(t2[0]))) {
+		return false
+	}
+
+	if !((l1 == nil && len(l2) == 0) || (inArray(l1, l2)) || (l1 != nil && len(l2) > 0 && isEmptyObject(l2[0]))) {
+		return false
+	}
+	return true
 }

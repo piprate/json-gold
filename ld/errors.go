@@ -64,6 +64,10 @@ const (
 	InvalidReversePropertyMap   ErrorCode = "invalid reverse property map"
 	InvalidReverseValue         ErrorCode = "invalid @reverse value"
 	InvalidReversePropertyValue ErrorCode = "invalid reverse property value"
+	InvalidVersionValue         ErrorCode = "invalid @version value"
+	ProcessingModeConflict      ErrorCode = "processing mode conflict"
+	InvalidPrefixValue          ErrorCode = "invalid @prefix value"
+	InvalidNestValue            ErrorCode = "invalid @nest value"
 
 	// non spec related errors
 	SyntaxError    ErrorCode = "syntax error"
