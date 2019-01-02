@@ -74,6 +74,8 @@ See complete code in [examples/compact.go](examples/compact.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
+// add the processing mode explicitly if you need JSON-LD 1.1 features
+options.ProcessingMode = ld.JsonLd_1_1
 
 doc := map[string]interface{}{
 	"@id": "http://example.org/test#book",
@@ -103,6 +105,8 @@ See complete code in [examples/flatten.go](examples/flatten.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
+// add the processing mode explicitly if you need JSON-LD 1.1 features
+options.ProcessingMode = ld.JsonLd_1_1
 
 doc := map[string]interface{}{
 	"@context": []interface{}{
@@ -134,6 +138,8 @@ See complete code in [examples/frame.go](examples/frame.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
+// add the processing mode explicitly if you need JSON-LD 1.1 features
+options.ProcessingMode = ld.JsonLd_1_1
 
 doc := map[string]interface{}{
 	"@context": map[string]interface{}{
@@ -187,6 +193,8 @@ See complete code in [examples/to_rdf.go](examples/to_rdf.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
+// add the processing mode explicitly if you need JSON-LD 1.1 features
+options.ProcessingMode = ld.JsonLd_1_1
 options.Format = "application/n-quads"
 
 // this JSON-LD document was taken from http://json-ld.org/test-suite/tests/toRdf-0028-in.jsonld
@@ -219,6 +227,8 @@ See complete code in [examples/from_rdf.go](examples/from_rdf.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
+// add the processing mode explicitly if you need JSON-LD 1.1 features
+options.ProcessingMode = ld.JsonLd_1_1
 
 triples := `
 	<http://example.com/Subj1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/Type> .
@@ -238,6 +248,8 @@ See complete code in [examples/normalize.go](examples/normalize.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
+// add the processing mode explicitly if you need JSON-LD 1.1 features
+options.ProcessingMode = ld.JsonLd_1_1
 options.Format = "application/n-quads"
 options.Algorithm = "URDNA2015"
 
