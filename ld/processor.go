@@ -544,6 +544,7 @@ func (jldp *JsonLdProcessor) Normalize(input interface{}, opts *JsonLdOptions) (
 		}
 	} else {
 		toRDFOpts := NewJsonLdOptions(opts.Base)
+		toRDFOpts.ProcessingMode = opts.ProcessingMode
 		toRDFOpts.Format = ""
 		// it's important to pass the original DocumentLoader. The default one will be used otherwise!
 		toRDFOpts.DocumentLoader = opts.DocumentLoader
