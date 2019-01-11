@@ -20,184 +20,216 @@ import (
 
 // GenerateNodeMap recursively flattens the subjects in the given JSON-LD expanded
 // input into a node map.
-func (api *JsonLdApi) GenerateNodeMap(element interface{}, nodeMap map[string]interface{}, activeGraph string,
-	activeSubject interface{}, activeProperty string, list map[string]interface{},
-	issuer *IdentifierIssuer) error {
-	// 1)
-	if elementList, isList := element.([]interface{}); isList {
+func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]interface{}, activeGraph string,
+	issuer *IdentifierIssuer, name string, list []interface{}) ([]interface{}, error) {
+
+	// recurse through array
+	if elementList, isList := input.([]interface{}); isList {
 		// 1.1)
 		for _, item := range elementList {
-			if err := api.GenerateNodeMap(item, nodeMap, activeGraph, activeSubject, activeProperty, list, issuer); err != nil {
-				return err
+			var err error
+			list, err = api.GenerateNodeMap(item, graphs, activeGraph, issuer, "", list)
+			if err != nil {
+				return nil, err
 			}
 		}
-		return nil
+		return list, nil
 	}
 
-	// for convenience
-	elem := element.(map[string]interface{})
-
-	// 2)
-	if _, present := nodeMap[activeGraph]; !present {
-		nodeMap[activeGraph] = make(map[string]interface{})
+	// add non-object to list
+	elem, isMap := input.(map[string]interface{})
+	if !isMap {
+		if list != nil {
+			list = append(list, input)
+		}
+		return list, nil
 	}
 
-	graph := nodeMap[activeGraph].(map[string]interface{})
-	var node map[string]interface{}
-	if activeSubjectStr, isString := activeSubject.(string); activeSubject != nil && isString {
-		node = graph[activeSubjectStr].(map[string]interface{})
+	// add values to list
+	if IsValue(input) {
+		if typeVal, hasType := elem["@type"]; hasType {
+			// relabel @type blank node
+			typeStr := typeVal.(string)
+			if strings.HasPrefix(typeStr, "_:") {
+				typeStr = issuer.GetId(typeStr)
+				elem["@type"] = typeStr
+			}
+		}
+		if list != nil {
+			list = append(list, input)
+		}
+		return list, nil
 	}
 
-	// 3)
+	// Note: At this point, input must be a subject.
+
+	// spec requires @type to be labeled first, so assign identifiers early
 	if typeVal, hasType := elem["@type"]; hasType {
-		// 3.1)
-		oldTypes := make([]string, 0)
-		newTypes := make([]string, 0)
-		typeList, isList := typeVal.([]interface{})
-		if isList {
-			for _, v := range typeList {
-				oldTypes = append(oldTypes, v.(string))
+		for _, t := range typeVal.([]interface{}) {
+			typeStr := t.(string)
+			if strings.HasPrefix(typeStr, "_:") {
+				issuer.GetId(typeStr)
 			}
-		} else {
-			oldTypes = append(oldTypes, typeVal.(string))
-		}
-		for _, item := range oldTypes {
-			if strings.HasPrefix(item, "_:") {
-				newTypes = append(newTypes, issuer.GetId(item))
-			} else {
-				newTypes = append(newTypes, item)
-			}
-		}
-		if isList {
-			elem["@type"] = newTypes
-		} else {
-			elem["@type"] = newTypes[0]
 		}
 	}
 
-	// 4)
-	if _, hasValue := elem["@value"]; hasValue {
-		// 4.1)
-		if list == nil {
-			MergeValue(node, activeProperty, elem)
-		} else {
-			// 4.2)
-			MergeValue(list, "@list", elem)
+	// get identifier for subject
+	if name == "" {
+		if id, hasID := elem["@id"]; hasID {
+			name = id.(string)
 		}
-	} else if listVal, hasList := elem["@list"]; hasList { // 5)
-		// 5.1)
-		result := make(map[string]interface{})
-		result["@list"] = make([]interface{}, 0)
-		// 5.2)
-		api.GenerateNodeMap(listVal, nodeMap, activeGraph, activeSubject, activeProperty, result, issuer)
-		// 5.3)
-		MergeValue(node, activeProperty, result)
-	} else { // 6)
-		// 6.1)
-		idVal, hasID := elem["@id"]
-		id, _ := idVal.(string)
-		delete(elem, "@id")
-
-		if hasID {
-			if strings.HasPrefix(id, "_:") {
-				id = issuer.GetId(id)
-			}
-		} else {
-			// 6.2)
-			id = issuer.GetId("")
-		}
-		// 6.3)
-		if _, hasID := graph[id]; !hasID {
-			graph[id] = map[string]interface{}{"@id": id}
-		}
-
-		// 6.4) TODO: SPEC this line is asked for by the spec, but it breaks
-		// various tests
-		// node = graph[id].(map[string]interface{})
-		// 6.5)
-		if _, isMap := activeSubject.(map[string]interface{}); isMap {
-			// 6.5.1)
-			MergeValue(graph[id].(map[string]interface{}), activeProperty, activeSubject)
-		} else if activeProperty != "" { // 6.6)
-			reference := make(map[string]interface{})
-			reference["@id"] = id
-
-			// 6.6.2)
-			if list == nil {
-				// 6.6.2.1+2)
-				MergeValue(node, activeProperty, reference)
-			} else {
-				// 6.6.3) TODO: SPEC says to add ELEMENT to @list member, should
-				// be REFERENCE
-				MergeValue(list, "@list", reference)
-			}
-		}
-
-		// TODO: SPEC this is removed in the spec now, but it's still needed
-		// (see 6.4)
-		node = graph[id].(map[string]interface{})
-		// 6.7)
-		if typeListVal, hasType := elem["@type"]; hasType {
-			typeList := typeListVal.([]string)
-			delete(elem, "@type")
-			for _, typeVal := range typeList {
-				MergeValue(node, "@type", typeVal)
-			}
-		}
-
-		// 6.8)
-		if elemIndex, hasIndex := elem["@index"]; hasIndex {
-			delete(elem, "@index")
-			if indexVal, nodeHasIndex := node["@index"]; nodeHasIndex {
-				if !DeepCompare(indexVal, elemIndex, false) {
-					return NewJsonLdError(ConflictingIndexes, nil)
-				}
-			} else {
-				node["@index"] = elemIndex
-			}
-		}
-
-		// 6.9)
-		if reverseVal, hasReverse := elem["@reverse"]; hasReverse {
-			// 6.9.1)
-			referencedNode := make(map[string]interface{})
-			referencedNode["@id"] = id
-			// 6.9.2+6.9.4)
-			reverseMap := reverseVal.(map[string]interface{})
-			delete(elem, "@reverse")
-
-			// 6.9.3)
-			for _, property := range GetKeys(reverseMap) {
-				values := reverseMap[property].([]interface{})
-				// 6.9.3.1)
-				for _, value := range values {
-					// 6.9.3.1.1)
-					api.GenerateNodeMap(value, nodeMap, activeGraph, referencedNode, property, nil, issuer)
-				}
-			}
-		}
-
-		// 6.10)
-		if graphVal, hasGraph := elem["@graph"]; hasGraph {
-			delete(elem, "@graph")
-			api.GenerateNodeMap(graphVal, nodeMap, id, nil, "", nil, issuer)
-		}
-
-		// 6.11)
-		for _, property := range GetOrderedKeys(elem) {
-			value := elem[property]
-			// 6.11.1)
-			if strings.HasPrefix(property, "_:") {
-				property = issuer.GetId(property)
-			}
-			// 6.11.2)
-			if _, hasProperty := node[property]; !hasProperty {
-				node[property] = make([]interface{}, 0)
-			}
-			// 6.11.3)
-			api.GenerateNodeMap(value, nodeMap, activeGraph, id, property, nil, issuer)
+		if IsBlankNodeValue(elem) {
+			name = issuer.GetId(name)
 		}
 	}
 
-	return nil
+	// add subject reference to list
+	if list != nil {
+		list = append(list, map[string]interface{}{
+			"@id": name,
+		})
+	}
+
+	// create new subject or merge into existing one
+	subject := setDefault(
+		setDefault(
+			graphs,
+			activeGraph,
+			make(map[string]interface{}),
+		).(map[string]interface{}),
+		name,
+		map[string]interface{}{
+			"@id": name,
+		},
+	).(map[string]interface{})
+	for _, property := range GetOrderedKeys(elem) {
+		// skip @id
+		if property == "@id" {
+			continue
+		}
+
+		// handle reverse properties
+		if property == "@reverse" {
+			referencedNode := map[string]interface{}{
+				"@id": name,
+			}
+			reverseMap := elem["@reverse"].(map[string]interface{})
+			for reverseProperty, items := range reverseMap {
+				for _, item := range items.([]interface{}) {
+					var itemName string
+					if idVal, hasID := item.(map[string]interface{})["@id"]; hasID {
+						itemName = idVal.(string)
+					}
+					if IsBlankNodeValue(item) {
+						itemName = issuer.GetId(itemName)
+					}
+					_, err := api.GenerateNodeMap(item, graphs, activeGraph, issuer, itemName, nil)
+					if err != nil {
+						return nil, err
+					}
+					AddValue(graphs[activeGraph].(map[string]interface{})[itemName], reverseProperty, referencedNode, true, false)
+				}
+			}
+
+			continue
+		}
+
+		objects := elem[property]
+
+		// recurse into graph
+		if property == "@graph" {
+			// add graph subjects map entry
+			if _, hasName := graphs[name]; !hasName {
+				graphs[name] = make(map[string]interface{})
+			}
+			g := name
+			if activeGraph == "@merged" {
+				g = "@merged"
+			}
+			_, err := api.GenerateNodeMap(objects, graphs, g, issuer, "", nil)
+			if err != nil {
+				return nil, err
+			}
+
+			continue
+		}
+
+		// copy non-@type keywords
+		if property != "@type" && IsKeyword(property) {
+			if subjIndex, hasIndex := subject["@index"]; hasIndex && property == "@index" && (subjIndex != elem["@index"] || subject["@index"].(map[string]interface{})["@id"] != elem["@index"].(map[string]interface{})["@id"]) {
+				return nil, NewJsonLdError(ConflictingIndexes, "conflicting @index property detected")
+			}
+			subject[property] = elem[property]
+
+			continue
+		}
+
+		// if property is a bnode, assign it a new id
+		if strings.HasPrefix(property, "_:") {
+			property = issuer.GetId(property)
+		}
+
+		// ensure property is added for empty arrays
+		if len(objects.([]interface{})) == 0 {
+			AddValue(subject, property, []interface{}{}, true, true)
+		}
+
+		for _, o := range objects.([]interface{}) {
+			if property == "@type" {
+				// rename @type blank nodes
+				oStr := o.(string)
+				if strings.HasPrefix(oStr, "_:") {
+					o = issuer.GetId(oStr)
+				}
+			}
+
+			// handle embedded subject or subject reference
+			if IsSubject(o) || IsSubjectReference(o) {
+				// rename blank node @id
+				var id string
+				if idVal, hasID := o.(map[string]interface{})["@id"]; hasID {
+					id = idVal.(string)
+				}
+				if IsBlankNodeValue(o) {
+					id = issuer.GetId(id)
+				}
+
+				// add reference and recurse
+				AddValue(subject, property, map[string]interface{}{
+					"@id": id,
+				}, true, false)
+				if _, err := api.GenerateNodeMap(o, graphs, activeGraph, issuer, id, nil); err != nil {
+					return nil, err
+				}
+			} else if IsList(o) {
+				// handle @list
+				oList := make([]interface{}, 0)
+				var err error
+				if oList, err = api.GenerateNodeMap(o.(map[string]interface{})["@list"], graphs, activeGraph, issuer, name, oList); err != nil {
+					return nil, err
+				}
+				newO := map[string]interface{}{
+					"@list": oList,
+				}
+				AddValue(subject, property, newO, true, false)
+			} else {
+				// handle @value
+				if _, err := api.GenerateNodeMap(o, graphs, activeGraph, issuer, name, nil); err != nil {
+					return nil, err
+				}
+				AddValue(subject, property, o, true, false)
+			}
+		}
+	}
+
+	return list, nil
+}
+
+func setDefault(m map[string]interface{}, key string, val interface{}) interface{} {
+	if v, ok := m[key]; ok {
+		return v
+	} else {
+		m[key] = val
+		return val
+	}
 }

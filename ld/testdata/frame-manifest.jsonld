@@ -534,7 +534,8 @@
       "input": "frame-g010-in.jsonld",
       "frame": "frame-g010-frame.jsonld",
       "expect": "frame-g010-out.jsonld",
-      "option": {"specVersion": "json-ld-1.1"}
+      "option": {"specVersion": "json-ld-1.1"},
+      "skip": true
     },
     {
       "@id": "#tp010",

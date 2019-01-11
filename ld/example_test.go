@@ -163,6 +163,7 @@ func mockNetwork(options *ld.JsonLdOptions, transport roundTripFunc) *ld.JsonLdO
 func ExampleJsonLdProcessor_Expand_online() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.ProcessingMode = ld.JsonLd_1_1
 
 	// expanding remote document
 
@@ -219,6 +220,7 @@ func ExampleJsonLdProcessor_Expand_online() {
 func ExampleJsonLdProcessor_Expand_inmemory() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.ProcessingMode = ld.JsonLd_1_1
 
 	// expanding in-memory document
 
@@ -273,6 +275,7 @@ func ExampleJsonLdProcessor_Expand_inmemory() {
 func ExampleJsonLdProcessor_Compact() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.ProcessingMode = ld.JsonLd_1_1
 
 	doc := map[string]interface{}{
 		"@id": "http://example.org/test#book",
@@ -319,6 +322,7 @@ func ExampleJsonLdProcessor_Compact() {
 func ExampleJsonLdProcessor_Flatten() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.ProcessingMode = ld.JsonLd_1_1
 
 	doc := map[string]interface{}{
 		"@context": []interface{}{
@@ -380,6 +384,7 @@ func ExampleJsonLdProcessor_Flatten() {
 func ExampleJsonLdProcessor_Frame() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.ProcessingMode = ld.JsonLd_1_1
 
 	doc := map[string]interface{}{
 		"@context": map[string]interface{}{
@@ -462,6 +467,7 @@ func ExampleJsonLdProcessor_Frame() {
 func ExampleJsonLdProcessor_ToRDF() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.ProcessingMode = ld.JsonLd_1_1
 	options.Format = "application/n-quads"
 
 	// this JSON-LD document was taken from http://json-ld.org/test-suite/tests/toRdf-0028-in.jsonld
@@ -505,6 +511,7 @@ func ExampleJsonLdProcessor_ToRDF() {
 func ExampleJsonLdProcessor_FromRDF() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.ProcessingMode = ld.JsonLd_1_1
 
 	triples := `
 	<http://example.com/Subj1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/Type> .
@@ -555,6 +562,7 @@ func ExampleJsonLdProcessor_FromRDF() {
 func ExampleJsonLdProcessor_Normalize() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.ProcessingMode = ld.JsonLd_1_1
 	options.Format = "application/n-quads"
 	options.Algorithm = "URDNA2015"
 

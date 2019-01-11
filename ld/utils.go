@@ -30,7 +30,8 @@ func IsKeyword(key interface{}) bool {
 	return key == "@base" || key == "@context" || key == "@container" || key == "@default" ||
 		key == "@embed" || key == "@explicit" || key == "@graph" || key == "@id" || key == "@index" ||
 		key == "@language" || key == "@list" || key == "@omitDefault" || key == "@reverse" ||
-		key == "@preserve" || key == "@set" || key == "@type" || key == "@value" || key == "@vocab"
+		key == "@preserve" || key == "@set" || key == "@type" || key == "@value" || key == "@vocab" ||
+		key == "@nest" || key == "@none" || key == "@version" || key == "@requireAll"
 }
 
 // DeepCompare returns true if v1 equals v2.
@@ -145,13 +146,13 @@ func IsAbsoluteIri(value string) bool {
 	return strings.Contains(value, ":")
 }
 
-// IsNode returns true if the given value is a subject with properties.
+// IsSubject returns true if the given value is a subject with properties.
 //
 // Note: A value is a subject if all of these hold true:
 // 1. It is an Object.
 // 2. It is not a @value, @set, or @list.
 // 3. It has more than 1 key OR any existing key is not @id.
-func IsNode(v interface{}) bool {
+func IsSubject(v interface{}) bool {
 	vMap, isMap := v.(map[string]interface{})
 	_, containsValue := vMap["@value"]
 	_, containsSet := vMap["@set"]
@@ -163,14 +164,53 @@ func IsNode(v interface{}) bool {
 	return false
 }
 
-// IsNodeReference returns true if the given value is a subject reference.
-func IsNodeReference(v interface{}) bool {
+// IsSubjectReference returns true if the given value is a subject reference.
+//
+// Note: A value is a subject reference if all of these hold True:
+// 1. It is an Object.
+// 2. It has a single key: @id.
+func IsSubjectReference(v interface{}) bool {
 	// Note: A value is a subject reference if all of these hold true:
 	// 1. It is an Object.
 	// 2. It has a single key: @id.
 	vMap, isMap := v.(map[string]interface{})
 	_, containsID := vMap["@id"]
 	return isMap && len(vMap) == 1 && containsID
+}
+
+// IsList returns true if the given value is a @list.
+func IsList(v interface{}) bool {
+	vMap, isMap := v.(map[string]interface{})
+	_, hasList := vMap["@list"]
+	return isMap && hasList
+}
+
+// IsGraph returns true if the given value is a graph.
+//
+// Note: A value is a graph if all of these hold true:
+// 1. It is an object.
+// 2. It has an `@graph` key.
+// 3. It may have '@id' or '@index'
+func IsGraph(v interface{}) bool {
+	vMap, isMap := v.(map[string]interface{})
+	_, containsGraph := vMap["@graph"]
+	hasOtherKeys := false
+	if isMap {
+		for k := range vMap {
+			if k != "@id" && k != "@index" && k != "@graph" {
+				hasOtherKeys = true
+				break
+			}
+		}
+	}
+	return isMap && containsGraph && !hasOtherKeys
+}
+
+// IsSimpleGraph returns true if the given value is a simple @graph
+func IsSimpleGraph(v interface{}) bool {
+	vMap, _ := v.(map[string]interface{})
+	_, containsID := vMap["@id"]
+	return IsGraph(v) && !containsID
 }
 
 // IsRelativeIri returns true if the given value is a relative IRI, false if not.
@@ -183,6 +223,17 @@ func IsValue(v interface{}) bool {
 	vMap, isMap := v.(map[string]interface{})
 	_, containsValue := vMap["@value"]
 	return isMap && containsValue
+}
+
+// Arrayify returns v, if v is an array, otherwise returns an array
+// containing v as the only element.
+func Arrayify(v interface{}) []interface{} {
+	av, isArray := v.([]interface{})
+	if isArray {
+		return av
+	} else {
+		return []interface{}{v}
+	}
 }
 
 // IsBlankNode returns true if the given value is a blank node.
@@ -230,20 +281,37 @@ func (s ShortestLeast) Less(i, j int) bool {
 	return CompareShortestLeast(s[i], s[j])
 }
 
+func inArray(v interface{}, array []interface{}) bool {
+	if array != nil {
+		for _, x := range array {
+			if v == x {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isEmptyObject(v interface{}) bool {
+	vMap, isMap := v.(map[string]interface{})
+	return isMap && len(vMap) == 0
+}
+
 // RemovePreserve removes the @preserve keywords as the last step of the framing algorithm.
 //
 // ctx: the active context used to compact the input
 // input: the framed, compacted output
-// opts: the compaction options used
+// bnodesToClear: list of bnodes to be pruned
+// compactArrays: compactArrays flag
 //
 // Returns the resulting output.
-func RemovePreserve(ctx *Context, input interface{}, opts *JsonLdOptions) (interface{}, error) {
+func RemovePreserve(ctx *Context, input interface{}, bnodesToClear []string, compactArrays bool) interface{} {
 
 	// recurse through arrays
 	if inputList, isList := input.([]interface{}); isList {
 		output := make([]interface{}, 0)
 		for _, i := range inputList {
-			result, _ := RemovePreserve(ctx, i, opts)
+			result := RemovePreserve(ctx, i, bnodesToClear, compactArrays)
 			// drop nulls from arrays
 			if result != nil {
 				output = append(output, result)
@@ -254,35 +322,133 @@ func RemovePreserve(ctx *Context, input interface{}, opts *JsonLdOptions) (inter
 		// remove @preserve
 		if preserveVal, present := inputMap["@preserve"]; present {
 			if preserveVal == "@null" {
-				return nil, nil
+				return nil
 			}
-			return preserveVal, nil
+			return preserveVal
 		}
 
 		// skip @values
 		if _, hasValue := inputMap["@value"]; hasValue {
-			return input, nil
+			return input
 		}
 
 		// recurse through @lists
 		if listVal, hasList := inputMap["@list"]; hasList {
-			inputMap["@list"], _ = RemovePreserve(ctx, listVal, opts)
-			return input, nil
+			inputMap["@list"] = RemovePreserve(ctx, listVal, bnodesToClear, compactArrays)
+			return input
 		}
 
+		// potentially remove the id, if it is an unreference bnode
+		idAlias := ctx.CompactIri("@id", nil, false, false)
+		if id, hasID := inputMap[idAlias]; hasID {
+			for _, bnode := range bnodesToClear {
+				if id == bnode {
+					delete(inputMap, idAlias)
+				}
+			}
+		}
 		// recurse through properties
+		graphAlias := ctx.CompactIri("@graph", nil, false, false)
 		for prop, propVal := range inputMap {
-			result, _ := RemovePreserve(ctx, propVal, opts)
-			container := ctx.GetContainer(prop)
+			result := RemovePreserve(ctx, propVal, bnodesToClear, compactArrays)
+			isListContainer := ctx.HasContainerMapping(prop, "@list")
+			isSetContainer := ctx.HasContainerMapping(prop, "@set")
 			resultList, isList := result.([]interface{})
-			if opts.CompactArrays && isList && len(resultList) == 1 && container == "" {
+			if compactArrays && isList && len(resultList) == 1 && !isSetContainer && !isListContainer && prop != graphAlias {
 				result = resultList[0]
 			}
 			inputMap[prop] = result
 		}
 	}
 
-	return input, nil
+	return input
+}
+
+// HasValue determines if the given value is a property of the given subject
+func HasValue(subject interface{}, property string, value interface{}) bool {
+
+	if subjMap, isMap := subject.(map[string]interface{}); isMap {
+		if val, found := subjMap[property]; found {
+			isList := IsList(val)
+			if valArray, isArray := val.([]interface{}); isArray || isList {
+				if isList {
+					valArray = val.(map[string]interface{})["@list"].([]interface{})
+				}
+				for _, v := range valArray {
+					if CompareValues(value, v) {
+						return true
+					}
+				}
+			} else if _, isArray := value.([]interface{}); !isArray {
+				// avoid matching the set of values with an array value parameter
+				return CompareValues(value, val)
+			}
+		}
+	}
+	return false
+}
+
+// AddValue adds a value to a subject. If the value is an array, all values in the
+// array will be added.
+//
+// Options:
+//   [propertyIsArray] True if the property is always an array, False if not (default: False).
+//   [allowDuplicate] True to allow duplicates, False not to (uses a simple shallow comparison
+//   		of subject ID or value) (default: True).
+func AddValue(subject interface{}, property string, value interface{}, propertyIsArray, allowDuplicate bool) {
+	subjMap, _ := subject.(map[string]interface{})
+	propVal, propertyFound := subjMap[property]
+	if valueArray, isArray := value.([]interface{}); isArray {
+		if len(valueArray) == 0 && propertyIsArray && !propertyFound {
+			subjMap[property] = make([]interface{}, 0)
+		}
+		for _, v := range valueArray {
+			AddValue(subject, property, v, propertyIsArray, allowDuplicate)
+		}
+	} else if propertyFound {
+		// check if subject already has value if duplicates not allowed
+		hasValue := !allowDuplicate && HasValue(subject, property, value)
+
+		// make property an array if value not present or always an array
+		valArray, isArray := propVal.([]interface{})
+		if !isArray && (!hasValue || propertyIsArray) {
+			valArray = []interface{}{subjMap[property]}
+			subjMap[property] = valArray
+		}
+
+		// add new value
+		if !hasValue {
+			subjMap[property] = append(valArray, value)
+		}
+	} else if propertyIsArray {
+		subjMap[property] = []interface{}{value}
+	} else {
+		subjMap[property] = value
+	}
+}
+
+// RemoveValue removes a value from a subject.
+func RemoveValue(subject interface{}, property string, value interface{}, propertyIsArray bool) {
+	subjMap, _ := subject.(map[string]interface{})
+	propVal, propertyFound := subjMap[property]
+	if !propertyFound {
+		return
+	}
+
+	values := make([]interface{}, 0)
+	for _, v := range Arrayify(propVal) {
+		if !CompareValues(v, value) {
+			values = append(values, v)
+		}
+	}
+
+	if len(values) == 0 {
+		delete(subjMap, property)
+	} else if len(values) == 1 && !propertyIsArray {
+		subjMap[property] = values[0]
+	} else {
+		subjMap[property] = values
+	}
 }
 
 // CompareValues compares two JSON-LD values for equality.
@@ -292,12 +458,12 @@ func RemovePreserve(ctx *Context, input interface{}, opts *JsonLdOptions) (inter
 // 2. They are both @values with the same @value, @type, and @language, OR
 // 3. They both have @ids they are the same.
 func CompareValues(v1 interface{}, v2 interface{}) bool {
-	if v1 == v2 {
-		return true
-	}
-
 	v1Map, isv1Map := v1.(map[string]interface{})
 	v2Map, isv2Map := v2.(map[string]interface{})
+
+	if !isv1Map && !isv2Map && v1 == v2 {
+		return true
+	}
 
 	if IsValue(v1) && IsValue(v2) {
 		if v1Map["@value"] == v2Map["@value"] &&
@@ -376,9 +542,9 @@ func GetOrderedKeys(m map[string]interface{}) []string {
 func PrintDocument(msg string, doc interface{}) {
 	b, _ := json.MarshalIndent(doc, "", "  ")
 	if msg != "" {
-		os.Stdout.WriteString(msg)
-		os.Stdout.WriteString("\n")
+		_, _ = os.Stdout.WriteString(msg)
+		_, _ = os.Stdout.WriteString("\n")
 	}
-	os.Stdout.Write(b)
-	os.Stdout.WriteString("\n")
+	_, _ = os.Stdout.Write(b)
+	_, _ = os.Stdout.WriteString("\n")
 }

@@ -40,6 +40,28 @@ func TestGetFrameFlag(t *testing.T) {
 	)
 
 	assert.Equal(t, true, GetFrameFlag(
+		map[string]interface{}{
+			"test": map[string]interface{}{
+				"@value": "true",
+			},
+		},
+		"test",
+		false,
+	),
+	)
+
+	assert.Equal(t, false, GetFrameFlag(
+		map[string]interface{}{
+			"test": map[string]interface{}{
+				"@value": "false",
+			},
+		},
+		"test",
+		true,
+	),
+	)
+
+	assert.Equal(t, true, GetFrameFlag(
 		map[string]interface{}{"test": true},
 		"test",
 		false,

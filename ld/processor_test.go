@@ -179,6 +179,7 @@ type TestDefinition struct {
 	ExpectedFileName string
 	Option           map[string]interface{}
 	Raw              map[string]interface{}
+	Skip             bool
 }
 
 func TestSuite(t *testing.T) {
@@ -244,6 +245,11 @@ func TestSuite(t *testing.T) {
 				expectedFileName = testMap["result"].(string)
 			}
 
+			skip := false
+			if skipVal, hasSkip := testMap["skip"]; hasSkip {
+				skip = skipVal.(bool)
+			}
+
 			testName := testId
 			if strings.HasPrefix(testName, "#") {
 				testName = manifestURI + testName
@@ -258,6 +264,7 @@ func TestSuite(t *testing.T) {
 				InputFileName:    filepath.Join(testDir, inputFileName),
 				ExpectedFileName: filepath.Join(testDir, expectedFileName),
 				Raw:              testMap,
+				Skip:             skip,
 			}
 			if optionVal, optionsPresent := testMap["option"]; optionsPresent {
 				td.Option = optionVal.(map[string]interface{})
@@ -275,6 +282,11 @@ func TestSuite(t *testing.T) {
 				continue
 			}
 
+			if td.Skip {
+				log.Println("Test marked as skipped:", td.Id, ":", td.Name)
+				continue
+			}
+
 			// read 'option' section and initialise JsonLdOptions and expected HTTP server responses
 
 			options := NewJsonLdOptions("")
@@ -288,17 +300,13 @@ func TestSuite(t *testing.T) {
 				testOpts := td.Option
 
 				if value, hasValue := testOpts["specVersion"]; hasValue {
-					// this library supports JSON-LD 1.0 spec only
-					if value != "json-ld-1.0" {
+					if value == JsonLd_1_0 {
+						log.Println("Skipping JSON-LD 1.0 test:", td.Id, ":", td.Name)
 						continue
 					}
 				}
 
 				if value, hasValue := testOpts["processingMode"]; hasValue {
-					// this library supports JSON-LD 1.0 spec only
-					if value != "json-ld-1.0" {
-						continue
-					}
 					options.ProcessingMode = value.(string)
 				}
 
@@ -312,6 +320,9 @@ func TestSuite(t *testing.T) {
 				}
 				if value, hasValue := testOpts["compactArrays"]; hasValue {
 					options.CompactArrays = value.(bool)
+				}
+				if value, hasValue := testOpts["omitGraph"]; hasValue {
+					options.OmitGraph = value.(bool)
 				}
 				if value, hasValue := testOpts["useNativeTypes"]; hasValue {
 					options.UseNativeTypes = value.(bool)
@@ -460,25 +471,25 @@ func TestSuite(t *testing.T) {
 				if expectedType == ".jsonld" || expectedType == ".json" {
 					log.Println("==== ACTUAL ====")
 					b, _ := json.MarshalIndent(result, "", "  ")
-					os.Stdout.Write(b)
-					os.Stdout.WriteString("\n")
+					_, _ = os.Stdout.Write(b)
+					_, _ = os.Stdout.WriteString("\n")
 					log.Println("==== EXPECTED ====")
 					b, _ = json.MarshalIndent(expected, "", "  ")
-					os.Stdout.Write(b)
-					os.Stdout.WriteString("\n")
+					_, _ = os.Stdout.Write(b)
+					_, _ = os.Stdout.WriteString("\n")
 
 				} else if expectedType == ".nq" {
 					log.Println("==== ACTUAL ====")
-					os.Stdout.WriteString(result.(string))
+					_, _ = os.Stdout.WriteString(result.(string))
 					log.Println("==== EXPECTED ====")
-					os.Stdout.WriteString(expected.(string))
+					_, _ = os.Stdout.WriteString(expected.(string))
 				} else {
 					log.Println("==== ACTUAL ====")
-					os.Stdout.WriteString(result.(string))
-					os.Stdout.WriteString("\n")
+					_, _ = os.Stdout.WriteString(result.(string))
+					_, _ = os.Stdout.WriteString("\n")
 					log.Println("==== EXPECTED ====")
-					os.Stdout.WriteString(expected.(string))
-					os.Stdout.WriteString("\n")
+					_, _ = os.Stdout.WriteString(expected.(string))
+					_, _ = os.Stdout.WriteString("\n")
 				}
 				log.Println("Error when running", td.Id, "for", td.Type)
 				earlReport.addAssertion(td.Name, false)

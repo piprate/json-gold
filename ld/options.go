@@ -14,10 +14,16 @@
 
 package ld
 
+type Embed string
+
 const (
 	JsonLd_1_0       = "json-ld-1.0"
 	JsonLd_1_1       = "json-ld-1.1"
 	JsonLd_1_1_Frame = "json-ld-1.1-expand-frame"
+
+	EmbedLast   = "@last"
+	EmbedAlways = "@always"
+	EmbedNever  = "@never"
 )
 
 // JsonLdOptions type as specified in the JSON-LD-API specification:
@@ -39,9 +45,12 @@ type JsonLdOptions struct {
 
 	// Frame options: http://json-ld.org/spec/latest/json-ld-framing/
 
-	Embed       bool
-	Explicit    bool
-	OmitDefault bool
+	Embed        Embed
+	Explicit     bool
+	RequireAll   bool
+	FrameDefault bool
+	OmitDefault  bool
+	OmitGraph    bool
 
 	// RDF conversion options: http://www.w3.org/TR/json-ld-api/#serialize-rdf-as-json-ld-algorithm
 
@@ -63,11 +72,13 @@ func NewJsonLdOptions(base string) *JsonLdOptions {
 	return &JsonLdOptions{
 		Base:                  base,
 		CompactArrays:         true,
-		ProcessingMode:        JsonLd_1_0,
 		DocumentLoader:        NewDefaultDocumentLoader(nil),
-		Embed:                 true,
+		Embed:                 EmbedLast,
 		Explicit:              false,
+		RequireAll:            true,
+		FrameDefault:          false,
 		OmitDefault:           false,
+		OmitGraph:             false,
 		UseRdfType:            false,
 		UseNativeTypes:        false,
 		ProduceGeneralizedRdf: false,
@@ -76,5 +87,30 @@ func NewJsonLdOptions(base string) *JsonLdOptions {
 		Algorithm:             "URGNA2012",
 		UseNamespaces:         false,
 		OutputForm:            "",
+	}
+}
+
+// Copy creates a deep copy of JsonLdOptions object.
+func (opt *JsonLdOptions) Copy() *JsonLdOptions {
+	return &JsonLdOptions{
+		Base:                  opt.Base,
+		CompactArrays:         opt.CompactArrays,
+		ExpandContext:         opt.ExpandContext,
+		ProcessingMode:        opt.ProcessingMode,
+		DocumentLoader:        opt.DocumentLoader,
+		Embed:                 opt.Embed,
+		Explicit:              opt.Explicit,
+		RequireAll:            opt.RequireAll,
+		FrameDefault:          opt.FrameDefault,
+		OmitDefault:           opt.OmitDefault,
+		OmitGraph:             opt.OmitGraph,
+		UseRdfType:            opt.UseRdfType,
+		UseNativeTypes:        opt.UseNativeTypes,
+		ProduceGeneralizedRdf: opt.ProduceGeneralizedRdf,
+		InputFormat:           opt.InputFormat,
+		Format:                opt.Format,
+		Algorithm:             opt.Algorithm,
+		UseNamespaces:         opt.UseNamespaces,
+		OutputForm:            opt.OutputForm,
 	}
 }
