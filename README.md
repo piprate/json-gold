@@ -20,7 +20,7 @@ This library aims to pass the official [test suite](https://json-ld.org/test-sui
 - [JSON-LD 1.0 Processing Algorithms and API](http://www.w3.org/TR/2014/REC-json-ld-api-20140116/),
   W3C Recommendation,
   2014-01-16, and any [errata](http://www.w3.org/2014/json-ld-errata)
-- [JSON-LD 1.1](https://json-ld.org/spec/FCGS/json-ld/20180607/,
+- [JSON-LD 1.1](https://json-ld.org/spec/FCGS/json-ld/20180607/),
   Final Community Group Report,
   2018-06-07 or [newer JSON-LD latest](https://json-ld.org/spec/latest/json-ld/)
 - [JSON-LD 1.1 Processing Algorithms and API](https://json-ld.org/spec/ED/json-ld-api/20180215/),
