@@ -1,5 +1,16 @@
 # JSON-goLD Change Log
 
+## v0.2.0 - 2019-01-16
+
+- JSON 1.1 support
+  - **Breaking interface change**: JsonLdOptions.Embed is now _string_ (used to be _bool_)
+- Do not use native types to create IRIs in value expansion.
+- Improve acceptable N-Quads blank node labels.
+- Compact the @context array if it contains a single element
+- Fix a bug which omitted the context if provided in a URL form
+- Provide error message when output form for FromRDF operation is unknown
+- Pass array compaction flag to compaction inside of framing
+
 ## v0.1.1 - 2018-12-12
 
 - RFC7324 compliant caching
