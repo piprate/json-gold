@@ -565,10 +565,10 @@ func getFrameEmbed(frame map[string]interface{}, theDefault Embed) (Embed, error
 		case "@last":
 			return EmbedLast, nil
 		default:
-			return EmbedLast, NewJsonLdError(SyntaxError, "invalid @embed value")
+			return EmbedLast, NewJsonLdError(InvalidEmbedValue, "")
 		}
 	}
-	return EmbedLast, NewJsonLdError(SyntaxError, "invalid @embed value")
+	return EmbedLast, NewJsonLdError(InvalidEmbedValue, "")
 }
 
 // removeEmbed removes an existing embed with the given id.
