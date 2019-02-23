@@ -330,8 +330,8 @@ func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 							itemid := listitem.(map[string]interface{})["@id"].(string)
 
 							subframe := make(map[string]interface{})
-							if containsProp {
-								subframe = framePropVal.([]interface{})[0].(map[string]interface{})["@list"].(map[string]interface{})
+							if containsProp && IsList(framePropVal.([]interface{})[0]) {
+								subframe = framePropVal.([]interface{})[0].(map[string]interface{})["@list"].([]interface{})[0].(map[string]interface{})
 							} else {
 								subframe = flags
 							}
