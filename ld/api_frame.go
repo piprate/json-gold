@@ -565,10 +565,11 @@ func getFrameEmbed(frame map[string]interface{}, theDefault Embed) (Embed, error
 		case "@last":
 			return EmbedLast, nil
 		default:
-			return EmbedLast, NewJsonLdError(InvalidEmbedValue, "")
+			return EmbedLast, NewJsonLdError(InvalidEmbedValue,
+				fmt.Sprintf("Invalid JSON-LD frame syntax; invalid value of @embed: %s", stringVal))
 		}
 	}
-	return EmbedLast, NewJsonLdError(InvalidEmbedValue, "")
+	return EmbedLast, NewJsonLdError(InvalidEmbedValue, "Invalid JSON-LD frame syntax; invalid value of @embed")
 }
 
 // removeEmbed removes an existing embed with the given id.
