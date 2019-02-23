@@ -1380,6 +1380,9 @@ func (c *Context) Serialize() map[string]interface{} {
 	if hasBase && baseVal != c.options.Base {
 		ctx["@base"] = baseVal
 	}
+	if versionVal, hasVersion := c.values["@version"]; hasVersion {
+		ctx["@version"] = versionVal
+	}
 	if langVal, hasLang := c.values["@language"]; hasLang {
 		ctx["@language"] = langVal
 	}
