@@ -7,10 +7,6 @@
       "@type": "schema:URL"
     }
   },
-  "@graph": [
-    {
-      "name": "Jane Doe",
-      "url": "http://example.com"
-    }
-  ]
+  "name": "Jane Doe",
+  "url": "http://example.com"
 }

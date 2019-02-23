@@ -1,7 +1,6 @@
 {
   "@context": {"ex": "http://example.org/"},
-  "@id": "ex:Sub1",
   "ex:p": {"@value": {}},
   "ex:q": {"@value": {}, "@type": "ex:q"},
-  "ex:r": {"@value": {}, "@language": "r"}
+  "ex:r": {"@value": {}, "@language": "R"}
 }
