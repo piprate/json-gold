@@ -340,11 +340,6 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 
 	defined[term] = false
 
-	if IsKeyword(term) {
-		return NewJsonLdError(KeywordRedefinition, term)
-	}
-
-	delete(c.termDefinitions, term)
 	value := context[term]
 	mapValue, isMap := value.(map[string]interface{})
 	idValue, hasID := mapValue["@id"]
@@ -364,6 +359,18 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	if !isMap {
 		return NewJsonLdError(InvalidTermDefinition, value)
 	}
+
+	if IsKeyword(term) {
+		vmap, isMap := value.(map[string]interface{})
+		isTypeContainerAsSet := term == "@type" && isMap && vmap["@container"] == "@set"
+		if c.processingMode(1.1) && isTypeContainerAsSet {
+			// this is the only case were redefining a keyword is allowed
+		} else {
+			return NewJsonLdError(KeywordRedefinition, term)
+		}
+	}
+
+	delete(c.termDefinitions, term)
 
 	// casting the value so it doesn't have to be done below everytime
 	val := mapValue
@@ -468,7 +475,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			// 15)
 		} else if vocabValue, containsVocab := c.values["@vocab"]; containsVocab {
 			definition["@id"] = vocabValue.(string) + term
-		} else {
+		} else if term != "@type" {
 			return NewJsonLdError(InvalidIRIMapping, "relative term definition without vocab mapping")
 		}
 	}
@@ -596,6 +603,10 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		}
 
 		definition["@container"] = container
+
+		if term == "@type" {
+			definition["@id"] = "@type"
+		}
 	}
 
 	// scoped contexts
