@@ -712,13 +712,18 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 			}
 		}
 		// 4.4)
+		// If active context contains a term definition for prefix, return the result of concatenating
+		// the IRI mapping associated with prefix and suffix.
 		if termDef, hasPrefix := c.termDefinitions[prefix]; hasPrefix {
 			termDefMap := termDef.(map[string]interface{})
 			return termDefMap["@id"].(string) + suffix, nil
+		} else if IsAbsoluteIri(value) {
+			// Otherwise, if the value has the form of an absolute IRI, return it
+			return value, nil
 		}
-		// 4.5)
-		return value, nil
+		// Otherwise, it is a relative IRI
 	}
+
 	// 5)
 	if vocabValue, containsVocab := c.values["@vocab"]; vocab && containsVocab {
 		return vocabValue.(string) + value, nil

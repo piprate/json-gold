@@ -119,7 +119,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				} else {
 					compactedValue = compactedValues
 				}
-				
+
 				compValArray, isArray := compactedValue.([]interface{})
 				AddValue(result, alias, compactedValue, isArray && (len(compValArray) == 0 || isTypeContainer), true)
 				continue
