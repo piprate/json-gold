@@ -42,13 +42,14 @@ func NewContext(values map[string]interface{}, options *JsonLdOptions) *Context 
 		termDefinitions: make(map[string]interface{}),
 	}
 
+	context.values["@base"] = options.Base
+
 	if values != nil {
 		for k, v := range values {
 			context.values[k] = v
 		}
 	}
 
-	context.values["@base"] = options.Base
 	context.values["processingMode"] = options.ProcessingMode
 
 	return context
@@ -185,6 +186,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			if vocabValue == nil {
 				delete(result.values, "@vocab")
 			} else if vocabString, isString := vocabValue.(string); isString {
+
 				if IsAbsoluteIri(vocabString) {
 					result.values["@vocab"] = vocabValue
 				} else if vocabString == "" {
@@ -194,7 +196,11 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 						return nil, NewJsonLdError(InvalidVocabMapping, "@vocab is empty but @base is not specified")
 					}
 				} else {
-					return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be an absolute IRI")
+					expandedVocab, err := result.ExpandIri(vocabString, true, true, nil, nil)
+					if err != nil {
+						return nil, err
+					}
+					result.values["@vocab"] = expandedVocab
 				}
 			} else {
 				return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be a string or null")
