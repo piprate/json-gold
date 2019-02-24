@@ -311,6 +311,9 @@ func TestSuite(t *testing.T) {
 
 				if value, hasValue := testOpts["processingMode"]; hasValue {
 					options.ProcessingMode = value.(string)
+					if options.ProcessingMode == JsonLd_1_1 {
+						options.OmitGraph = true
+					}
 				}
 
 				if value, hasValue := testOpts["base"]; hasValue {
