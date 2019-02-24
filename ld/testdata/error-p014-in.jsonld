@@ -1,3 +1,0 @@
-{
-  "http://example/foo": {"@type": "http://example/foo", "http://example/bar": "bar"}
-}

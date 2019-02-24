@@ -1,8 +1,0 @@
-{
-  "@context": {
-    "id": "@id",
-    "ID": "@id"
-  },
-  "id": "http://example/foo",
-  "ID": "http://example/bar"
-}

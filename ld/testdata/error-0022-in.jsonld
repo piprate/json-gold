@@ -1,6 +1,0 @@
-{
-  "@context": {
-    "term": {"@id": "http://example/term", "@language": true}
-  },
-  "@id": "http://example/test#example"
-}

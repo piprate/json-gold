@@ -1,6 +1,0 @@
-{
-  "@context": {
-    "term": {"@id": "http://example/term", "@type": "_:not-an-iri"}
-  },
-  "@id": "http://example/test#example"
-}

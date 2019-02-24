@@ -1,3 +1,0 @@
-{
-  "http://example/foo": {"@value": "bar", "@language": "en", "@type": "http://example/type"}
-}

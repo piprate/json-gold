@@ -1,3 +1,0 @@
-{
-  "http://example.com/foo": {"@list": [{"@list": ["baz"]}]}
-}

@@ -1,6 +1,0 @@
-{
-  "@context": {
-    "term": {"@container": "@set"}
-  },
-  "@id": "http://example/test#example"
-}

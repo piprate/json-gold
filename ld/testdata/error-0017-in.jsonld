@@ -1,6 +1,0 @@
-{
-  "@context": {
-    "term": {"@reverse": "http://example/reverse", "@container": "@list"}
-  },
-  "@id": "http://example/test#example"
-}

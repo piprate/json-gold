@@ -1,3 +1,0 @@
-{
-  "http://example/foo": {"@graph": {"http://example/bar": "bar"}}
-}
