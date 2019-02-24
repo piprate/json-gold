@@ -282,6 +282,9 @@ func TestSuite(t *testing.T) {
 			purpose := td.Raw["purpose"]
 			if purpose != nil && strings.Contains(purpose.(string), "RFC3986") {
 				log.Println("Skipping RFC3986 test", td.Id, ":", td.Name)
+
+				earlReport.addAssertion(td.Name, true, false)
+
 				continue
 			}
 
@@ -477,6 +480,15 @@ func TestSuite(t *testing.T) {
 				} else {
 					result = ""
 				}
+			} else if td.EvaluationType == "jld:PositiveSyntaxTest" {
+				if opError != nil {
+					//PrintDocument("ERROR", opError)
+					result = string(opError.(*JsonLdError).Code)
+				} else {
+					result = ""
+				}
+
+				expected = ""
 			}
 
 			if !assert.True(t, DeepCompare(expected, result, true)) {
