@@ -1146,6 +1146,7 @@
       "input": "compact/h001-in.html",
       "context": "compact/h001-context.jsonld",
       "expect": "compact/h001-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th002",
@@ -1155,6 +1156,7 @@
       "input": "compact/h002-in.html",
       "context": "compact/h002-context.jsonld",
       "expect": "compact/h002-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th003",
@@ -1164,6 +1166,7 @@
       "input": "compact/h003-in.html#second",
       "context": "compact/h003-context.jsonld",
       "expect": "compact/h003-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th004",
@@ -1173,6 +1176,7 @@
       "input": "compact/h004-in.html",
       "context": "compact/h004-context.jsonld",
       "expect": "compact/h004-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "extractAllScripts": true}
    }, {
       "@id": "#tm001",
@@ -1440,6 +1444,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
       "name": "Compact IRI will not use an expanded term definition in 1.0",
       "purpose": "Terms with an expanded term definition are not used for creating compact IRIs",
+      "skip": true,
       "option": {"processingMode": "json-ld-1.0", "specVersion": "json-ld-1.1"},
       "input": "compact/p001-in.jsonld",
       "context": "compact/p001-context.jsonld",
@@ -1554,6 +1559,7 @@
       "input": "compact/li01-in.jsonld",
       "context": "compact/li01-context.jsonld",
       "expect": "compact/li01-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli02",
@@ -1563,6 +1569,7 @@
       "input": "compact/li02-in.jsonld",
       "context": "compact/li02-context.jsonld",
       "expect": "compact/li02-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli03",
@@ -1572,6 +1579,7 @@
       "input": "compact/li03-in.jsonld",
       "context": "compact/li03-context.jsonld",
       "expect": "compact/li03-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli04",
@@ -1581,6 +1589,7 @@
       "input": "compact/li04-in.jsonld",
       "context": "compact/li04-context.jsonld",
       "expect": "compact/li04-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli05",
@@ -1590,12 +1599,14 @@
       "input": "compact/li05-in.jsonld",
       "context": "compact/li05-context.jsonld",
       "expect": "compact/li05-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
    }, {
       "@id": "#ttn01",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
       "name": "@type: @none does not compact values",
       "purpose": "@type: @none does not compact values.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "context": "compact/tn01-context.jsonld",
       "input": "compact/tn01-in.jsonld",
@@ -1605,6 +1616,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
       "name": "@type: @none does not use arrays by default",
       "purpose": "@type: @none honors @container.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "context": "compact/tn02-context.jsonld",
       "input": "compact/tn02-in.jsonld",
@@ -1614,6 +1626,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
       "name": "@type: @none uses arrays with @container: @set",
       "purpose": "@type: @none honors @container.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "context": "compact/tn03-context.jsonld",
       "input": "compact/tn03-in.jsonld",
