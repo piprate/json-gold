@@ -236,7 +236,9 @@ func TestSuite(t *testing.T) {
 				testEvaluationType = testMap["@type"].([]interface{})[0].(string)
 				inputURL = baseIri + testMap["input"].(string)
 				inputFileName = testMap["input"].(string)
-				expectedFileName = testMap["expect"].(string)
+				if testEvaluationType != "jld:PositiveSyntaxTest" {
+					expectedFileName = testMap["expect"].(string)
+				}
 			} else {
 				// Normalisation test manifest
 				testId = testMap["id"].(string)
