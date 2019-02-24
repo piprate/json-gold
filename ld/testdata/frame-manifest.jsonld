@@ -503,6 +503,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
       "name": "Frame matching with no matching value in list",
       "purpose": "Lists match on any matching value.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "frame/0058-in.jsonld",
       "frame": "frame/0058-frame.jsonld",
