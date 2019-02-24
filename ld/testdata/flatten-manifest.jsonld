@@ -357,6 +357,7 @@
       "input": "flatten/h001-in.html",
       "context": "flatten/h001-context.jsonld",
       "expect": "flatten/h001-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th002",
@@ -366,6 +367,7 @@
       "input": "flatten/h002-in.html",
       "context": "flatten/h002-context.jsonld",
       "expect": "flatten/h002-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "extractAllScripts": false}
     }, {
       "@id": "#th003",
@@ -375,6 +377,7 @@
       "input": "flatten/h003-in.html#second",
       "context": "flatten/h003-context.jsonld",
       "expect": "flatten/h003-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th004",
@@ -384,12 +387,14 @@
       "input": "flatten/h004-in.html",
       "context": "flatten/h004-context.jsonld",
       "expect": "flatten/h004-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli01",
       "@type": [ "jld:PositiveEvaluationTest", "jld:FlattenTest" ],
       "name": "@list containing an deep list",
       "purpose": "Lists of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "flatten/li01-in.jsonld",
       "expect": "flatten/li01-out.jsonld"
@@ -398,6 +403,7 @@
       "@type": [ "jld:PositiveEvaluationTest", "jld:FlattenTest" ],
       "name": "@list containing empty @list",
       "purpose": "Lists of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "flatten/li02-in.jsonld",
       "expect": "flatten/li02-out.jsonld"
@@ -406,6 +412,7 @@
       "@type": [ "jld:PositiveEvaluationTest", "jld:FlattenTest" ],
       "name": "@list containing mixed list values",
       "purpose": "Lists of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "flatten/li03-in.jsonld",
       "expect": "flatten/li03-out.jsonld"
