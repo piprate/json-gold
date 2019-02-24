@@ -9,7 +9,7 @@
                 "@value": "indexes"
             },
             {
-                "@id": "https://json-ld.org/test-suite/tests/asTheValueIsntAnObject"
+                "@id": "https://w3c.github.io/json-ld-api/tests/flatten/asTheValueIsntAnObject"
             }
         ],
         "http://example.com/vocab/label": [

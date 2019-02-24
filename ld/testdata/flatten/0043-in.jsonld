@@ -4,7 +4,7 @@
     {
       "@id": "#t0001",
       "http://example/name": "Keywords cannot be aliased to other keywords",
-      "http://example/input": {"@id": "error-expand-0001-in.jsonld"}
+      "http://example/input": {"@id": "0001-in.jsonld"}
     }
   ]}
 }

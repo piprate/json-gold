@@ -1,6 +1,6 @@
 [
     {
-        "@id": "https://json-ld.org/test-suite/tests/example1",
+        "@id": "https://w3c.github.io/json-ld-api/tests/flatten/example1",
         "@type": [
             "http://example.org/vocab#test"
         ],
@@ -12,12 +12,12 @@
         ],
         "http://example.org/vocab#embed": [
             {
-                "@id": "https://json-ld.org/test-suite/tests/example2"
+                "@id": "https://w3c.github.io/json-ld-api/tests/flatten/example2"
             }
         ]
     },
     {
-        "@id": "https://json-ld.org/test-suite/tests/example2",
+        "@id": "https://w3c.github.io/json-ld-api/tests/flatten/example2",
         "http://example.org/vocab#expandedDate": [
             {
                 "@type": "http://example.org/vocab#dateTime",
