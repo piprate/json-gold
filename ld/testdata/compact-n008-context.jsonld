@@ -1,7 +1,0 @@
-{
-  "@context": {
-    "@vocab": "http://example/",
-    "typemap": {"@container": "@type", "@nest": "nestedtypemap"},
-    "nestedtypemap": "@nest"
-  }
-}

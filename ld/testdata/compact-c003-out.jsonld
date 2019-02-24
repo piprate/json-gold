@@ -1,9 +1,0 @@
-{
-  "@context": {
-    "@vocab": "http://example/",
-    "foo": {"@context": {"Bar": {"@id": "bar"}}}
-  },
-  "foo": {
-    "Bar": "baz"
-  }
-}
