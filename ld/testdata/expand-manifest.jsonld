@@ -1329,6 +1329,7 @@
       "purpose": "Tests embedded JSON-LD in HTML",
       "input": "expand/h001-in.html",
       "expect": "expand/h001-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th002",
@@ -1337,6 +1338,7 @@
       "purpose": "Tests embedded JSON-LD in HTML",
       "input": "expand/h002-in.html",
       "expect": "expand/h002-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th003",
@@ -1345,6 +1347,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with fragment identifier",
       "input": "expand/h003-in.html#second",
       "expect": "expand/h003-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th004",
@@ -1353,6 +1356,7 @@
       "purpose": "Tests embedded JSON-LD in HTML extracting all elements",
       "input": "expand/h004-in.html",
       "expect": "expand/h004-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "extractAllScripts": true}
     }, {
       "@id": "#th005",
@@ -1361,6 +1365,7 @@
       "purpose": "Tests embedded JSON-LD in HTML extracting all elements with array",
       "input": "expand/h005-in.html",
       "expect": "expand/h005-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "extractAllScripts": true}
     }, {
       "@id": "#th006",
@@ -1369,6 +1374,7 @@
       "purpose": "Tests embedded JSON-LD in HTML when none exist",
       "input": "expand/h006-in.html",
       "expect": "expand/h006-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th007",
@@ -1377,6 +1383,7 @@
       "purpose": "Tests embedded JSON-LD in HTML when none exist extracting all elements",
       "input": "expand/h007-in.html",
       "expect": "expand/h007-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "extractAllScripts": true}
     }, {
       "@id": "#th010",
@@ -1385,6 +1392,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with character references",
       "input": "expand/h010-in.html",
       "expect": "expand/h010-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th011",
@@ -1393,6 +1401,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with fragment identifier that doesn't exist",
       "input": "expand/h011-in.html#third",
       "expect": "invalid script element",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th012",
@@ -1401,6 +1410,7 @@
       "purpose": "Tests embedded JSON-LD in HTML which isn't a script element",
       "input": "expand/h012-in.html#first",
       "expect": "invalid script element",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th013",
@@ -1409,6 +1419,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with wrong type",
       "input": "expand/h013-in.html#first",
       "expect": "invalid script element",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th014",
@@ -1417,6 +1428,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with comments leftover",
       "input": "expand/h014-in.html",
       "expect": "invalid script element",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th015",
@@ -1425,6 +1437,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with unballanced comments",
       "input": "expand/h015-in.html",
       "expect": "invalid script element",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th016",
@@ -1433,6 +1446,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with unballanced comments",
       "input": "expand/h016-in.html",
       "expect": "invalid script element",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th017",
@@ -1441,6 +1455,7 @@
       "purpose": "Tests embedded JSON-LD in HTML which is invalid JSON",
       "input": "expand/h017-in.html",
       "expect": "invalid script element",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th018",
@@ -1449,6 +1464,7 @@
       "purpose": "Tests embedded JSON-LD in HTML",
       "input": "expand/h018-in.html",
       "expect": "expand/h018-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th019",
@@ -1457,6 +1473,7 @@
       "purpose": "Tests embedded JSON-LD in HTML",
       "input": "expand/h019-in.html",
       "expect": "expand/h019-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "base": "http://a.example.com/doc"}
     }, {
       "@id": "#th020",
@@ -1465,6 +1482,7 @@
       "purpose": "Tests embedded JSON-LD in HTML",
       "input": "expand/h020-in.html",
       "expect": "expand/h020-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "base": "http://a.example.com/doc"}
     }, {
       "@id": "#th021",
@@ -1473,6 +1491,7 @@
       "purpose": "Tests embedded JSON-LD in HTML",
       "input": "expand/h021-in.html",
       "expect": "expand/h021-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "base": "http://a.example.com/doc"}
     }, {
       "@id": "#th022",
@@ -1481,6 +1500,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with fragment identifier",
       "input": "expand/h022-in.html#second",
       "expect": "expand/h022-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tm001",
@@ -1711,6 +1731,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "@list containing @list",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li01-in.jsonld",
       "expect": "expand/li01-out.jsonld"
@@ -1719,6 +1740,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "@list containing empty @list",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li02-in.jsonld",
       "expect": "expand/li02-out.jsonld"
@@ -1727,6 +1749,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "@list containing @list (with coercion)",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li03-in.jsonld",
       "expect": "expand/li03-out.jsonld"
@@ -1735,6 +1758,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "@list containing empty @list (with coercion)",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li04-in.jsonld",
       "expect": "expand/li04-out.jsonld"
@@ -1743,6 +1767,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "coerced @list containing an array",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li05-in.jsonld",
       "expect": "expand/li05-out.jsonld"
@@ -1751,6 +1776,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "coerced @list containing an empty array",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li06-in.jsonld",
       "expect": "expand/li06-out.jsonld"
@@ -1759,6 +1785,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "coerced @list containing deep arrays",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li07-in.jsonld",
       "expect": "expand/li07-out.jsonld"
@@ -1767,6 +1794,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "coerced @list containing deep empty arrays",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li08-in.jsonld",
       "expect": "expand/li08-out.jsonld"
@@ -1775,6 +1803,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "coerced @list containing multiple lists",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li09-in.jsonld",
       "expect": "expand/li09-out.jsonld"
@@ -1783,6 +1812,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "coerced @list containing mixed list values",
       "purpose": "List of lists",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/li10-in.jsonld",
       "expect": "expand/li10-out.jsonld"
@@ -1791,6 +1821,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Seal a term",
       "purpose": "Sealed Contexts",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/se01-in.jsonld",
       "expect": "expand/se01-out.jsonld"
@@ -1799,6 +1830,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Set a term to not be sealed",
       "purpose": "A term with @sealed: false is not sealed.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/se02-in.jsonld",
       "expect": "expand/se02-out.jsonld"
@@ -1807,6 +1839,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Seal all terms in context",
       "purpose": "A sealed context seals all term definitions.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/se03-in.jsonld",
       "expect": "expand/se03-out.jsonld"
@@ -1815,6 +1848,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Do not seal term with @sealed: false",
       "purpose": "A sealed context does not seal terms with @sealed: false.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/se04-in.jsonld",
       "expect": "expand/se04-out.jsonld"
@@ -1823,6 +1857,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Clear active context with sealed terms from an embedded context",
       "purpose": "The Active context be set to null from an embedded context.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/se05-in.jsonld",
       "expect": "expand/se05-out.jsonld"
@@ -1831,6 +1866,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Clear active context of sealed terms from a term.",
       "purpose": "The Active context may be set to null from a scoped context of a term.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/se06-in.jsonld",
       "expect": "expand/se06-out.jsonld"
@@ -1839,6 +1875,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Term with sealed scoped context.",
       "purpose": "A scoped context can seal terms.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/se08-in.jsonld",
       "expect": "expand/se08-out.jsonld"
@@ -1847,6 +1884,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Attempt to redefine term in other sealed context.",
       "purpose": "A sealed term cannot redefine another sealed term.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/se09-in.jsonld",
       "expect": "expand/se09-out.jsonld"
@@ -1855,6 +1893,7 @@
       "@type": ["jld:NegativeEvaluationTest", "jld:ExpandTest"],
       "name": "@type: @none is illegal in 1.0.",
       "purpose": "@type: @none is illegal in json-ld-1.0.",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/tn01-in.jsonld",
       "expect": "invalid type mapping"
@@ -1863,6 +1902,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "@type: @none expands strings as value objects",
       "purpose": "@type: @none leaves inputs other than strings alone",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "expand/tn02-in.jsonld",
       "expect": "expand/tn02-out.jsonld"
