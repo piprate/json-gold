@@ -452,6 +452,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
       "name": "Relative IRIs",
       "purpose": "RDF version of expand-0029",
+      "skip": true,
       "input": "toRdf/0069-in.jsonld",
       "expect": "toRdf/0069-out.nq"
     }, {
@@ -670,6 +671,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
       "name": "Overwrite document base with @base and reset it again",
       "purpose": "RDF version of expand-0060",
+      "skip": true,
       "input": "toRdf/0100-in.jsonld",
       "expect": "toRdf/0100-out.nq"
     }, {
@@ -712,6 +714,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
       "name": "Use @vocab to expand keys in reverse-maps",
       "purpose": "RDF version of expand-0066",
+      "skip": true,
       "input": "toRdf/0106-in.jsonld",
       "expect": "toRdf/0106-out.nq"
     }, {
@@ -886,6 +889,7 @@
       "purpose": "Tests embedded JSON-LD in HTML",
       "input": "toRdf/h001-in.html",
       "expect": "toRdf/h001-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#th002",
@@ -894,6 +898,7 @@
       "purpose": "Tests embedded JSON-LD in HTML",
       "input": "toRdf/h002-in.html",
       "expect": "toRdf/h002-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1", "extractAllScripts": false}
     }, {
       "@id": "#th003",
@@ -902,6 +907,7 @@
       "purpose": "Tests embedded JSON-LD in HTML with fragment identifier",
       "input": "toRdf/h003-in.html#second",
       "expect": "toRdf/h003-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli01",
@@ -910,6 +916,7 @@
       "purpose": "List of lists.",
       "input": "toRdf/li01-in.jsonld",
       "expect": "toRdf/li01-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli02",
@@ -918,6 +925,7 @@
       "purpose": "List of lists.",
       "input": "toRdf/li02-in.jsonld",
       "expect": "toRdf/li02-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#twf01",
@@ -926,6 +934,7 @@
       "purpose": "ToRdf emits only well-formed statements.",
       "input": "toRdf/wf01-in.jsonld",
       "expect": "toRdf/wf01-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#twf02",
@@ -934,6 +943,7 @@
       "purpose": "ToRdf emits only well-formed statements.",
       "input": "toRdf/wf02-in.jsonld",
       "expect": "toRdf/wf02-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#twf03",
@@ -942,6 +952,7 @@
       "purpose": "ToRdf emits only well-formed statements.",
       "input": "toRdf/wf03-in.jsonld",
       "expect": "toRdf/wf03-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#twf04",
@@ -950,6 +961,7 @@
       "purpose": "ToRdf emits only well-formed statements.",
       "input": "toRdf/wf04-in.jsonld",
       "expect": "toRdf/wf04-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#twf05",
@@ -958,6 +970,7 @@
       "purpose": "ToRdf emits only well-formed statements.",
       "input": "toRdf/wf05-in.jsonld",
       "expect": "toRdf/wf05-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#twf06",
@@ -966,6 +979,7 @@
       "purpose": "ToRdf emits only well-formed statements.",
       "input": "toRdf/wf06-in.jsonld",
       "expect": "toRdf/wf06-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#twf07",
@@ -974,102 +988,119 @@
       "purpose": "ToRdf emits only well-formed statements.",
       "input": "toRdf/wf07-in.jsonld",
       "expect": "toRdf/wf07-out.nq",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tnt01",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_ascii_boundaries",
       "purpose": "literal_ascii_boundaries '\\x00\\x26\\x28...' from N-Triples",
+      "skip": true,
       "input": "toRdf/nt01-in.jsonld"
     }, {
       "@id": "#tnt02",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_UTF8_boundaries",
       "purpose": "literal_with_UTF8_boundaries '\\x80\\x7ff\\x800\\xfff...' from N-Triples",
+      "skip": true,
       "input": "toRdf/nt02-in.jsonld"
     }, {
       "@id": "#tnt03",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_all_controls",
       "purpose": "literal_all_controls '\\x00\\x01\\x02\\x03\\x04...' from N-Triples",
+      "skip": true,
       "input": "toRdf/nt03-in.jsonld"
     }, {
       "@id": "#tnt04",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_all_punctuation",
       "purpose": "literal_all_punctuation '!\"#$%&()...' from N-Triples",
+      "skip": true,
       "input": "toRdf/nt04-in.jsonld"
     }, {
       "@id": "#tnt05",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_squote",
       "purpose": "literal with squote \"x'y\" from N-Triples",
+      "skip": true,
       "input": "toRdf/nt05-in.jsonld"
     }, {
       "@id": "#tnt06",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_2_squotes",
       "purpose": "literal with 2 squotes \"x''y\" from N-Triples",
+      "skip": true,
       "input": "toRdf/nt06-in.jsonld"
     }, {
       "@id": "#tnt07",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_dquote",
       "purpose": "literal with dquote \"x\"y\" from N-Triples",
+      "skip": true,
       "input": "toRdf/nt07-in.jsonld"
     }, {
       "@id": "#tnt08",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_2_dquotes",
       "purpose": "literal with 2 dquotes \"\"\"a\"\"b\"\"\" from N-Triples",
+      "skip": true,
       "input": "toRdf/nt08-in.jsonld"
     }, {
       "@id": "#tnt09",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_REVERSE_SOLIDUS2",
       "purpose": "REVERSE SOLIDUS at end of literal from N-Triples",
+      "skip": true,
       "input": "toRdf/nt09-in.jsonld"
     }, {
       "@id": "#tnt10",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_CHARACTER_TABULATION",
       "purpose": "literal with CHARACTER TABULATION from N-Triples",
+      "skip": true,
       "input": "toRdf/nt10-in.jsonld"
     }, {
       "@id": "#tnt11",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_BACKSPACE",
       "purpose": "literal with BACKSPACE from N-Triples",
+      "skip": true,
       "input": "toRdf/nt11-in.jsonld"
     }, {
       "@id": "#tnt12",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_LINE_FEED",
       "purpose": "literal with LINE FEED from N-Triples",
+      "skip": true,
       "input": "toRdf/nt12-in.jsonld"
     }, {
       "@id": "#tnt13",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_CARRIAGE_RETURN",
       "purpose": "literal with CARRIAGE RETURN from N-Triples",
+      "skip": true,
       "input": "toRdf/nt13-in.jsonld"
     }, {
       "@id": "#tnt14",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_FORM_FEED",
       "purpose": "literal with FORM FEED from N-Triples",
+      "skip": true,
       "input": "toRdf/nt14-in.jsonld"
     }, {
       "@id": "#tnt15",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_REVERSE_SOLIDUS",
       "purpose": "literal with REVERSE SOLIDUS from N-Triples",
+      "skip": true,
       "input": "toRdf/nt15-in.jsonld"
     }, {
       "@id": "#tnt16",
       "@type": ["jld:PositiveSyntaxTest", "jld:ToRDFTest"],
       "name": "literal_with_numeric_escape4",
       "purpose": "literal with numeric escape4 \\u from N-Triples",
+      "skip": true,
       "input": "toRdf/nt16-in.jsonld"
     }
   ]
