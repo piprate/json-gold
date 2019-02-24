@@ -54,7 +54,7 @@ func BenchmarkLoadNQuads(b *testing.B) {
 }
 
 func TestParseLinkHeader(t *testing.T) {
-	rval := ParseLinkHeader("<remote-doc-0010-context.jsonld>; rel=\"http://www.w3.org/ns/json-ld#context\"")
+	rval := ParseLinkHeader("<remote-doc/0010-context.jsonld>; rel=\"http://www.w3.org/ns/json-ld#context\"")
 
 	assert.Equal(
 		t,
