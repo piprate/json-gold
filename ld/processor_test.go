@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -458,7 +459,11 @@ func TestSuite(t *testing.T) {
 					// load as N-Quads
 					expectedBytes, err := ioutil.ReadFile(td.ExpectedFileName)
 					assert.NoError(t, err)
-					expected = string(expectedBytes)
+
+					// for now, we don't apply RDF Isonorphism method to compare NQuads.
+					// we sort for the actual and the expected results to ignore differences in the order.
+					result = sortNQuads(result.(string))
+					expected = sortNQuads(string(expectedBytes))
 				}
 
 				// marshal/unmarshal the result to avoid any differences due to formatting & key sequences
@@ -508,6 +513,12 @@ func TestSuite(t *testing.T) {
 		}
 	}
 	earlReport.write("earl.jsonld")
+}
+
+func sortNQuads(input string) string {
+	temp := strings.Split(input, "\n")
+	sort.Strings(temp)
+	return strings.Join(temp, "\n")
 }
 
 const (

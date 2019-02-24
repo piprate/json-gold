@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"sort"
 	"strings"
 )
 
@@ -44,7 +43,6 @@ func (s *NQuadRDFSerializer) SerializeTo(w io.Writer, dataset *RDFDataset) error
 			quads = append(quads, toNQuad(triple, graphName))
 		}
 	}
-	sort.Strings(quads)
 	for _, quad := range quads {
 		if _, err := fmt.Fprint(w, quad); err != nil {
 			return NewJsonLdError(IOError, err)

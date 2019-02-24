@@ -452,7 +452,6 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
       "name": "Relative IRIs",
       "purpose": "RDF version of expand-0029",
-      "skip": true,
       "input": "toRdf/0069-in.jsonld",
       "expect": "toRdf/0069-out.nq"
     }, {
@@ -671,7 +670,6 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
       "name": "Overwrite document base with @base and reset it again",
       "purpose": "RDF version of expand-0060",
-      "skip": true,
       "input": "toRdf/0100-in.jsonld",
       "expect": "toRdf/0100-out.nq"
     }, {
@@ -714,7 +712,6 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
       "name": "Use @vocab to expand keys in reverse-maps",
       "purpose": "RDF version of expand-0066",
-      "skip": true,
       "input": "toRdf/0106-in.jsonld",
       "expect": "toRdf/0106-out.nq"
     }, {
