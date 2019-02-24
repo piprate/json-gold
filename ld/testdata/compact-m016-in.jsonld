@@ -1,5 +1,0 @@
-[{
-  "http://example/typemap": [
-    {"http://example/label": [{"@value": "Object with no @id"}]}
-  ]
-}]

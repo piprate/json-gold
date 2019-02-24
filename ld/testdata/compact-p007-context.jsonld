@@ -1,6 +1,0 @@
-{
-  "@context": {
-    "foo": "http://example.org/",
-    "foo:bar": "foo:baz/"
-  }
-}
