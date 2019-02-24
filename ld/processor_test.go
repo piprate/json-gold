@@ -284,6 +284,9 @@ func TestSuite(t *testing.T) {
 
 			if td.Skip {
 				log.Println("Test marked as skipped:", td.Id, ":", td.Name)
+
+				earlReport.addAssertion(td.Name, true, false)
+
 				continue
 			}
 
@@ -436,7 +439,7 @@ func TestSuite(t *testing.T) {
 			if td.EvaluationType == "jld:PositiveEvaluationTest" {
 				// we don't expect any errors here
 				if !assert.NoError(t, opError) {
-					earlReport.addAssertion(td.Name, false)
+					earlReport.addAssertion(td.Name, false, false)
 				}
 
 				// load expected document
@@ -492,10 +495,10 @@ func TestSuite(t *testing.T) {
 					_, _ = os.Stdout.WriteString("\n")
 				}
 				log.Println("Error when running", td.Id, "for", td.Type)
-				earlReport.addAssertion(td.Name, false)
+				earlReport.addAssertion(td.Name, false, false)
 				return
 			} else {
-				earlReport.addAssertion(td.Name, true)
+				earlReport.addAssertion(td.Name, false, true)
 			}
 		}
 	}
@@ -565,9 +568,11 @@ func NewEarlReport() *EarlReport {
 	return rval
 }
 
-func (er *EarlReport) addAssertion(testName string, success bool) {
+func (er *EarlReport) addAssertion(testName string, skipped bool, success bool) {
 	var outcome string
-	if success {
+	if skipped {
+		outcome = "earl:untested"
+	} else if success {
 		outcome = "earl:passed"
 	} else {
 		outcome = "earl:failed"
