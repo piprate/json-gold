@@ -195,6 +195,7 @@
       "purpose": "List of lists",
       "input": "fromRdf/li01-in.nq",
       "expect": "fromRdf/li01-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli02",
@@ -203,6 +204,7 @@
       "purpose": "List of lists",
       "input": "fromRdf/li02-in.nq",
       "expect": "fromRdf/li02-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli03",
@@ -211,6 +213,7 @@
       "purpose": "List of lists",
       "input": "fromRdf/li02-in.nq",
       "expect": "fromRdf/li02-out.jsonld",
+      "skip": true,
       "option": {"specVersion": "json-ld-1.1"}
     }
   ]
