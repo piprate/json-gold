@@ -14,7 +14,9 @@
 
 package ld
 
-import "sort"
+import (
+	"sort"
+)
 
 // Compact operation compacts the given input using the context
 // according to the steps in the Compaction Algorithm:
@@ -98,6 +100,9 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 			expandedValue := elem[expandedProperty]
 
 			if expandedProperty == "@id" || expandedProperty == "@type" {
+
+				alias := activeCtx.CompactIri(expandedProperty, nil, true, false)
+
 				var compactedValue interface{}
 
 				compactedValues := make([]interface{}, 0)
@@ -107,16 +112,16 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 					compactedValues = append(compactedValues, cv)
 				}
 
-				if len(compactedValues) == 1 {
+				cont := activeCtx.GetContainer(alias)
+				isTypeContainer := expandedProperty == "@type" && (len(cont) > 0 && cont[0] == "@set")
+				if len(compactedValues) == 1 && (!activeCtx.processingMode(1.1) || !isTypeContainer) {
 					compactedValue = compactedValues[0]
 				} else {
 					compactedValue = compactedValues
 				}
 
-				alias := activeCtx.CompactIri(expandedProperty, nil, true, false)
 				compValArray, isArray := compactedValue.([]interface{})
-				AddValue(result, alias, compactedValue, isArray && len(compValArray) == 0, true)
-
+				AddValue(result, alias, compactedValue, isArray && (len(compValArray) == 0 || isTypeContainer), true)
 				continue
 			}
 

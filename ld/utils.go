@@ -143,7 +143,7 @@ func MergeValue(obj map[string]interface{}, key string, value interface{}) {
 
 // IsAbsoluteIri returns true if the given value is an absolute IRI, false if not.
 func IsAbsoluteIri(value string) bool {
-	return strings.Contains(value, ":")
+	return ParseURL(value).Protocol != ""
 }
 
 // IsSubject returns true if the given value is a subject with properties.

@@ -18,6 +18,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -495,6 +496,10 @@ func ExampleJsonLdProcessor_ToRDF() {
 		log.Println("Error running ToRDF:", err)
 		return
 	}
+
+	temp := strings.Split(triples.(string), "\n")
+	sort.Strings(temp)
+	triples = strings.Join(temp, "\n")
 
 	fmt.Printf("%s\n", triples)
 

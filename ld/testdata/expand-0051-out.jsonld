@@ -1,6 +1,0 @@
-[{
-   "http://example.com/property": [{
-      "@value": "ok"
-   }],
-   "@id": "https://json-ld.org/issue/1"
-}]

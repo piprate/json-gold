@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -236,7 +237,9 @@ func TestSuite(t *testing.T) {
 				testEvaluationType = testMap["@type"].([]interface{})[0].(string)
 				inputURL = baseIri + testMap["input"].(string)
 				inputFileName = testMap["input"].(string)
-				expectedFileName = testMap["expect"].(string)
+				if testEvaluationType != "jld:PositiveSyntaxTest" {
+					expectedFileName = testMap["expect"].(string)
+				}
 			} else {
 				// Normalisation test manifest
 				testId = testMap["id"].(string)
@@ -279,11 +282,17 @@ func TestSuite(t *testing.T) {
 			purpose := td.Raw["purpose"]
 			if purpose != nil && strings.Contains(purpose.(string), "RFC3986") {
 				log.Println("Skipping RFC3986 test", td.Id, ":", td.Name)
+
+				earlReport.addAssertion(td.Name, true, false)
+
 				continue
 			}
 
 			if td.Skip {
 				log.Println("Test marked as skipped:", td.Id, ":", td.Name)
+
+				earlReport.addAssertion(td.Name, true, false)
+
 				continue
 			}
 
@@ -308,6 +317,9 @@ func TestSuite(t *testing.T) {
 
 				if value, hasValue := testOpts["processingMode"]; hasValue {
 					options.ProcessingMode = value.(string)
+					if options.ProcessingMode == JsonLd_1_1 {
+						options.OmitGraph = true
+					}
 				}
 
 				if value, hasValue := testOpts["base"]; hasValue {
@@ -436,7 +448,7 @@ func TestSuite(t *testing.T) {
 			if td.EvaluationType == "jld:PositiveEvaluationTest" {
 				// we don't expect any errors here
 				if !assert.NoError(t, opError) {
-					earlReport.addAssertion(td.Name, false)
+					earlReport.addAssertion(td.Name, false, false)
 				}
 
 				// load expected document
@@ -450,7 +462,11 @@ func TestSuite(t *testing.T) {
 					// load as N-Quads
 					expectedBytes, err := ioutil.ReadFile(td.ExpectedFileName)
 					assert.NoError(t, err)
-					expected = string(expectedBytes)
+
+					// for now, we don't apply RDF Isonorphism method to compare NQuads.
+					// we sort for the actual and the expected results to ignore differences in the order.
+					result = sortNQuads(result.(string))
+					expected = sortNQuads(string(expectedBytes))
 				}
 
 				// marshal/unmarshal the result to avoid any differences due to formatting & key sequences
@@ -464,6 +480,15 @@ func TestSuite(t *testing.T) {
 				} else {
 					result = ""
 				}
+			} else if td.EvaluationType == "jld:PositiveSyntaxTest" {
+				if opError != nil {
+					//PrintDocument("ERROR", opError)
+					result = string(opError.(*JsonLdError).Code)
+				} else {
+					result = ""
+				}
+
+				expected = ""
 			}
 
 			if !assert.True(t, DeepCompare(expected, result, true)) {
@@ -492,14 +517,20 @@ func TestSuite(t *testing.T) {
 					_, _ = os.Stdout.WriteString("\n")
 				}
 				log.Println("Error when running", td.Id, "for", td.Type)
-				earlReport.addAssertion(td.Name, false)
+				earlReport.addAssertion(td.Name, false, false)
 				return
 			} else {
-				earlReport.addAssertion(td.Name, true)
+				earlReport.addAssertion(td.Name, false, true)
 			}
 		}
 	}
 	earlReport.write("earl.jsonld")
+}
+
+func sortNQuads(input string) string {
+	temp := strings.Split(input, "\n")
+	sort.Strings(temp)
+	return strings.Join(temp, "\n")
 }
 
 const (
@@ -565,9 +596,11 @@ func NewEarlReport() *EarlReport {
 	return rval
 }
 
-func (er *EarlReport) addAssertion(testName string, success bool) {
+func (er *EarlReport) addAssertion(testName string, skipped bool, success bool) {
 	var outcome string
-	if success {
+	if skipped {
+		outcome = "earl:untested"
+	} else if success {
 		outcome = "earl:passed"
 	} else {
 		outcome = "earl:failed"

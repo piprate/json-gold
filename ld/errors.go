@@ -66,6 +66,8 @@ const (
 	InvalidReversePropertyValue ErrorCode = "invalid reverse property value"
 	InvalidVersionValue         ErrorCode = "invalid @version value"
 	ProcessingModeConflict      ErrorCode = "processing mode conflict"
+	InvalidFrame                ErrorCode = "invalid frame"
+	InvalidEmbedValue           ErrorCode = "invalid @embed value"
 	InvalidPrefixValue          ErrorCode = "invalid @prefix value"
 	InvalidNestValue            ErrorCode = "invalid @nest value"
 

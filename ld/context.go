@@ -42,13 +42,14 @@ func NewContext(values map[string]interface{}, options *JsonLdOptions) *Context 
 		termDefinitions: make(map[string]interface{}),
 	}
 
+	context.values["@base"] = options.Base
+
 	if values != nil {
 		for k, v := range values {
 			context.values[k] = v
 		}
 	}
 
-	context.values["@base"] = options.Base
 	context.values["processingMode"] = options.ProcessingMode
 
 	return context
@@ -185,6 +186,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			if vocabValue == nil {
 				delete(result.values, "@vocab")
 			} else if vocabString, isString := vocabValue.(string); isString {
+
 				if IsAbsoluteIri(vocabString) {
 					result.values["@vocab"] = vocabValue
 				} else if vocabString == "" {
@@ -194,7 +196,11 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 						return nil, NewJsonLdError(InvalidVocabMapping, "@vocab is empty but @base is not specified")
 					}
 				} else {
-					return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be an absolute IRI")
+					expandedVocab, err := result.ExpandIri(vocabString, true, true, nil, nil)
+					if err != nil {
+						return nil, err
+					}
+					result.values["@vocab"] = expandedVocab
 				}
 			} else {
 				return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be a string or null")
@@ -340,11 +346,6 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 
 	defined[term] = false
 
-	if IsKeyword(term) {
-		return NewJsonLdError(KeywordRedefinition, term)
-	}
-
-	delete(c.termDefinitions, term)
 	value := context[term]
 	mapValue, isMap := value.(map[string]interface{})
 	idValue, hasID := mapValue["@id"]
@@ -364,6 +365,18 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	if !isMap {
 		return NewJsonLdError(InvalidTermDefinition, value)
 	}
+
+	if IsKeyword(term) {
+		vmap, isMap := value.(map[string]interface{})
+		isTypeContainerAsSet := term == "@type" && isMap && vmap["@container"] == "@set"
+		if c.processingMode(1.1) && isTypeContainerAsSet {
+			// this is the only case were redefining a keyword is allowed
+		} else {
+			return NewJsonLdError(KeywordRedefinition, term)
+		}
+	}
+
+	delete(c.termDefinitions, term)
 
 	// casting the value so it doesn't have to be done below everytime
 	val := mapValue
@@ -468,7 +481,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			// 15)
 		} else if vocabValue, containsVocab := c.values["@vocab"]; containsVocab {
 			definition["@id"] = vocabValue.(string) + term
-		} else {
+		} else if term != "@type" {
 			return NewJsonLdError(InvalidIRIMapping, "relative term definition without vocab mapping")
 		}
 	}
@@ -596,6 +609,10 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		}
 
 		definition["@container"] = container
+
+		if term == "@type" {
+			definition["@id"] = "@type"
+		}
 	}
 
 	// scoped contexts
@@ -701,13 +718,18 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 			}
 		}
 		// 4.4)
+		// If active context contains a term definition for prefix, return the result of concatenating
+		// the IRI mapping associated with prefix and suffix.
 		if termDef, hasPrefix := c.termDefinitions[prefix]; hasPrefix {
 			termDefMap := termDef.(map[string]interface{})
 			return termDefMap["@id"].(string) + suffix, nil
+		} else if IsAbsoluteIri(value) {
+			// Otherwise, if the value has the form of an absolute IRI, return it
+			return value, nil
 		}
-		// 4.5)
-		return value, nil
+		// Otherwise, it is a relative IRI
 	}
+
 	// 5)
 	if vocabValue, containsVocab := c.values["@vocab"]; vocab && containsVocab {
 		return vocabValue.(string) + value, nil
@@ -1379,6 +1401,9 @@ func (c *Context) Serialize() map[string]interface{} {
 	baseVal, hasBase := c.values["@base"]
 	if hasBase && baseVal != c.options.Base {
 		ctx["@base"] = baseVal
+	}
+	if versionVal, hasVersion := c.values["@version"]; hasVersion {
+		ctx["@version"] = versionVal
 	}
 	if langVal, hasLang := c.values["@language"]; hasLang {
 		ctx["@language"] = langVal

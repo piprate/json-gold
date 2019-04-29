@@ -1,0 +1,11 @@
+{
+  "@context": {
+    "@vocab": "http://example.com/",
+    "@version": 1.1,
+    "sealed": {"@sealed": true}
+  },
+  "sealed": {
+    "@context": {"sealed": "http://example.com/something-else"},
+    "sealed": "this should have the property http://example.com/sealed"
+  }
+}
