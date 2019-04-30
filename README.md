@@ -30,9 +30,9 @@ This library aims to pass the official [test suite](https://json-ld.org/test-sui
   Draft Community Group Report
   2018-09-05 or newer
 
-As of January 1, 2019:
+As of April 30th, 2019:
 
-* all JSON-LD 1.0 and 1.1 tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass, with one exception: [framing test #tg010](https://github.com/melville-wiley/json-ld.org/blob/3461fd0005cd8e338cd3729c4714163e9217e619/test-suite/tests/frame-manifest.jsonld#L530). See the discussion [here](https://github.com/json-ld/json-ld.org/pull/663). This needs further investigation.
+* 89.9% of tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass. The failing tests are related to HTML based checks and the most recently added features of JSON 1.1 spec.
 * all RDF Dataset Normalisation tests from the [current test suite](https://json-ld.github.io/normalization/tests/index.html) pass
 
 ## Examples ##
