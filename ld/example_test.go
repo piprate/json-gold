@@ -168,7 +168,8 @@ func ExampleJsonLdProcessor_Expand_online() {
 
 	// expanding remote document
 
-	expanded, err := proc.Expand("http://json-ld.org/test-suite/tests/expand-0002-in.jsonld", options)
+	// NOTE: the URL below doesn't exist since the test suite's directory structure had changed
+	expanded, err := proc.Expand("http://json-ld.org/test-suite/tests/expand/0002-in.jsonld", options)
 	if err != nil {
 		log.Println("Error when expanding JSON-LD document:", err)
 		return
