@@ -266,7 +266,8 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 					"a keyword cannot be used as a @reverse property")
 			}
 			// 7.4.2)
-			if _, containsKey := resultMap[expandedProperty]; containsKey {
+			_, containsKey := resultMap[expandedProperty]
+			if containsKey && expandedProperty != "@type" {
 				return NewJsonLdError(CollidingKeywords, expandedProperty+" already exists in result")
 			}
 			// 7.4.3)
@@ -324,6 +325,9 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 					expandedValue, err = activeCtx.ExpandIri(v, true, true, nil, nil)
 					if err != nil {
 						return err
+					}
+					if containsKey {
+						expandedValue = append(Arrayify(resultMap[expandedProperty]), expandedValue)
 					}
 				case map[string]interface{}:
 					if len(v) != 0 {
