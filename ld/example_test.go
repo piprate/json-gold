@@ -29,7 +29,7 @@ func init() {
 	if os.Getenv("CI") == "true" {
 		log.Print("mocking network in CI environment")
 		mockTransport := make(muxRoundTripper)
-		mockTransport.AddFunc("json-ld.org", mockJsonLdOrg)
+		mockTransport.AddFunc("w3c.github.io", mockW3CGitHubOrg)
 		mockTransport.AddFunc("schema.org", mockSchemaOrg)
 		mockTransport.Add("*", http.DefaultTransport) // as fallback
 		http.DefaultTransport = mockTransport         // override default transport
@@ -63,18 +63,18 @@ func (mux muxRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 		r.URL.Host)
 }
 
-func mockJsonLdOrg(r *http.Request) (resp *http.Response, err error) {
-	if r.URL.Host != "json-ld.org" {
-		err = fmt.Errorf("mock client only handle json-ld.org, not %s",
+func mockW3CGitHubOrg(r *http.Request) (resp *http.Response, err error) {
+	if r.URL.Host != "w3c.github.io" {
+		err = fmt.Errorf("mock client only handle w3c.github.io, not %s",
 			r.URL.Host)
 		return
 	}
-	if !strings.HasPrefix(r.URL.Path, "/test-suite/tests/") {
+	if !strings.HasPrefix(r.URL.Path, "/json-ld-api/tests/") {
 		err = fmt.Errorf("mock client only handle /test-suite/tests/*, not %s",
 			r.URL.Path)
 		return
 	}
-	path := strings.TrimPrefix(r.URL.Path, "/test-suite/tests/")
+	path := strings.TrimPrefix(r.URL.Path, "/json-ld-api/tests/")
 	f, err := os.Open("./testdata/" + path)
 	if err != nil {
 		return nil, fmt.Errorf("error openning testdata for mock transport: %s",
@@ -168,8 +168,7 @@ func ExampleJsonLdProcessor_Expand_online() {
 
 	// expanding remote document
 
-	// NOTE: the URL below doesn't exist since the test suite's directory structure had changed
-	expanded, err := proc.Expand("http://json-ld.org/test-suite/tests/expand/0002-in.jsonld", options)
+	expanded, err := proc.Expand("https://w3c.github.io/json-ld-api/tests/expand/0002-in.jsonld", options)
 	if err != nil {
 		log.Println("Error when expanding JSON-LD document:", err)
 		return
