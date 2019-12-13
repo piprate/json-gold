@@ -72,6 +72,7 @@ func NewJsonLdOptions(base string) *JsonLdOptions {
 	return &JsonLdOptions{
 		Base:                  base,
 		CompactArrays:         true,
+		ProcessingMode:        JsonLd_1_1,
 		DocumentLoader:        NewDefaultDocumentLoader(nil),
 		Embed:                 EmbedLast,
 		Explicit:              false,

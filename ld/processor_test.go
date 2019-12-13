@@ -237,7 +237,7 @@ func TestSuite(t *testing.T) {
 				testEvaluationType = testMap["@type"].([]interface{})[0].(string)
 				inputURL = baseIri + testMap["input"].(string)
 				inputFileName = testMap["input"].(string)
-				if testEvaluationType != "jld:PositiveSyntaxTest" {
+				if testEvaluationType != "jld:PositiveSyntaxTest" && testEvaluationType != "jld:NegativeEvaluationTest" {
 					expectedFileName = testMap["expect"].(string)
 				}
 			} else {
@@ -326,7 +326,7 @@ func TestSuite(t *testing.T) {
 					options.Base = value.(string)
 				}
 				if value, hasValue := testOpts["expandContext"]; hasValue {
-					contextDoc, err := dl.LoadDocument(filepath.Join(testDir, value.(string)))
+					contextDoc, err := dl.LoadDocument(filepath.Join(filepath.Dir(td.InputFileName), value.(string)))
 					assert.NoError(t, err)
 					options.ExpandContext = contextDoc.Document
 				}

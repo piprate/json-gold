@@ -611,14 +611,12 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		isContainerGraph := activeCtx.HasContainerMapping(key, "@graph")
 		isContainerID := activeCtx.HasContainerMapping(key, "@id")
 		isContainerIndex := activeCtx.HasContainerMapping(key, "@index")
-		if isContainerGraph && !isContainerID && !isContainerIndex && !IsGraph(expandedValue) {
+		if isContainerGraph && !isContainerID && !isContainerIndex {
 			evList := Arrayify(expandedValue)
 			rVal := make([]interface{}, 0)
 			for _, ev := range evList {
-				if !IsGraph(ev) {
-					ev = map[string]interface{}{
-						"@graph": Arrayify(ev),
-					}
+				ev = map[string]interface{}{
+					"@graph": Arrayify(ev),
 				}
 				rVal = append(rVal, ev)
 			}
