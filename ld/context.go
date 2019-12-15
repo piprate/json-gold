@@ -21,6 +21,10 @@ import (
 	"strings"
 )
 
+var (
+	ignoredKeywordPattern = regexp.MustCompile("^@[a-zA-Z]+$")
+)
+
 // Context represents a JSON-LD context and provides easy access to specific
 // keys and operations.
 type Context struct {
@@ -374,6 +378,11 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		} else {
 			return NewJsonLdError(KeywordRedefinition, term)
 		}
+	} else {
+		if ignoredKeywordPattern.Match([]byte(term)) {
+			//log.Printf("Terms beginning with '@' are reserved for future use and ignored: %s.", term)
+			return nil
+		}
 	}
 
 	delete(c.termDefinitions, term)
@@ -430,6 +439,12 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			return NewJsonLdError(InvalidIRIMapping, fmt.Sprintf(
 				"@context @reverse value must be an absolute IRI or a blank node identifier, got %s", id))
 		}
+
+		if ignoredKeywordPattern.Match([]byte(reverseStr)) {
+			//log.Printf("Values beginning with '@' are reserved for future use and ignored: %s.", reverseStr)
+			return nil
+		}
+
 		definition["@id"] = id
 		definition["@reverse"] = true
 	} else if idValue, hasID := val["@id"]; hasID { // 13)
@@ -439,6 +454,12 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		}
 
 		if term != idStr {
+
+			if !IsKeyword(idStr) && ignoredKeywordPattern.Match([]byte(idStr)) {
+				//log.Printf("Values beginning with '@' are reserved for future use and ignored: %s.", idStr)
+				return nil
+			}
+
 			res, err := c.ExpandIri(idStr, false, true, context, defined)
 			if err != nil {
 				return err
@@ -683,6 +704,11 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 	if IsKeyword(value) {
 		return value, nil
 	}
+
+	if !IsKeyword(value) && ignoredKeywordPattern.Match([]byte(value)) {
+		return "", nil
+	}
+
 	// 2)
 	if context != nil {
 		if _, containsKey := context[value]; containsKey && !defined[value] {
