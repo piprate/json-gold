@@ -404,7 +404,8 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	}
 
 	// always compute whether term has a colon as an optimization for _compact_iri
-	termHasColon := strings.Contains(term, ":")
+	colIndex := strings.Index(term, ":")
+	termHasColon := colIndex > 0
 
 	definition["@reverse"] = false
 
@@ -464,7 +465,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	}
 
 	if _, hasID := definition["@id"]; !hasID {
-		if colIndex := strings.Index(term, ":"); colIndex >= 0 {
+		if termHasColon {
 			prefix := term[0:colIndex]
 			if _, containsPrefix := context[prefix]; containsPrefix {
 				if err := c.createTermDefinition(context, prefix, defined); err != nil {
@@ -699,9 +700,11 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 
 		return "", nil
 	}
+
 	// 4)
+	// check if value contains a colon (`:`) anywhere but as the first character
 	colIndex := strings.Index(value, ":")
-	if colIndex >= 0 {
+	if colIndex > 0 {
 		// 4.1)
 		prefix := value[0:colIndex]
 		suffix := value[colIndex+1:]
