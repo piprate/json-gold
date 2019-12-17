@@ -512,7 +512,9 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		termCtx := activeCtx
 		td := activeCtx.GetTermDefinition(key)
 		if ctx, hasCtx := td["@context"]; hasCtx {
-			termCtx, err = activeCtx.Parse(ctx)
+			// TODO: fix calling a private method
+			//termCtx, err = activeCtx.Parse(ctx)
+			termCtx, err = activeCtx.parse(ctx, make([]string, 0), false, true)
 			if err != nil {
 				return err
 			}
@@ -775,9 +777,15 @@ func (api *JsonLdApi) expandIndexMap(activeCtx *Context, activeProperty string, 
 				} else {
 					t := []interface{}{index}
 					if types, hasType := item["@type"]; hasType {
-						for _, tt := range types.([]interface{}) {
-							t = append(t, tt.(string))
+						switch v := types.(type) {
+						case string:
+							t = append(t, v)
+						case []interface{}:
+							for _, tt := range v {
+								t = append(t, tt.(string))
+							}
 						}
+
 					}
 					item["@type"] = t
 				}

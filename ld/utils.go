@@ -27,11 +27,11 @@ func IsKeyword(key interface{}) bool {
 	if _, isString := key.(string); !isString {
 		return false
 	}
-	return key == "@base" || key == "@context" || key == "@container" || key == "@default" ||
-		key == "@embed" || key == "@explicit" || key == "@graph" || key == "@id" || key == "@index" ||
-		key == "@language" || key == "@list" || key == "@omitDefault" || key == "@reverse" ||
-		key == "@preserve" || key == "@set" || key == "@type" || key == "@value" || key == "@vocab" ||
-		key == "@nest" || key == "@none" || key == "@version" || key == "@requireAll"
+	return key == "@base" || key == "@container" || key == "@context" || key == "@default" ||
+		key == "@embed" || key == "@explicit" || key == "@graph" || key == "@id" || key == "@index" || key == "@json" ||
+		key == "@language" || key == "@list" || key == "@nest" || key == "@none" || key == "@omitDefault" || key == "@prefix" ||
+		key == "@preserve" || key == "@protected" || key == "@requireAll" || key == "@reverse" || key == "@set" ||
+		key == "@type" || key == "@value" || key == "@version" || key == "@vocab"
 }
 
 // DeepCompare returns true if v1 equals v2.

@@ -463,7 +463,7 @@ func TestSuite(t *testing.T) {
 					expectedBytes, err := ioutil.ReadFile(td.ExpectedFileName)
 					assert.NoError(t, err)
 
-					// for now, we don't apply RDF Isonorphism method to compare NQuads.
+					// for now, we don't apply RDF Isomorphism method to compare NQuads.
 					// we sort for the actual and the expected results to ignore differences in the order.
 					result = sortNQuads(result.(string))
 					expected = sortNQuads(string(expectedBytes))
@@ -473,7 +473,7 @@ func TestSuite(t *testing.T) {
 				resultBytes, _ := json.MarshalIndent(result, "", "  ")
 				err = json.Unmarshal(resultBytes, &result)
 			} else if td.EvaluationType == "jld:NegativeEvaluationTest" {
-				expected = td.Raw["expect"].(string)
+				expected = td.Raw["expectErrorCode"].(string)
 
 				if opError != nil {
 					result = string(opError.(*JsonLdError).Code)
@@ -518,7 +518,9 @@ func TestSuite(t *testing.T) {
 				}
 				log.Println("Error when running", td.Id, "for", td.Type)
 				earlReport.addAssertion(td.Name, false, false)
-				return
+				if os.Getenv("FULL_RUN") != "true" {
+					return
+				}
 			} else {
 				earlReport.addAssertion(td.Name, false, true)
 			}

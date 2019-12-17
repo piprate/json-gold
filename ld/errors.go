@@ -70,10 +70,12 @@ const (
 	InvalidEmbedValue           ErrorCode = "invalid @embed value"
 	InvalidPrefixValue          ErrorCode = "invalid @prefix value"
 	InvalidNestValue            ErrorCode = "invalid @nest value"
+	InvalidContextNullification ErrorCode = "invalid context nullification"
+	ProtectedTermRedefinition   ErrorCode = "protected term redefinition"
 
 	// non spec related errors
 	SyntaxError    ErrorCode = "syntax error"
-	NotImplemented ErrorCode = "not implemnted"
+	NotImplemented ErrorCode = "not implemented"
 	UnknownFormat  ErrorCode = "unknown format"
 	InvalidInput   ErrorCode = "invalid input"
 	ParseError     ErrorCode = "parse error"

@@ -32,6 +32,7 @@ type Context struct {
 	options         *JsonLdOptions
 	termDefinitions map[string]interface{}
 	inverse         map[string]interface{}
+	protected       map[string]bool
 }
 
 // NewContext creates and returns a new Context object.
@@ -44,6 +45,7 @@ func NewContext(values map[string]interface{}, options *JsonLdOptions) *Context 
 		values:          make(map[string]interface{}),
 		options:         options,
 		termDefinitions: make(map[string]interface{}),
+		protected:       make(map[string]bool),
 	}
 
 	context.values["@base"] = options.Base
@@ -67,6 +69,10 @@ func CopyContext(ctx *Context) *Context {
 		context.termDefinitions[k] = v
 	}
 
+	for k, v := range ctx.protected {
+		context.protected[k] = v
+	}
+
 	// do not copy c.inverse, because it will be regenerated
 
 	return context
@@ -79,7 +85,7 @@ func CopyContext(ctx *Context) *Context {
 // than just parsing the context. In particular, we need to check if additional logic is required
 // to load remote scoped contexts.
 func (c *Context) Parse(localContext interface{}) (*Context, error) {
-	return c.parse(localContext, make([]string, 0), false)
+	return c.parse(localContext, make([]string, 0), false, false)
 }
 
 // parse processes a local context, retrieving any URLs as necessary, and
@@ -88,7 +94,7 @@ func (c *Context) Parse(localContext interface{}) (*Context, error) {
 // If parsingARemoteContext is true, localContext represents a remote context
 // that has been parsed and sent into this method. This must be set to know
 // whether to propagate the @base key from the context to the result.
-func (c *Context) parse(localContext interface{}, remoteContexts []string, parsingARemoteContext bool) (*Context, error) {
+func (c *Context) parse(localContext interface{}, remoteContexts []string, parsingARemoteContext, overrideProtected bool) (*Context, error) {
 	// 1. Initialize result to the result of cloning active context.
 	result := CopyContext(c)
 
@@ -96,6 +102,12 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 	for _, context := range Arrayify(localContext) {
 		// 3.1)
 		if context == nil {
+			// We can't nullify if there are protected terms and we're
+			// not allowing overrides (e.g. processing a property term scoped context)
+			if !overrideProtected && len(c.protected) != 0 {
+				return nil, NewJsonLdError(InvalidContextNullification,
+					"tried to nullify a context with protected terms outside of a term definition.")
+			}
 			result = NewContext(nil, c.options)
 			continue
 		}
@@ -131,7 +143,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			}
 
 			// 3.2.4
-			resultRef, err := result.parse(context, remoteContexts, true)
+			resultRef, err := result.parse(context, remoteContexts, true, overrideProtected)
 			if err != nil {
 				return nil, err
 			}
@@ -223,13 +235,24 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		}
 
 		// 3.7
+		// TODO: check JS implementation. This structure is populated with a lot more values
 		defined := make(map[string]bool)
+
+		// handle @protected; determine whether this sub-context is declaring
+		// all its terms to be "protected" (exceptions can be made on a
+		// per-definition basis)
+		if protectedVal, protectedPresent := contextMap["@protected"]; protectedPresent {
+			defined["@protected"] = protectedVal.(bool)
+		} else {
+			// TODO is this necessary?
+			defined["@protected"] = false
+		}
 
 		for key := range contextMap {
 			if key == "@base" || key == "@vocab" || key == "@language" || key == "@version" {
 				continue
 			}
-			if err := result.createTermDefinition(contextMap, key, defined); err != nil {
+			if err := result.createTermDefinition(contextMap, key, defined, overrideProtected); err != nil {
 				return nil, err
 			}
 		}
@@ -340,7 +363,8 @@ func (c *Context) processingMode(version float64) bool {
 // for a term being processed in a local context as described in
 // http://www.w3.org/TR/json-ld-api/#create-term-definition
 func (c *Context) createTermDefinition(context map[string]interface{}, term string,
-	defined map[string]bool) error {
+	defined map[string]bool, overrideProtected bool) error {
+
 	if definedValue, inDefined := defined[term]; inDefined {
 		if definedValue {
 			return nil
@@ -372,8 +396,15 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 
 	if IsKeyword(term) {
 		vmap, isMap := value.(map[string]interface{})
-		isTypeContainerAsSet := term == "@type" && isMap && vmap["@container"] == "@set"
-		if c.processingMode(1.1) && isTypeContainerAsSet {
+		var hasAllowedKeysOnly = true
+		for k := range vmap {
+			if k != "@container" && k != "@protected" {
+				hasAllowedKeysOnly = false
+				break
+			}
+		}
+		isSet := isMap && (vmap["@container"] == "@set" || vmap["@container"] == nil)
+		if c.processingMode(1.1) && term == "@type" && hasAllowedKeysOnly && isSet {
 			// this is the only case were redefining a keyword is allowed
 		} else {
 			return NewJsonLdError(KeywordRedefinition, term)
@@ -384,6 +415,9 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			return nil
 		}
 	}
+
+	// keep reference to previous mapping for potential `@protected` check
+	prevDefinition := c.termDefinitions[term]
 
 	delete(c.termDefinitions, term)
 
@@ -405,6 +439,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		validKeys["@context"] = true
 		validKeys["@nest"] = true
 		validKeys["@prefix"] = true
+		validKeys["@protected"] = true
 	}
 	for k := range val {
 		if _, isValid := validKeys[k]; !isValid {
@@ -489,7 +524,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		if termHasColon {
 			prefix := term[0:colIndex]
 			if _, containsPrefix := context[prefix]; containsPrefix {
-				if err := c.createTermDefinition(context, prefix, defined); err != nil {
+				if err := c.createTermDefinition(context, prefix, defined, overrideProtected); err != nil {
 					return err
 				}
 			}
@@ -506,6 +541,13 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		} else if term != "@type" {
 			return NewJsonLdError(InvalidIRIMapping, "relative term definition without vocab mapping")
 		}
+	}
+
+	// handle term protection
+	valProtected, protectedFound := mapValue["@protected"]
+	if (protectedFound && valProtected.(bool)) || (defined["@protected"] && !(protectedFound && !valProtected.(bool))) {
+		c.protected[term] = true
+		definition["protected"] = true
 	}
 
 	defined[term] = true
@@ -541,16 +583,16 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	// 16)
 	if containerVal, hasContainer := val["@container"]; hasContainer {
 		containerArray, isArray := containerVal.([]interface{})
-		var container []string
+		var container []interface{}
 		containerValueMap := make(map[string]bool)
 		if isArray {
-			container = make([]string, 0)
+			container = make([]interface{}, 0)
 			for _, c := range containerArray {
-				container = append(container, c.(string))
+				container = append(container, c)
 				containerValueMap[c.(string)] = true
 			}
 		} else {
-			container = []string{containerVal.(string)}
+			container = []interface{}{containerVal}
 			containerValueMap[containerVal.(string)] = true
 		}
 
@@ -603,7 +645,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 
 		// check against valid containers
 		for _, v := range container {
-			if _, isValidContainer := validContainers[v]; !isValidContainer {
+			if _, isValidContainer := validContainers[v.(string)]; !isValidContainer {
 				allowedValues := make([]string, 0)
 				for k := range validContainers {
 					allowedValues = append(allowedValues, k)
@@ -663,6 +705,9 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		if !isBool {
 			return NewJsonLdError(InvalidPrefixValue, "@context value for @prefix must be boolean")
 		}
+		if idVal, hasID := definition["@id"]; hasID && IsKeyword(idVal) {
+			return NewJsonLdError(InvalidTermDefinition, "keywords may not be used as prefixes")
+		}
 		definition["_prefix"] = prefix
 	}
 
@@ -680,6 +725,19 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	id := definition["@id"]
 	if id == "@context" || id == "@preserve" {
 		return NewJsonLdError(InvalidKeywordAlias, "@context and @preserve cannot be aliased")
+	}
+
+	// Check for overriding protected terms
+	if prevDefinition != nil {
+		prevDefMap := prevDefinition.(map[string]interface{})
+		if protectedVal, found := prevDefMap["protected"]; found && protectedVal.(bool) && !overrideProtected {
+			// force new term to continue to be protected and see if the mappings would be equal
+			c.protected[term] = true
+			definition["protected"] = true
+			if !DeepCompare(prevDefinition, definition, false) {
+				return NewJsonLdError(ProtectedTermRedefinition, "invalid JSON-LD syntax; tried to redefine a protected term")
+			}
+		}
 	}
 
 	// 18)
@@ -712,7 +770,7 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 	// 2)
 	if context != nil {
 		if _, containsKey := context[value]; containsKey && !defined[value] {
-			if err := c.createTermDefinition(context, value, defined); err != nil {
+			if err := c.createTermDefinition(context, value, defined, false); err != nil {
 				return "", err
 			}
 		}
@@ -741,7 +799,7 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 		// 4.3)
 		if context != nil {
 			if _, containsPrefix := context[prefix]; containsPrefix && !defined[prefix] {
-				if err := c.createTermDefinition(context, prefix, defined); err != nil {
+				if err := c.createTermDefinition(context, prefix, defined, false); err != nil {
 					return "", err
 				}
 			}
@@ -749,7 +807,8 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 		// 4.4)
 		// If active context contains a term definition for prefix, return the result of concatenating
 		// the IRI mapping associated with prefix and suffix.
-		if termDef, hasPrefix := c.termDefinitions[prefix]; hasPrefix {
+		termDef, hasPrefix := c.termDefinitions[prefix]
+		if hasPrefix && termDef.(map[string]interface{})["@id"] != "" && termDef.(map[string]interface{})["_prefix"].(bool) {
 			termDefMap := termDef.(map[string]interface{})
 			return termDefMap["@id"].(string) + suffix, nil
 		} else if IsAbsoluteIri(value) {
@@ -1176,9 +1235,13 @@ func (c *Context) GetInverse() map[string]interface{} {
 		if !present {
 			containerJoin = "@none"
 		} else {
-			container := containerVal.([]string)
-			sort.Strings(container)
-			containerJoin = strings.Join(container, "")
+			container := containerVal.([]interface{})
+			strList := make([]string, 0, len(container))
+			for _, c := range container {
+				strList = append(strList, c.(string))
+			}
+			sort.Strings(strList)
+			containerJoin = strings.Join(strList, "")
 		}
 
 		// 3.3)
@@ -1296,15 +1359,15 @@ func (c *Context) SelectTerm(iri string, containers []string, typeLanguage strin
 }
 
 // GetContainer retrieves container mapping for the given property.
-func (c *Context) GetContainer(property string) []string {
+func (c *Context) GetContainer(property string) []interface{} {
 	propertyMap, isMap := c.termDefinitions[property].(map[string]interface{})
 	if isMap {
 		if container, hasContainer := propertyMap["@container"]; hasContainer {
-			return container.([]string)
+			return container.([]interface{})
 		}
 	}
 
-	return []string{}
+	return []interface{}{}
 }
 
 // GetContainer retrieves container mapping for the given property.
@@ -1312,7 +1375,7 @@ func (c *Context) HasContainerMapping(property string, val string) bool {
 	propertyMap, isMap := c.termDefinitions[property].(map[string]interface{})
 	if isMap {
 		if container, hasContainer := propertyMap["@container"]; hasContainer {
-			for _, container := range container.([]string) {
+			for _, container := range container.([]interface{}) {
 				if container == val {
 					return true
 				}
