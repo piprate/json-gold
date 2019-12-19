@@ -176,7 +176,7 @@ func (jldp *JsonLdProcessor) expand(input interface{}, opts *JsonLdOptions) ([]i
 
 	// 6)
 	api := NewJsonLdApi()
-	expanded, err := api.Expand(activeCtx, "", input, opts)
+	expanded, err := api.Expand(activeCtx, "", input, opts, false, nil)
 	if err != nil {
 		return nil, err
 	}

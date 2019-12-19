@@ -33,6 +33,7 @@ type Context struct {
 	termDefinitions map[string]interface{}
 	inverse         map[string]interface{}
 	protected       map[string]bool
+	previousContext *Context
 }
 
 // NewContext creates and returns a new Context object.
@@ -61,6 +62,19 @@ func NewContext(values map[string]interface{}, options *JsonLdOptions) *Context 
 	return context
 }
 
+func (c *Context) AsMap() map[string]interface{} {
+	res := map[string]interface{}{
+		"values":          c.values,
+		"termDefinitions": c.termDefinitions,
+		"inverse":         c.inverse,
+		"protected":       c.protected,
+	}
+	if c.previousContext != nil {
+		res["previousContext"] = c.previousContext.AsMap()
+	}
+	return res
+}
+
 // CopyContext creates a full copy of the given context.
 func CopyContext(ctx *Context) *Context {
 	context := NewContext(ctx.values, ctx.options)
@@ -75,6 +89,10 @@ func CopyContext(ctx *Context) *Context {
 
 	// do not copy c.inverse, because it will be regenerated
 
+	if ctx.previousContext != nil {
+		context.previousContext = CopyContext(ctx.previousContext)
+	}
+
 	return context
 }
 
@@ -85,7 +103,7 @@ func CopyContext(ctx *Context) *Context {
 // than just parsing the context. In particular, we need to check if additional logic is required
 // to load remote scoped contexts.
 func (c *Context) Parse(localContext interface{}) (*Context, error) {
-	return c.parse(localContext, make([]string, 0), false, false)
+	return c.parse(localContext, make([]string, 0), false, true, false)
 }
 
 // parse processes a local context, retrieving any URLs as necessary, and
@@ -94,12 +112,37 @@ func (c *Context) Parse(localContext interface{}) (*Context, error) {
 // If parsingARemoteContext is true, localContext represents a remote context
 // that has been parsed and sent into this method. This must be set to know
 // whether to propagate the @base key from the context to the result.
-func (c *Context) parse(localContext interface{}, remoteContexts []string, parsingARemoteContext, overrideProtected bool) (*Context, error) {
+func (c *Context) parse(localContext interface{}, remoteContexts []string, parsingARemoteContext, propagate, overrideProtected bool) (*Context, error) {
+
+	// normalize local context to an array of @context objects
+	contexts := Arrayify(localContext)
+
+	// no contexts in array, return current active context w/o changes
+	if len(contexts) == 0 {
+		return c, nil
+	}
+
+	// override propagate if first resolved context has `@propagate`
+	firxtCtxMap, isMap := contexts[0].(map[string]interface{})
+	propagateVal, propagateFound := firxtCtxMap["@propagate"]
+	if isMap && propagateFound {
+		// retrieve early, error checking done later
+		if propagateBool, isBool := propagateVal.(bool); isBool {
+			propagate = propagateBool
+		}
+	}
+
 	// 1. Initialize result to the result of cloning active context.
 	result := CopyContext(c)
 
+	// track the previous context
+	// if not propagating, make sure result has a previous context
+	if !propagate && result.previousContext == nil {
+		result.previousContext = c
+	}
+
 	// 3)
-	for _, context := range Arrayify(localContext) {
+	for _, context := range contexts {
 		// 3.1)
 		if context == nil {
 			// We can't nullify if there are protected terms and we're
@@ -143,7 +186,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			}
 
 			// 3.2.4
-			resultRef, err := result.parse(context, remoteContexts, true, overrideProtected)
+			resultRef, err := result.parse(context, remoteContexts, true, true, overrideProtected)
 			if err != nil {
 				return nil, err
 			}
@@ -223,7 +266,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			}
 		}
 
-		// 3.6
+		// handle @language
 		if languageValue, languagePresent := contextMap["@language"]; languagePresent {
 			if languageValue == nil {
 				delete(result.values, "@language")
@@ -238,6 +281,20 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		// TODO: check JS implementation. This structure is populated with a lot more values
 		defined := make(map[string]bool)
 
+		// handle @propagate
+		// note: we've already extracted it, here we just do error checking
+		if propagateValue, propagatePresent := contextMap["@propagate"]; propagatePresent {
+			if c.processingMode(1.0) {
+				return nil, NewJsonLdError(InvalidContextMember,
+					fmt.Sprintf("@propagate not compatible with %s", c.values["processingMode"]))
+			}
+			if _, isBool := propagateValue.(bool); isBool {
+				defined["@propagate"] = true
+			} else {
+				return nil, NewJsonLdError(InvalidPropagateValue, "@propagate value must be a boolean")
+			}
+		}
+
 		// handle @protected; determine whether this sub-context is declaring
 		// all its terms to be "protected" (exceptions can be made on a
 		// per-definition basis)
@@ -249,6 +306,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		}
 
 		for key := range contextMap {
+			// TODO why do we need this?
 			if key == "@base" || key == "@vocab" || key == "@language" || key == "@version" {
 				continue
 			}
@@ -437,6 +495,8 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	}
 	if c.processingMode(1.1) {
 		validKeys["@context"] = true
+		//validKeys["@direction"] = true
+		//validKeys["@index"] = true
 		validKeys["@nest"] = true
 		validKeys["@prefix"] = true
 		validKeys["@protected"] = true
@@ -744,6 +804,15 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	c.termDefinitions[term] = definition
 
 	return nil
+}
+
+// RevertToPreviousContext reverts any type-scoped context in this active context to the previous context.
+func (c *Context) RevertToPreviousContext() *Context {
+	if c.previousContext == nil {
+		return c
+	} else {
+		return CopyContext(c.previousContext)
+	}
 }
 
 // ExpandIri expands a string value to a full IRI.
