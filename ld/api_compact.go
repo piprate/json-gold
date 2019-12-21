@@ -162,7 +162,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 			if expandedProperty == "@index" && activeCtx.HasContainerMapping(activeProperty, "@index") {
 				continue
-			} else if expandedProperty == "@index" || expandedProperty == "@value" || expandedProperty == "@language" {
+			} else if expandedProperty == "@index" || expandedProperty == "@value" || expandedProperty == "@language" ||
+				expandedProperty == "@direction" {
 				alias := activeCtx.CompactIri(expandedProperty, nil, false, false)
 				AddValue(result, alias, expandedValue, false, true)
 				continue

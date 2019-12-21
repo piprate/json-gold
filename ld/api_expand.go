@@ -195,10 +195,11 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 		if rval, hasValue := resultMap["@value"]; hasValue {
 			// 8.1)
 			allowedKeys := map[string]interface{}{
-				"@value":    nil,
-				"@index":    nil,
-				"@language": nil,
-				"@type":     nil,
+				"@value":     nil,
+				"@index":     nil,
+				"@language":  nil,
+				"@type":      nil,
+				"@direction": nil,
 			}
 			hasDisallowedKeys := false
 			for key := range resultMap {
@@ -208,13 +209,14 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 				}
 			}
 			_, hasLanguage := resultMap["@language"]
+			_, hasDirection := resultMap["@direction"]
 			typeValue, hasType := resultMap["@type"]
 			if hasDisallowedKeys {
 				return nil, NewJsonLdError(InvalidValueObject, "value object has unknown keys")
 			}
-			if hasLanguage && hasType {
+			if (hasLanguage || hasDirection) && hasType {
 				return nil, NewJsonLdError(InvalidValueObject,
-					"an element containing @value may not contain both @type and @language")
+					"value object must not include @type with either @language or @direction")
 			}
 			// 8.2)
 			if rval == nil {
@@ -419,8 +421,14 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 					resultMap["@value"] = nil
 					continue
 				}
-			} else if expandedProperty == "@language" { // 7.4.7)
+			} else if expandedProperty == "@language" {
+
+				// If expanded property is @language and value is not a string, an invalid language-tagged
+				// string error has been detected and processing is aborted. Otherwise, set expanded value
+				// to lowercase value.
+
 				if frameExpansion {
+					// If framing, always use array form
 					expandedValues := make([]interface{}, 0)
 					for _, v := range Arrayify(value) {
 						if vStr, isString := v.(string); isString {
@@ -434,6 +442,30 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 					vStr, isString := value.(string)
 					if !isString {
 						return NewJsonLdError(InvalidLanguageTaggedString, "@language value must be a string")
+					}
+					expandedValue = strings.ToLower(vStr)
+				}
+			} else if expandedProperty == "@direction" {
+
+				// If expanded property is @direction and value is not either 'ltr' or 'rtl', an invalid
+				// base direction error has been detected and processing is aborted. Otherwise, set
+				// expanded value to value.
+
+				if frameExpansion {
+					// If framing, always use array form
+					expandedValues := make([]interface{}, 0)
+					for _, v := range Arrayify(value) {
+						if vStr, isString := v.(string); isString {
+							expandedValues = append(expandedValues, strings.ToLower(vStr))
+						} else {
+							expandedValues = append(expandedValues, v)
+						}
+					}
+					expandedValue = expandedValues
+				} else {
+					vStr, isString := value.(string)
+					if !isString {
+						return NewJsonLdError(InvalidBaseDirection, "@direction must be one of 'ltr', 'rtl'")
 					}
 					expandedValue = strings.ToLower(vStr)
 				}
@@ -584,34 +616,38 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		}
 
 		valueMap, isMap := value.(map[string]interface{})
-		// 7.5
 		if termCtx.HasContainerMapping(key, "@language") && isMap {
-			// 7.5.1)
 			var expandedValueList []interface{}
-			// 7.5.2)
+
+			dir, hasDir := td["@direction"]
 			for _, language := range GetOrderedKeys(valueMap) {
 				expandedLanguage, err := termCtx.ExpandIri(language, false, true, nil, nil)
 				if err != nil {
 					return err
 				}
-				// 7.5.2.1)
 				languageList := Arrayify(valueMap[language])
-				// 7.5.2.2)
 				for _, item := range languageList {
 					if item == nil {
 						continue
 					}
-					// 7.5.2.2.1)
+
 					if _, isString := item.(string); !isString {
 						return NewJsonLdError(InvalidLanguageMapValue,
 							fmt.Sprintf("expected %v to be a string", item))
 					}
-					// 7.5.2.2.2)
+
 					v := map[string]interface{}{
 						"@value": item,
 					}
 					if expandedLanguage != "@none" {
 						v["@language"] = strings.ToLower(language)
+					}
+					if hasDir {
+						if dir != nil {
+							v["@direction"] = dir
+						}
+					} else if defaultDir, found := termCtx.values["@direction"]; found {
+						v["@direction"] = defaultDir
 					}
 					expandedValueList = append(expandedValueList, v)
 				}

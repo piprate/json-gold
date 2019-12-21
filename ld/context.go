@@ -23,6 +23,15 @@ import (
 
 var (
 	ignoredKeywordPattern = regexp.MustCompile("^@[a-zA-Z]+$")
+
+	nonTermDefKeys = map[string]bool{
+		"@base":      true,
+		"@direction": true,
+		"@language":  true,
+		"@protected": true,
+		"@version":   true,
+		"@vocab":     true,
+	}
 )
 
 // Context represents a JSON-LD context and provides easy access to specific
@@ -277,6 +286,21 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			}
 		}
 
+		// handle @direction
+		if directionValue, directionPresent := contextMap["@direction"]; directionPresent {
+			if directionValue == nil {
+				delete(result.values, "@direction")
+			} else if directionString, isString := directionValue.(string); isString {
+				if directionString == "rtl" || directionString == "ltr" {
+					result.values["@direction"] = strings.ToLower(directionString)
+				} else {
+					return nil, NewJsonLdError(InvalidBaseDirection, directionValue)
+				}
+			} else {
+				return nil, NewJsonLdError(InvalidBaseDirection, directionValue)
+			}
+		}
+
 		// 3.7
 		// TODO: check JS implementation. This structure is populated with a lot more values
 		defined := make(map[string]bool)
@@ -300,18 +324,13 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		// per-definition basis)
 		if protectedVal, protectedPresent := contextMap["@protected"]; protectedPresent {
 			defined["@protected"] = protectedVal.(bool)
-		} else {
-			// TODO is this necessary?
-			defined["@protected"] = false
 		}
 
 		for key := range contextMap {
-			// TODO why do we need this?
-			if key == "@base" || key == "@vocab" || key == "@language" || key == "@version" {
-				continue
-			}
-			if err := result.createTermDefinition(contextMap, key, defined, overrideProtected); err != nil {
-				return nil, err
+			if _, skip := nonTermDefKeys[key]; !skip {
+				if err := result.createTermDefinition(contextMap, key, defined, overrideProtected); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -320,83 +339,99 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 }
 
 // CompactValue performs value compaction on an object with @value or @id as the only property.
-// See http://www.w3.org/TR/json-ld-api/#value-compaction
+// See https://www.w3.org/TR/2019/CR-json-ld11-api-20191212/#value-compaction
 func (c *Context) CompactValue(activeProperty string, value map[string]interface{}) interface{} {
-	propType, _ := c.GetTermDefinition(activeProperty)["@type"]
 
-	if IsValue(value) {
-		language := c.GetLanguageMapping(activeProperty)
-		isIndexContainer := c.HasContainerMapping(activeProperty, "@index")
+	// 1
+	var result interface{} = value
 
-		// whether or not the value has an @index that must be preserved
-		_, hasIndex := value["@index"]
-		typeVal, hasType := value["@type"]
-		languageVal, hasLanguage := value["@language"]
+	// 2
+	language := c.GetLanguageMapping(activeProperty)
 
-		preserveIndex := hasIndex && !isIndexContainer
+	// 3
+	direction := c.GetDirectionMapping(activeProperty)
 
-		// if there's no @index to preserve
-		if !preserveIndex {
-			// matching @type or @language specified in context, compact
-			if (hasType && typeVal == propType) || (hasLanguage && languageVal == language) {
-				return value["@value"]
-			}
-		}
+	isIndexContainer := c.HasContainerMapping(activeProperty, "@index")
+	// whether or not the value has an @index that must be preserved
+	_, hasIndex := value["@index"]
+	idVal, hasId := value["@id"]
+	typeVal, hasType := value["@type"]
+	//preserveIndex := hasIndex && !isIndexContainer
 
-		// return just the value of @value if all are true:
-		// 1. @value is the only key or @index isn't being preserved
-		// 2. there is no default language or @value is not a string or
-		// the key has a mapping with a null @language
-		keyCount := len(value)
-		isValueOnlyKey := keyCount == 1 || (keyCount == 2 && hasIndex && !preserveIndex)
-		_, hasDefaultLanguage := c.values["@language"]
-		_, isValueString := value["@value"].(string)
-		langEntry, hasLanguageEntry := c.GetTermDefinition(activeProperty)["@language"]
-		hasNullMapping := c.GetTermDefinition(activeProperty) != nil && hasLanguageEntry && langEntry == nil
-		if isValueOnlyKey && (!hasDefaultLanguage || !isValueString || hasNullMapping) {
-			return value["@value"]
-		}
-
-		rval := make(map[string]interface{})
-
-		// preserve @index
-		if preserveIndex {
-			indexAlias := c.CompactIri("@index", nil, false, false)
-			rval[indexAlias] = value["@index"]
-		}
-
-		// compact @type IRI
-		if hasType {
-			typeAlias := c.CompactIri("@type", nil, false, false)
-			rval[typeAlias] = c.CompactIri(typeVal.(string), nil, true, false)
-		} else if hasLanguage {
-			// alias @language
-			languageAlias := c.CompactIri("@language", nil, false, false)
-			rval[languageAlias] = languageVal
-		}
-
-		// alias @value
-		valueAlias := c.CompactIri("@value", nil, false, false)
-		rval[valueAlias] = value["@value"]
-
-		return rval
-	} else {
-		// value is a subject reference
-		expandedProperty, err := c.ExpandIri(activeProperty, false, true, nil, nil)
-		if err != nil {
-			return err
-		}
-		compacted := c.CompactIri(value["@id"].(string), nil, propType == "@vocab", false)
-
-		// compact to scalar
-		if propType == "@id" || propType == "@vocab" || expandedProperty == "@graph" {
-			return compacted
-		}
-
-		return map[string]interface{}{
-			c.CompactIri("@id", nil, false, false): compacted,
+	idOrIndex := true
+	for k := range value {
+		if k != "@id" && k != "@index" {
+			idOrIndex = false
+			break
 		}
 	}
+
+	propType, _ := c.GetTermDefinition(activeProperty)["@type"]
+
+	languageVal := value["@language"]
+	directionVal := value["@direction"]
+
+	if hasId && idOrIndex { // 4
+		if propType == "@id" { // 4.1
+			result = c.CompactIri(idVal.(string), nil, false, false)
+		} else if propType == "@vocab" { // 4.2
+			result = c.CompactIri(idVal.(string), nil, true, false)
+		} else {
+			result = map[string]interface{}{
+				c.CompactIri("@id", nil, true, false): c.CompactIri(idVal.(string), nil, false, false),
+			}
+		}
+	} else if hasType && typeVal == propType { // 5
+		// compact common datatype
+		result = value["@value"]
+	} else if propType == "@none" || (hasType && typeVal != propType) { // 6
+		// use original expanded value
+		result = value
+	} else if _, isString := value["@value"].(string); !isString && ((hasIndex && isIndexContainer) || !hasIndex) { // 7   // && hasIndex && isIndexContainer
+		result = value["@value"]
+		//if hasIndex && isIndexContainer {
+		//	result = value["@value"]
+		//}
+	} else if (languageVal == language) && directionVal == direction { // 8
+		// compact language and direction
+		if (hasIndex && isIndexContainer) || !hasIndex {
+			result = value["@value"]
+
+			return result
+		}
+	}
+
+	resultMap, isMap := result.(map[string]interface{})
+	if isMap && resultMap["@type"] != nil && value["@type"] != "@json" { // 6.1
+		// compact values of @type
+		if tt, isArray := resultMap["@type"].([]interface{}); isArray {
+			newTT := make([]interface{}, len(tt))
+			for i, t := range tt {
+				newTT[i] = c.CompactIri(t.(string), nil, true, false)
+			}
+			resultMap["@type"] = newTT
+		} else {
+			resultMap["@type"] = c.CompactIri(resultMap["@type"].(string), nil, true, false)
+		}
+	}
+
+	// 9
+	resultMap, isMap = result.(map[string]interface{})
+	if isMap {
+		newMap := make(map[string]interface{}, len(resultMap))
+		for k, v := range resultMap {
+			if k == "@index" && !(hasIndex && !isIndexContainer) {
+				//// don't preserve @index
+				continue
+			}
+			keyAlias := c.CompactIri(k, nil, true, false)
+			newMap[keyAlias] = v
+		}
+
+		result = newMap
+	}
+
+	return result
 }
 
 // processingMode returns true if the given version is compatible with the current processing mode
@@ -495,8 +530,8 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	}
 	if c.processingMode(1.1) {
 		validKeys["@context"] = true
-		//validKeys["@direction"] = true
-		//validKeys["@index"] = true
+		validKeys["@direction"] = true
+		validKeys["@index"] = true
 		validKeys["@nest"] = true
 		validKeys["@prefix"] = true
 		validKeys["@protected"] = true
@@ -771,6 +806,18 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		definition["_prefix"] = prefix
 	}
 
+	// handle direction
+	if directionVal, hasDirection := val["@direction"]; hasDirection {
+		if dir, isString := directionVal.(string); isString {
+			definition["@direction"] = strings.ToLower(dir)
+		} else if directionVal == nil {
+			definition["@direction"] = nil
+		} else {
+			return NewJsonLdError(InvalidBaseDirection,
+				fmt.Sprintf("direction must be null, 'ltr', or 'rtl', was %s on term %s", directionVal, term))
+		}
+	}
+
 	// nesting
 	if nestVal, hasNest := val["@nest"]; hasNest {
 		nest, isString := nestVal.(string)
@@ -922,7 +969,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 		return ""
 	}
 
-	inverseCtx := c.GetInverse()
+	inverseCtx := c.GetInverse() // TODO: optimise
 
 	// term is a keyword, force relativeToVocab to True
 	if IsKeyword(iri) {
@@ -942,13 +989,17 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 	// 2)
 	if relativeToVocab {
 		if _, containsIRI := inverseCtx[iri]; containsIRI {
-			// 2.1)
-			// TODO see pyLD, defaultLanguage is never used. It looks like a bug in their implementation.
-			//defaultLanguage := "@none"
-			//langVal, hasLang := c.values["@language"]
-			//if hasLang {
-			//	defaultLanguage = langVal.(string)
-			//}
+			var defaultLanguage string
+			langVal, hasLang := c.values["@language"]
+			if dir, dirFound := c.values["@direction"]; dirFound {
+				defaultLanguage = fmt.Sprintf("%s_%s", langVal, dir)
+			} else {
+				if hasLang {
+					defaultLanguage = langVal.(string)
+				} else {
+					defaultLanguage = "@none"
+				}
+			}
 
 			// 2.2)
 
@@ -1013,15 +1064,17 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 				}
 				// 2.6.2)
 				list := valueList.([]interface{})
+				var commonLanguage string
 				// 2.6.3)
 				if len(list) == 0 {
-					//commonLanguage = defaultLanguage
+					commonLanguage = defaultLanguage
 					typeLanguage = "@any"
 					typeLanguageValue = "@none"
 				} else {
-					commonLanguage := ""
+					commonLanguage = ""
 					commonType := ""
 					if len(list) == 0 {
+						// TODO
 						commonType = "@id"
 					}
 					// 2.6.4)
@@ -1033,7 +1086,15 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 						if IsValue(item) {
 							// 2.6.4.2.1)
 							itemMap := item.(map[string]interface{})
-							if langVal, hasLang := itemMap["@language"]; hasLang {
+							dirVal, hasDir := itemMap["@direction"]
+							langVal, hasLang := itemMap["@language"]
+							if hasDir {
+								if hasLang {
+									itemLanguage = fmt.Sprintf("%s_%s", itemMap["@language"], dirVal)
+								} else {
+									itemLanguage = fmt.Sprintf("_%s", dirVal)
+								}
+							} else if hasLang {
 								itemLanguage = langVal.(string)
 							} else if typeVal, hasType := itemMap["@type"]; hasType {
 								// 2.6.4.2.2)
@@ -1092,7 +1153,13 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 					_, hasIndex := valueMap["@index"]
 					if hasLang && !hasIndex {
 						containers = append(containers, "@language", "@language@set")
-						typeLanguageValue = langVal.(string)
+						if dir, hasDir := valueMap["@direction"]; hasDir {
+							typeLanguageValue = fmt.Sprintf("%s_%s", langVal, dir)
+						} else {
+							typeLanguageValue = langVal.(string)
+						}
+					} else if dir, hasDir := valueMap["@direction"]; hasDir && !hasIndex {
+						typeLanguageValue = fmt.Sprintf("_%s", dir)
 					} else if typeVal, hasType := valueMap["@type"]; hasType {
 						// 2.7.1.2)
 						typeLanguage = "@type"
@@ -1158,7 +1225,17 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 				// 2.13)
 				preferredValues = append(preferredValues, typeLanguageValue)
 			}
+
 			preferredValues = append(preferredValues, "@none")
+
+			// if containers included `@language` and preferred_values includes something
+			// of the form language-tag_direction, add just the _direction part, to select
+			//terms that have that direction.
+			for _, pv := range preferredValues {
+				if idx := strings.LastIndex(pv, "_"); idx != -1 {
+					preferredValues = append(preferredValues, pv[idx:])
+				}
+			}
 
 			// 2.14)
 			term := c.SelectTerm(iri, containers, typeLanguage, preferredValues)
@@ -1302,7 +1379,7 @@ func (c *Context) GetInverse() map[string]interface{} {
 		var containerJoin string // this implementation was adapted from pyLD
 		containerVal, present := definition["@container"]
 		if !present {
-			containerJoin = "@none"
+			containerJoin = "@none" // see Ruby, as_set?
 		} else {
 			container := containerVal.([]interface{})
 			strList := make([]string, 0, len(container))
@@ -1341,6 +1418,9 @@ func (c *Context) GetInverse() map[string]interface{} {
 			typeLanguageMap = typeLanguageMapVal.(map[string]interface{})
 		}
 
+		langVal, hasLang := definition["@language"]
+		dirVal, hasDir := definition["@direction"]
+
 		// 3.8)
 		if reverseVal, hasValue := definition["@reverse"]; hasValue && reverseVal.(bool) {
 			typeMap := typeLanguageMap["@type"].(map[string]interface{})
@@ -1353,8 +1433,21 @@ func (c *Context) GetInverse() map[string]interface{} {
 			if _, hasValue := typeMap["@type"]; !hasValue {
 				typeMap[typeVal.(string)] = term
 			}
-			// 3.10)
-		} else if langVal, hasValue := definition["@language"]; hasValue {
+		} else if hasLang && hasDir {
+			languageMap := typeLanguageMap["@language"].(map[string]interface{})
+			langDir := "@null"
+
+			if langVal != nil && dirVal != nil {
+				langDir = fmt.Sprintf("%s_%s", langVal.(string), dirVal.(string))
+			} else if langVal != nil {
+				langDir = langVal.(string)
+			} else if dirVal != nil {
+				langDir = "_" + dirVal.(string)
+			}
+			if _, hasLang := languageMap[langDir]; !hasLang {
+				languageMap[langDir] = term
+			}
+		} else if hasLang {
 			languageMap := typeLanguageMap["@language"].(map[string]interface{})
 			language := "@null"
 			if langVal != nil {
@@ -1363,7 +1456,34 @@ func (c *Context) GetInverse() map[string]interface{} {
 			if _, hasLang := languageMap[language]; !hasLang {
 				languageMap[language] = term
 			}
-			// 3.11)
+		} else if hasDir {
+			languageMap := typeLanguageMap["@language"].(map[string]interface{})
+			dir := "@none"
+			if dirVal != nil {
+				dir = "_" + dirVal.(string)
+			}
+			if _, hasLang := languageMap[dir]; !hasLang {
+				languageMap[dir] = term
+			}
+		} else if defDir, found := c.values["@direction"]; found {
+			languageMap := typeLanguageMap["@language"].(map[string]interface{})
+			typeMap := typeLanguageMap["@type"].(map[string]interface{})
+			var langDir string
+			if hasLang {
+				// does this ever happen? There is a check above for hasLang
+				langDir = fmt.Sprintf("%s_%s", langVal.(string), defDir.(string))
+			} else {
+				langDir = "_" + defDir.(string)
+			}
+			if _, hasLang := languageMap[langDir]; !hasLang {
+				languageMap[langDir] = term
+			}
+			if _, found := languageMap["@none"]; !found {
+				languageMap["@none"] = term
+			}
+			if _, found := typeMap["@none"]; !found {
+				typeMap["@none"] = term
+			}
 		} else {
 			// 3.11.1)
 			languageMap := typeLanguageMap["@language"].(map[string]interface{})
@@ -1483,20 +1603,35 @@ func (c *Context) GetTypeMapping(property string) string {
 }
 
 // GetLanguageMapping returns language mapping for the given property
-func (c *Context) GetLanguageMapping(property string) string {
-	rval := ""
-	if defaultLang, hasDefault := c.values["@language"]; hasDefault {
-		rval = defaultLang.(string)
-	}
-
+func (c *Context) GetLanguageMapping(property string) interface{} {
 	td := c.GetTermDefinition(property)
 	if td != nil {
-		if val, contains := td["@language"]; contains && val != nil {
-			return val.(string)
+		if val, found := td["@language"]; found {
+			return val
 		}
 	}
 
-	return rval
+	if defaultLang, hasDefault := c.values["@language"]; hasDefault {
+		return defaultLang
+	}
+
+	return nil
+}
+
+// GetDirectionMapping returns direction mapping for the given property
+func (c *Context) GetDirectionMapping(property string) interface{} {
+	td := c.GetTermDefinition(property)
+	if td != nil {
+		if val, found := td["@direction"]; found {
+			return val
+		}
+	}
+
+	if defaultDir, hasDefault := c.values["@direction"]; hasDefault {
+		return defaultDir
+	}
+
+	return nil
 }
 
 // GetTermDefinition returns a term definition for the given key
@@ -1509,7 +1644,10 @@ func (c *Context) GetTermDefinition(key string) map[string]interface{} {
 func (c *Context) ExpandValue(activeProperty string, value interface{}) (interface{}, error) {
 	var rval = make(map[string]interface{})
 	td := c.GetTermDefinition(activeProperty)
-	// 1)
+
+	// If the active property has a type mapping in active context that is @id, return a new JSON object
+	// containing a single key-value pair where the key is @id and the value is the result of using
+	// the IRI Expansion algorithm, passing active context, value, and true for document relative.
 	if td != nil && td["@type"] == "@id" {
 		if strVal, isString := value.(string); isString {
 			var err error
@@ -1522,7 +1660,9 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 		}
 		return rval, nil
 	}
-	// 2)
+	// If active property has a type mapping in active context that is @vocab, return a new JSON object
+	// containing a single key-value pair where the key is @id and the value is the result of using
+	// the IRI Expansion algorithm, passing active context, value, true for vocab, and true for document relative.
 	if td != nil && td["@type"] == "@vocab" {
 		if strVal, isString := value.(string); isString {
 			var err error
@@ -1535,21 +1675,29 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 		}
 		return rval, nil
 	}
+
 	// 3)
 	rval["@value"] = value
 	// 4)
 	if typeVal, containsType := td["@type"]; td != nil && containsType && typeVal != "@id" && typeVal != "@vocab" {
 		rval["@type"] = typeVal
-	} else if _, isString := value.(string); isString { // 5)
+	} else if _, isString := value.(string); isString {
 		// 5.1)
 		langVal, containsLang := td["@language"]
-		if td != nil && containsLang { // TODO: is "td != nil" necessary?
+		if containsLang {
 			if langVal != nil {
 				rval["@language"] = langVal.(string)
 			}
-		} else if langVal := c.values["@language"]; langVal != nil {
-			// 5.2)
-			rval["@language"] = langVal
+		} else if defaultLangVal, hasDefaultLang := c.values["@language"]; hasDefaultLang {
+			rval["@language"] = defaultLangVal
+		}
+		dirVal, containsDir := td["@direction"]
+		if containsDir {
+			if dirVal != nil {
+				rval["@direction"] = dirVal.(string)
+			}
+		} else if dirVal := c.values["@direction"]; dirVal != nil {
+			rval["@direction"] = dirVal
 		}
 	}
 	return rval, nil
@@ -1568,6 +1716,9 @@ func (c *Context) Serialize() map[string]interface{} {
 	}
 	if langVal, hasLang := c.values["@language"]; hasLang {
 		ctx["@language"] = langVal
+	}
+	if dirVal, hasDir := c.values["@direction"]; hasDir {
+		ctx["@direction"] = dirVal
 	}
 	if vocabVal, hasVocab := c.values["@vocab"]; hasVocab {
 		ctx["@vocab"] = vocabVal

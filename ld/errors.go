@@ -74,6 +74,7 @@ const (
 	ProtectedTermRedefinition   ErrorCode = "protected term redefinition"
 	InvalidContextMember        ErrorCode = "invalid context member"
 	InvalidPropagateValue       ErrorCode = "invalid @propagate value"
+	InvalidBaseDirection        ErrorCode = "invalid base direction"
 
 	// non spec related errors
 	SyntaxError    ErrorCode = "syntax error"
