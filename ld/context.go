@@ -254,22 +254,14 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			if vocabValue == nil {
 				delete(result.values, "@vocab")
 			} else if vocabString, isString := vocabValue.(string); isString {
-
-				if IsAbsoluteIri(vocabString) {
-					result.values["@vocab"] = vocabValue
-				} else if vocabString == "" {
-					if baseVal, hasBase := result.values["@base"]; hasBase {
-						result.values["@vocab"] = baseVal
-					} else {
-						return nil, NewJsonLdError(InvalidVocabMapping, "@vocab is empty but @base is not specified")
-					}
-				} else {
-					expandedVocab, err := result.ExpandIri(vocabString, true, true, nil, nil)
-					if err != nil {
-						return nil, err
-					}
-					result.values["@vocab"] = expandedVocab
+				if !IsAbsoluteIri(vocabString) && c.processingMode(1.0) {
+					return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode")
 				}
+				expandedVocab, err := result.ExpandIri(vocabString, true, true, nil, nil)
+				if err != nil {
+					return nil, err
+				}
+				result.values["@vocab"] = expandedVocab
 			} else {
 				return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be a string or null")
 			}
@@ -599,6 +591,21 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 					return NewJsonLdError(InvalidKeywordAlias, "cannot alias @context")
 				}
 				definition["@id"] = res
+
+				var checkRegex = regexp.MustCompile("(?::[^:])|\\/")
+				if checkRegex.Match([]byte(term)) {
+					defined[term] = true
+					termIRI, err := c.ExpandIri(term, false, true, context, defined)
+					if err != nil {
+						return err
+					}
+					if termIRI != res {
+						return NewJsonLdError(InvalidIRIMapping,
+							fmt.Sprintf("term %s expands to %s, not %s", term, res, termIRI),
+						)
+					}
+					delete(defined, term)
+				}
 
 				var regexExp = regexp.MustCompile(".*[:/\\?#\\[\\]@]$")
 				// NOTE: definition["_prefix"] is implemented in Python and JS libraries as follows:
