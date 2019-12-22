@@ -332,7 +332,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 			}
 			// 7.4.2)
 			_, containsKey := resultMap[expandedProperty]
-			if containsKey && expandedProperty != "@type" {
+			if containsKey && expandedProperty != "@type" && expandedProperty != "@included" {
 				return NewJsonLdError(CollidingKeywords, expandedProperty+" already exists in result")
 			}
 			// 7.4.3)
@@ -369,6 +369,28 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 				} else {
 					return NewJsonLdError(InvalidIDValue, "value of @id must be a string")
 				}
+			} else if expandedProperty == "@included" {
+				// Included blocks are treated as an array of separate object nodes sharing the same
+				// referencing active_property. For 1.0, it is skipped as are other unknown keywords
+				if activeCtx.processingMode(1.0) {
+					continue
+				}
+
+				ev, err := api.Expand(activeCtx, activeProperty, value, opts, false, nil)
+				if err != nil {
+					return err
+				}
+				includedResult := Arrayify(ev)
+				for _, v := range includedResult {
+					if !IsSubject(v) {
+						return NewJsonLdError(InvalidIncludedValue,
+							"values of @included must expand to node objects")
+					}
+				}
+				if prevIncluded, found := resultMap["@included"]; found {
+					includedResult = append(prevIncluded.([]interface{}), includedResult...)
+				}
+				expandedValue = includedResult
 			} else if expandedProperty == "@type" { // 7.4.4)
 				switch v := value.(type) {
 				case []interface{}:

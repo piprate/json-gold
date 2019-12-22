@@ -200,7 +200,6 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 			for _, expandedItem := range expandedValueList {
 				itemActiveProperty := activeCtx.CompactIri(expandedProperty, expandedItem, true, insideReverse)
-
 				isListContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@list")
 				isGraphContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@graph")
 				isSetContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@set")
@@ -296,6 +295,18 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 						// add compactedItem to map, using value of "@id" or a new blank node identifier
 						AddValue(mapObject, mapKey, compactedItem, asArray, true)
 					} else if isGraphContainer && IsSimpleGraph(expandedItemMap) {
+
+						// container includes @graph but not @id or @index and value is a
+						// simple graph object add compact value
+						// if compactedItem contains multiple values, it is wrapped in
+						// @included
+						compactedItemArray, isArray := compactedItem.([]interface{})
+						if isArray && len(compactedItemArray) > 1 {
+							compactedItem = map[string]interface{}{
+								"@included": compactedItem,
+							}
+						}
+
 						AddValue(nestResult, itemActiveProperty, compactedItem, asArray, true)
 					} else {
 						// wrap using @graph alias, remove array if only one item and compactArrays not set

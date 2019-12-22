@@ -75,6 +75,7 @@ const (
 	InvalidContextMember        ErrorCode = "invalid context member"
 	InvalidPropagateValue       ErrorCode = "invalid @propagate value"
 	InvalidBaseDirection        ErrorCode = "invalid base direction"
+	InvalidIncludedValue        ErrorCode = "invalid @included value"
 
 	// non spec related errors
 	SyntaxError    ErrorCode = "syntax error"

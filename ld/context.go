@@ -23,7 +23,7 @@ import (
 
 var (
 	ignoredKeywordPattern = regexp.MustCompile("^@[a-zA-Z]+$")
-	invalidPrefixPattern = regexp.MustCompile(":|/")
+	invalidPrefixPattern  = regexp.MustCompile(":|/")
 
 	nonTermDefKeys = map[string]bool{
 		"@base":      true,
