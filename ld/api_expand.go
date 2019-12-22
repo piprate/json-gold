@@ -141,6 +141,7 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 		// set the type-scoped context to the context on input, for use later
 		typeScopedContext = activeCtx
 
+		var typeKey string
 		// look for scoped context on @type
 		for _, key := range elemOrderedKeys {
 			expandedProperty, err := activeCtx.ExpandIri(key, false, true, nil, nil)
@@ -181,11 +182,13 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 						activeCtx = newCtx
 					}
 				}
+
+				typeKey = key
 			}
 		}
 
 		resultMap := make(map[string]interface{})
-		err = api.expandObject(activeCtx, activeProperty, expandedActiveProperty, elem, resultMap, opts,
+		err = api.expandObject(activeCtx, activeProperty, expandedActiveProperty, elem, resultMap, typeKey, opts,
 			typeScopedContext, frameExpansion)
 		if err != nil {
 			return nil, err
@@ -234,11 +237,16 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 					}
 				}
 			} else if hasType {
-				for _, v := range Arrayify(typeValue) {
-					vStr, isString := v.(string)
-					if !(isEmptyObject(v) || (isString && IsAbsoluteIri(vStr) && !strings.HasPrefix(vStr, "_:"))) {
-						return nil, NewJsonLdError(InvalidTypedValue,
-							"an element containing @value and @type must have an absolute IRI for the value of @type")
+				types := Arrayify(typeValue)
+				if activeCtx.processingMode(1.1) && len(types) == 1 && types[0] == "@json" {
+					// Any value of @value is okay if @type: @json
+				} else {
+					for _, v := range types {
+						vStr, isString := v.(string)
+						if !(isEmptyObject(v) || (isString && IsAbsoluteIri(vStr) && !strings.HasPrefix(vStr, "_:"))) {
+							return nil, NewJsonLdError(InvalidTypedValue,
+								"an element containing @value and @type must have an absolute IRI for the value of @type")
+						}
 					}
 				}
 			}
@@ -303,7 +311,20 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 	}
 }
 
-func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, expandedActiveProperty string, elem map[string]interface{}, resultMap map[string]interface{}, opts *JsonLdOptions, typeScopedContext *Context, frameExpansion bool) error {
+func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, expandedActiveProperty string, elem map[string]interface{}, resultMap map[string]interface{}, typeKey string, opts *JsonLdOptions, typeScopedContext *Context, frameExpansion bool) error {
+
+	inputType := elem[typeKey]
+	if inputType != nil {
+		if itArray, isArray := inputType.([]interface{}); isArray {
+			inputType = itArray[len(itArray)-1]
+		}
+		var err error
+		inputType, err = activeCtx.ExpandIri(inputType.(string), false, true, nil, nil)
+		if err != nil {
+			return err
+		}
+	}
+
 	// 6)
 	nests := make([]string, 0)
 	// 7)
@@ -432,12 +453,19 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 				}
 				expandedValue = Arrayify(expandedValue)
 			} else if expandedProperty == "@value" { // 7.4.6)
-				_, isMap := value.(map[string]interface{})
-				_, isList := value.([]interface{})
-				if value != nil && (isMap || isList) && !frameExpansion {
-					return NewJsonLdError(InvalidValueObjectValue, "value of "+
-						expandedProperty+" must be a scalar or null")
+				if inputType == "@json" && activeCtx.processingMode(1.1) {
+					// allow any value, to be verified when the object is fully expanded and
+					// the @type is @json.
+				} else {
+					_, isMap := value.(map[string]interface{})
+					_, isList := value.([]interface{})
+					if value != nil && (isMap || isList) && !frameExpansion {
+						return NewJsonLdError(InvalidValueObjectValue, "value of "+
+							expandedProperty+" must be a scalar or null")
+					}
+
 				}
+
 				expandedValue = value
 				if expandedValue == nil {
 					resultMap["@value"] = nil
@@ -707,6 +735,11 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 				if isList && IsList(expandedValue) {
 					return NewJsonLdError(ListOfLists, "lists of lists are not permitted")
 				}
+			} else if activeCtx.GetTermDefinition(key)["@type"] == "@json" {
+				expandedValue = map[string]interface{}{
+					"@type":  "@json",
+					"@value": value,
+				}
 			} else {
 				// 7.7)
 				expandedValue, err = api.Expand(termCtx, key, value, opts, false, nil)
@@ -835,7 +868,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 			if !isMap || hasValues {
 				return NewJsonLdError(InvalidNestValue, "nested value must be a node object")
 			}
-			err := api.expandObject(activeCtx, activeProperty, expandedActiveProperty, nv.(map[string]interface{}), resultMap, opts, typeScopedContext, frameExpansion)
+			err := api.expandObject(activeCtx, activeProperty, expandedActiveProperty, nv.(map[string]interface{}), resultMap, typeKey, opts, typeScopedContext, frameExpansion)
 			if err != nil {
 				return err
 			}

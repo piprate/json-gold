@@ -661,7 +661,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		if !isString {
 			return NewJsonLdError(InvalidTypeMapping, typeValue)
 		}
-		if typeStr != "@id" && typeStr != "@vocab" {
+		if typeStr != "@id" && typeStr != "@vocab" && typeStr != "@json" {
 			// expand @type to full IRI
 			var err error
 			typeStr, err = c.ExpandIri(typeStr, false, true, context, defined)

@@ -34,6 +34,7 @@ const (
 	RDFNil          string = RDFSyntaxNS + "nil"
 	RDFPlainLiteral string = RDFSyntaxNS + "PlainLiteral"
 	RDFXMLLiteral   string = RDFSyntaxNS + "XMLLiteral"
+	RDFJSONLiteral  string = RDFSyntaxNS + "JSON"
 	RDFObject       string = RDFSyntaxNS + "object"
 	RDFLangString   string = RDFSyntaxNS + "langString"
 	RDFList         string = RDFSyntaxNS + "List"
