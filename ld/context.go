@@ -23,6 +23,7 @@ import (
 
 var (
 	ignoredKeywordPattern = regexp.MustCompile("^@[a-zA-Z]+$")
+	invalidPrefixPattern = regexp.MustCompile(":|/")
 
 	nonTermDefKeys = map[string]bool{
 		"@base":      true,
@@ -800,8 +801,8 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 
 	// term may be used as prefix
 	if prefixVal, hasPrefix := val["@prefix"]; hasPrefix {
-		if termHasColon {
-			return NewJsonLdError(InvalidTermDefinition, "@context @prefix used on a compact IRI term")
+		if invalidPrefixPattern.Match([]byte(term)) {
+			return NewJsonLdError(InvalidTermDefinition, "@prefix used on compact or relative IRI term")
 		}
 		prefix, isBool := prefixVal.(bool)
 		if !isBool {
