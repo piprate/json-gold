@@ -524,7 +524,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	if c.processingMode(1.1) {
 		validKeys["@context"] = true
 		validKeys["@direction"] = true
-		validKeys["@index"] = true
+		//validKeys["@index"] = true
 		validKeys["@nest"] = true
 		validKeys["@prefix"] = true
 		validKeys["@protected"] = true
