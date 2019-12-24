@@ -739,6 +739,18 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 					return NewJsonLdError(InvalidContainerMapping, "@set can only be combined with one more type")
 				}
 			}
+
+			if _, hasType := containerValueMap["@type"]; hasType {
+				// if mapping does not have an @type, set it to @id
+				if _, tdHasType := definition["@type"]; !tdHasType {
+					definition["@type"] = "@id"
+				}
+
+				if definition["@type"] != "@id" && definition["@type"] != "@vocab" {
+					return NewJsonLdError(InvalidTypeMapping,
+						"container: @type requires @type to be @id or @vocab")
+				}
+			}
 		} else {
 			// json-ld-1.0
 			if _, isString := containerVal.(string); !isString {
@@ -1206,8 +1218,8 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 			// 2.11)
 
 			// 2.12)
-			if (typeLanguageValue == "@reverse" || typeLanguageValue == "@id") && IsSubjectReference(value) {
-				idVal := valueMap["@id"]
+			idVal, hasId := valueMap["@id"]
+			if (typeLanguageValue == "@reverse" || typeLanguageValue == "@id") && isObject && hasId {
 
 				if typeLanguageValue == "@reverse" {
 					preferredValues = append(preferredValues, "@reverse")

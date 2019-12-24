@@ -397,6 +397,19 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 							types = make([]interface{}, 0)
 						}
 
+						// if compactedItem contains a single entry whose key maps to @id, re-compact without @type
+						if len(compactedItemMap) == 1 {
+							if idVal, hasId := expandedItemMap["@id"]; hasId {
+								compactedItem, err = api.Compact(activeCtx, itemActiveProperty,
+									map[string]interface{}{
+										"@id": idVal,
+									}, compactArrays)
+								if err != nil {
+									return nil, err
+								}
+							}
+						}
+
 						if len(types) > 0 {
 							AddValue(compactedItemMap, typeKey, types, false, false, false)
 						}
