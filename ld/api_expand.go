@@ -51,15 +51,18 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 			if err != nil {
 				return nil, err
 			}
-			// 3.2.2)
+
 			if activeProperty == "@list" || activeCtx.HasContainerMapping(activeProperty, "@list") {
 				_, isList := v.([]interface{})
-				vMap, isMap := v.(map[string]interface{})
-				_, mapContainsList := vMap["@list"]
-				if isList || (isMap && mapContainsList) {
-					return nil, NewJsonLdError(ListOfLists, "lists of lists are not permitted.")
+				if isList {
+					// if the active property is @list or its container mapping is set to @list and v is an array,
+					// change it to a list object
+					v = map[string]interface{}{
+						"@list": v,
+					}
 				}
 			}
+
 			if v != nil {
 				// 3.2.3)
 				vList, isList := v.([]interface{})
@@ -541,13 +544,6 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 					expandedValue = expandedValueList
 				}
 
-				// 7.4.9.3)
-				for _, o := range expandedValueList {
-					oMap, isMap := o.(map[string]interface{})
-					if _, containsList := oMap["@list"]; isMap && containsList {
-						return NewJsonLdError(ListOfLists, "A list may not contain another list")
-					}
-				}
 			} else if expandedProperty == "@set" { // 7.4.10)
 				expandedValue, _ = api.Expand(activeCtx, activeProperty, value, opts, false, nil)
 			} else if expandedProperty == "@reverse" { // 7.4.11)
@@ -731,9 +727,6 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 				expandedValue, err = api.Expand(termCtx, nextActiveProperty, value, opts, false, nil)
 				if err != nil {
 					return err
-				}
-				if isList && IsList(expandedValue) {
-					return NewJsonLdError(ListOfLists, "lists of lists are not permitted")
 				}
 			} else if activeCtx.GetTermDefinition(key)["@type"] == "@json" {
 				expandedValue = map[string]interface{}{

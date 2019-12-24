@@ -127,7 +127,8 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 					if err != nil {
 						return nil, err
 					}
-					AddValue(graphs[activeGraph].(map[string]interface{})[itemName], reverseProperty, referencedNode, true, false)
+					AddValue(graphs[activeGraph].(map[string]interface{})[itemName], reverseProperty, referencedNode,
+						true, false, false)
 				}
 			}
 
@@ -171,7 +172,7 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 
 		// ensure property is added for empty arrays
 		if len(objects.([]interface{})) == 0 {
-			AddValue(subject, property, []interface{}{}, true, true)
+			AddValue(subject, property, []interface{}{}, true, false, true)
 		}
 
 		for _, o := range objects.([]interface{}) {
@@ -197,7 +198,7 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 				// add reference and recurse
 				AddValue(subject, property, map[string]interface{}{
 					"@id": id,
-				}, true, false)
+				}, true, false, false)
 				if _, err := api.GenerateNodeMap(o, graphs, activeGraph, issuer, id, nil); err != nil {
 					return nil, err
 				}
@@ -211,13 +212,13 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 				newO := map[string]interface{}{
 					"@list": oList,
 				}
-				AddValue(subject, property, newO, true, false)
+				AddValue(subject, property, newO, true, false, false)
 			} else {
 				// handle @value
 				if _, err := api.GenerateNodeMap(o, graphs, activeGraph, issuer, name, nil); err != nil {
 					return nil, err
 				}
-				AddValue(subject, property, o, true, false)
+				AddValue(subject, property, o, true, false, false)
 			}
 		}
 	}

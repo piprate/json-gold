@@ -30,7 +30,6 @@ type JsonLdError struct {
 
 const (
 	LoadingDocumentFailed       ErrorCode = "loading document failed"
-	ListOfLists                 ErrorCode = "list of lists"
 	InvalidIndexValue           ErrorCode = "invalid @index value"
 	ConflictingIndexes          ErrorCode = "conflicting indexes"
 	InvalidIDValue              ErrorCode = "invalid @id value"
@@ -60,7 +59,6 @@ const (
 	InvalidTypedValue           ErrorCode = "invalid typed value"
 	InvalidSetOrListObject      ErrorCode = "invalid set or list object"
 	InvalidLanguageMapValue     ErrorCode = "invalid language map value"
-	CompactionToListOfLists     ErrorCode = "compaction to list of lists"
 	InvalidReversePropertyMap   ErrorCode = "invalid reverse property map"
 	InvalidReverseValue         ErrorCode = "invalid @reverse value"
 	InvalidReversePropertyValue ErrorCode = "invalid reverse property value"
