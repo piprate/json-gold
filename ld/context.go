@@ -524,7 +524,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	if c.processingMode(1.1) {
 		validKeys["@context"] = true
 		validKeys["@direction"] = true
-		//validKeys["@index"] = true
+		validKeys["@index"] = true
 		validKeys["@nest"] = true
 		validKeys["@prefix"] = true
 		validKeys["@protected"] = true
@@ -792,6 +792,21 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		if term == "@type" {
 			definition["@id"] = "@type"
 		}
+	}
+
+	// property indexing
+	if indexVal, hasIndex := val["@index"]; hasIndex {
+		_, hasContainer := val["@container"]
+		_, tdHasContainer := definition["@container"]
+		if !hasContainer || !tdHasContainer {
+			return NewJsonLdError(InvalidTermDefinition,
+				fmt.Sprintf("@index without @index in @container: %s on term %s", indexVal, term))
+		}
+		if indexStr, isString := indexVal.(string); !isString || strings.HasPrefix(indexStr, "@") {
+			return NewJsonLdError(InvalidTermDefinition,
+				fmt.Sprintf("@index must expand to an IRI: %s on term %s", indexVal, term))
+		}
+		definition["@index"] = indexVal
 	}
 
 	// scoped contexts

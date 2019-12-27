@@ -129,7 +129,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				}
 
 				compValArray, isArray := compactedValue.([]interface{})
-				AddValue(result, alias, compactedValue, isArray && (len(compValArray) == 0 || isTypeContainer), false, true)
+				AddValue(result, alias, compactedValue, isArray && (len(compValArray) == 0 || isTypeContainer), false, true, false)
 				continue
 			}
 
@@ -144,7 +144,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 					if activeCtx.IsReverseProperty(property) {
 						useArray := activeCtx.HasContainerMapping(property, "@set") || !compactArrays
 
-						AddValue(result, property, value, useArray, false, true)
+						AddValue(result, property, value, useArray, false, true, false)
 
 						delete(compactedValue, property)
 					}
@@ -153,7 +153,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 				if len(compactedValue) > 0 {
 					alias := activeCtx.CompactIri("@reverse", nil, false, false)
-					AddValue(result, alias, compactedValue, false, false, true)
+					AddValue(result, alias, compactedValue, false, false, true, false)
 				}
 
 				continue
@@ -163,7 +163,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				// compact using activeProperty
 				compactedValue, _ := api.Compact(activeCtx, activeProperty, expandedValue, compactArrays)
 				if cva, isArray := compactedValue.([]interface{}); !(isArray && len(cva) == 0) {
-					AddValue(result, expandedProperty, compactedValue, false, false, true)
+					AddValue(result, expandedProperty, compactedValue, false, false, true, false)
 				}
 				continue
 			}
@@ -173,14 +173,14 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 			} else if expandedProperty == "@index" || expandedProperty == "@value" || expandedProperty == "@language" ||
 				expandedProperty == "@direction" {
 				alias := activeCtx.CompactIri(expandedProperty, nil, false, false)
-				AddValue(result, alias, expandedValue, false, false, true)
+				AddValue(result, alias, expandedValue, false, false, true, false)
 				continue
 			}
 
 			// skip array processing for keywords that aren't @graph or @list
 			if expandedProperty != "@graph" && expandedProperty != "@list" && IsKeyword(expandedProperty) {
 				alias := activeCtx.CompactIri(expandedProperty, nil, false, false)
-				AddValue(result, alias, expandedValue, false, false, true)
+				AddValue(result, alias, expandedValue, false, false, true, false)
 				continue
 			}
 
@@ -203,7 +203,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 					nestResult = result[nestProperty.(string)].(map[string]interface{})
 				}
 
-				AddValue(nestResult, itemActiveProperty, make([]interface{}, 0), true, false, true)
+				AddValue(nestResult, itemActiveProperty, make([]interface{}, 0), true, false, true, false)
 			}
 
 			for _, expandedItem := range expandedValueList {
@@ -271,7 +271,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 							wrapper[indexAlias] = indexVal
 						}
 					} else {
-						AddValue(nestResult, itemActiveProperty, compactedItem, true, true, true)
+						AddValue(nestResult, itemActiveProperty, compactedItem, true, true, true, false)
 						continue
 					}
 				}
@@ -301,7 +301,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 						}
 
 						// add compactedItem to map, using value of "@id" or a new blank node identifier
-						AddValue(mapObject, mapKey, compactedItem, asArray, false, true)
+						AddValue(mapObject, mapKey, compactedItem, asArray, false, true, false)
 					} else if isGraphContainer && IsSimpleGraph(expandedItemMap) {
 
 						// container includes @graph but not @id or @index and value is a
@@ -315,7 +315,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 							}
 						}
 
-						AddValue(nestResult, itemActiveProperty, compactedItem, asArray, false, true)
+						AddValue(nestResult, itemActiveProperty, compactedItem, asArray, false, true, false)
 					} else {
 						// wrap using @graph alias, remove array if only one item and compactArrays not set
 						compactedItemArray, isArray := compactedItem.([]interface{})
@@ -340,7 +340,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 							compactedItemMap[indexAlias] = val
 						}
 
-						AddValue(nestResult, itemActiveProperty, compactedItem, asArray, false, true)
+						AddValue(nestResult, itemActiveProperty, compactedItem, asArray, false, true, false)
 					}
 				} else if isLanguageContainer || isIndexContainer || isIdContainer || isTypeContainer {
 
@@ -364,8 +364,49 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 							mapKey = v.(string)
 						}
 					} else if isIndexContainer {
-						if v, found := expandedItemMap["@index"]; found {
-							mapKey = v.(string)
+						indexKey := activeCtx.GetTermDefinition(itemActiveProperty)["@index"]
+						if indexKey == nil {
+							indexKey = "@index"
+						}
+
+						containerKey := activeCtx.CompactIri(indexKey.(string), nil, true, false)
+
+						if indexKey == "@index" {
+							mapKey, _ = expandedItemMap["@index"].(string)
+							if compactedItemMap, isMap := compactedItem.(map[string]interface{}); isMap {
+								delete(compactedItemMap, containerKey)
+							}
+						} else {
+							var propsArray []interface{}
+							compactedItemMap, isMap := compactedItem.(map[string]interface{})
+							if isMap {
+								props, found := compactedItemMap[indexKey.(string)]
+								if found {
+									propsArray = Arrayify(props)
+								} else {
+									propsArray = make([]interface{}, 0)
+								}
+							}
+
+							var mapKeyVal interface{}
+							var others []interface{}
+							if len(propsArray) > 0 {
+								mapKeyVal = propsArray[0]
+								others = propsArray[1:]
+							}
+							var isString bool
+							if mapKey, isString = mapKeyVal.(string); !isString {
+								mapKey = ""
+							} else {
+								switch len(others) {
+								case 0:
+									delete(compactedItemMap, indexKey.(string))
+								case 1:
+									compactedItemMap[indexKey.(string)] = others[0]
+								default:
+									compactedItemMap[indexKey.(string)] = others
+								}
+							}
 						}
 					} else if isIdContainer {
 						idKey := activeCtx.CompactIri("@id", nil, false, false)
@@ -411,22 +452,22 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 						}
 
 						if len(types) > 0 {
-							AddValue(compactedItemMap, typeKey, types, false, false, false)
+							AddValue(compactedItemMap, typeKey, types, false, false, false, false)
 						}
 					}
 
 					if mapKey == "" {
-						mapKey = activeCtx.CompactIri("@none", nil, false, false)
+						mapKey = activeCtx.CompactIri("@none", nil, true, false)
 					}
 
-					AddValue(mapObject, mapKey, compactedItem, isSetContainer, false, true)
+					AddValue(mapObject, mapKey, compactedItem, isSetContainer, false, true, false)
 				} else {
 					compactedItemArray, isArray := compactedItem.([]interface{})
 
 					asArray := !compactArrays || isSetContainer || isListContainer ||
 						(isArray && len(compactedItemArray) == 0) || expandedProperty == "@list" ||
 						expandedProperty == "@graph"
-					AddValue(nestResult, itemActiveProperty, compactedItem, asArray, false, true)
+					AddValue(nestResult, itemActiveProperty, compactedItem, asArray, false, true, false)
 				}
 			}
 		}

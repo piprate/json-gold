@@ -160,7 +160,7 @@ func (api *JsonLdApi) mergeNodeMapGraphs(graphs map[string]interface{}) map[stri
 				} else {
 					// merge objects
 					for _, v := range node[property].([]interface{}) {
-						AddValue(mergedNode, property, CloneDocument(v), true, false, false)
+						AddValue(mergedNode, property, CloneDocument(v), true, false, false, false)
 					}
 				}
 			}
@@ -227,7 +227,7 @@ func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 
 		// keep track of objects having blank nodes
 		if strings.HasPrefix(id, "_:") {
-			AddValue(state.bnodeMap, id, output, true, false, true)
+			AddValue(state.bnodeMap, id, output, true, false, true, false)
 		}
 
 		// 5.3
@@ -298,7 +298,7 @@ func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 					// count bnode values of @type
 					for _, t := range subject[prop].([]interface{}) {
 						if strings.HasPrefix(t.(string), "_:") {
-							AddValue(state.bnodeMap, t.(string), output, true, false, true)
+							AddValue(state.bnodeMap, t.(string), output, true, false, true, false)
 						}
 					}
 				}
@@ -415,7 +415,7 @@ func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 								output["@reverse"] = outputReverse
 							}
 							AddValue(output["@reverse"], reverseProp, []interface{}{}, true,
-								false, true)
+								false, true, false)
 							var subframe map[string]interface{}
 							sf := reverse.(map[string]interface{})[reverseProp]
 							if sfArray, isArray := sf.([]interface{}); isArray {
@@ -606,7 +606,7 @@ func removeEmbed(state *FramingContext, id string) {
 		parentMap := parent.(map[string]interface{})
 		_, useArray := parentMap[property]
 		RemoveValue(parentMap, property, subject, useArray)
-		AddValue(parentMap, property, subject, useArray, false, true)
+		AddValue(parentMap, property, subject, useArray, false, true, false)
 	}
 	// recursively remove dependent dangling embeds
 	removeDependents(links, id)
@@ -825,7 +825,7 @@ func FilterSubject(state *FramingContext, subject map[string]interface{}, frame 
 // output: the output to add.
 func addFrameOutput(parent interface{}, property string, output interface{}) interface{} {
 	if parentMap, isMap := parent.(map[string]interface{}); isMap {
-		AddValue(parentMap, property, output, true, false, true)
+		AddValue(parentMap, property, output, true, false, true, false)
 		return parentMap
 	}
 

@@ -516,11 +516,10 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 					}
 					expandedValue = expandedValues
 				} else {
-					vStr, isString := value.(string)
-					if !isString {
+					if _, isString := value.(string); !isString {
 						return NewJsonLdError(InvalidBaseDirection, "@direction must be one of 'ltr', 'rtl'")
 					}
-					expandedValue = strings.ToLower(vStr)
+					expandedValue = value
 				}
 			} else if expandedProperty == "@index" { // 7.4.8)
 				_, isString := value.(string)
@@ -701,19 +700,33 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 			expandedValue = expandedValueList
 		} else if termCtx.HasContainerMapping(key, "@index") && isMap { // 7.6)
 			asGraph := termCtx.HasContainerMapping(key, "@graph")
-			expandedValue, err = api.expandIndexMap(termCtx, key, valueMap, "@index", asGraph, opts)
+			indexKey := termCtx.GetTermDefinition(key)["@index"]
+			if indexKey == nil {
+				indexKey = "@index"
+			}
+			var propertyIndex string
+			if indexKey != "@index" {
+				propertyIndex, err = activeCtx.ExpandIri(indexKey.(string), false, true, nil, nil)
+				if err != nil {
+					return err
+				}
+			}
+			expandedValue, err = api.expandIndexMap(termCtx, key, valueMap, indexKey.(string), asGraph, propertyIndex,
+				opts)
 			if err != nil {
 				return err
 			}
 		} else if termCtx.HasContainerMapping(key, "@id") && isMap {
 			asGraph := termCtx.HasContainerMapping(key, "@graph")
-			expandedValue, err = api.expandIndexMap(termCtx, key, valueMap, "@id", asGraph, opts)
+			expandedValue, err = api.expandIndexMap(termCtx, key, valueMap, "@id", asGraph, "",
+				opts)
 			if err != nil {
 				return err
 			}
 		} else if termCtx.HasContainerMapping(key, "@type") && isMap {
 			// since container is @type, revert type scoped context when expanding
-			expandedValue, err = api.expandIndexMap(termCtx.RevertToPreviousContext(), key, valueMap, "@type", false, opts)
+			expandedValue, err = api.expandIndexMap(termCtx.RevertToPreviousContext(), key, valueMap, "@type",
+				false, "", opts)
 			if err != nil {
 				return err
 			}
@@ -871,44 +884,62 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 	return nil
 }
 
-func (api *JsonLdApi) expandIndexMap(activeCtx *Context, activeProperty string, value map[string]interface{}, indexKey string, asGraph bool, opts *JsonLdOptions) (interface{}, error) {
+func (api *JsonLdApi) expandIndexMap(activeCtx *Context, activeProperty string, value map[string]interface{}, indexKey string, asGraph bool, propertyIndex string, opts *JsonLdOptions) (interface{}, error) {
 	// 7.6.1)
 	var expandedValueList []interface{}
 	// 7.6.2)
-	for _, index := range GetOrderedKeys(value) {
-		indexValue := value[index]
+	for _, key := range GetOrderedKeys(value) {
+		indexValue := value[key]
 
 		indexCtx := activeCtx
-		td := activeCtx.GetTermDefinition(index)
-		if ctx, hasCtx := td["@context"]; hasCtx {
-			newCtx, err := activeCtx.Parse(ctx)
-			if err != nil {
-				return nil, err
+		// if indexKey is @type, there may be a context defined for it
+		if indexKey == "@type" {
+			td := activeCtx.GetTermDefinition(key)
+			if ctx, hasCtx := td["@context"]; hasCtx {
+				newCtx, err := activeCtx.Parse(ctx)
+				if err != nil {
+					return nil, err
+				}
+				indexCtx = newCtx
 			}
-			indexCtx = newCtx
-		}
-
-		expandedIndex, err := indexCtx.ExpandIri(index, false, true, nil, nil)
-		if err != nil {
-			return nil, err
-		}
-		if indexKey == "@id" {
-			// expand document relative
-			index, err = indexCtx.ExpandIri(index, true, false, nil, nil)
-			if err != nil {
-				return nil, err
-			}
-		} else if indexKey == "@type" {
-			index = expandedIndex
 		}
 
 		// 7.6.2.1)
 		indexValue = Arrayify(indexValue)
 
 		// 7.6.2.2)
-		indexValue, err = api.Expand(indexCtx, activeProperty, indexValue, opts, true, nil)
+		indexValue, err := api.Expand(indexCtx, activeProperty, indexValue, opts, true, nil)
 		if err != nil {
 			return nil, err
+		}
+
+		// expand for @type, but also for @none
+		var expandedKey interface{}
+		if propertyIndex != "" {
+			if key == "@none" {
+				expandedKey = "@none"
+			} else {
+				expandedKeyVal, err := indexCtx.ExpandValue(indexKey, key)
+				if err != nil {
+					return nil, err
+				}
+				expandedKey = expandedKeyVal
+			}
+		} else {
+			expandedKey, err = indexCtx.ExpandIri(key, false, true, nil, nil)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if indexKey == "@id" {
+			// expand document relative
+			key, err = indexCtx.ExpandIri(key, true, false, nil, nil)
+			if err != nil {
+				return nil, err
+			}
+		} else if indexKey == "@type" {
+			key = expandedKey.(string)
 		}
 
 		// 7.6.2.3)
@@ -920,26 +951,31 @@ func (api *JsonLdApi) expandIndexMap(activeCtx *Context, activeProperty string, 
 			}
 			item := itemValue.(map[string]interface{})
 			if indexKey == "@type" {
-				if expandedIndex == "@none" {
+				if expandedKey == "@none" {
 					// ignore @none
-				} else {
-					t := []interface{}{index}
-					if types, hasType := item["@type"]; hasType {
-						switch v := types.(type) {
-						case string:
-							t = append(t, v)
-						case []interface{}:
-							for _, tt := range v {
-								t = append(t, tt.(string))
-							}
-						}
-
+				} else if types, hasType := item["@type"]; hasType {
+					switch v := types.(type) {
+					case string:
+						item["@type"] = []interface{}{key, v}
+					case []interface{}:
+						item["@type"] = append([]interface{}{key}, v...)
 					}
-					item["@type"] = t
+				} else {
+					item["@type"] = []interface{}{key}
 				}
-			} else if _, containsKey := item[indexKey]; !containsKey && expandedIndex != "@none" {
+			} else if IsValue(item) && indexKey != "@language" && indexKey != "@type" && indexKey != "@index" {
+				return nil, NewJsonLdError(InvalidValueObject,
+					fmt.Sprintf("Attempt to add illegal key to value object: %s", indexKey))
+			} else if propertyIndex != "" {
+				// index is a property to be expanded, and values interpreted for that property
+				if expandedKey != "@none" {
+					// expand key as a value
+					AddValue(item, propertyIndex, expandedKey, true, false, true, true)
+				}
+
+			} else if _, containsKey := item[indexKey]; !containsKey && expandedKey != "@none" {
 				// 7.6.2.3.1)
-				item[indexKey] = index
+				item[indexKey] = key
 			}
 
 			// 7.6.2.3.2)

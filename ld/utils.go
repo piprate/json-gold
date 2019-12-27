@@ -397,17 +397,26 @@ func HasValue(subject interface{}, property string, value interface{}) bool {
 //   [propertyIsArray] True if the property is always an array, False if not (default: False).
 //   [allowDuplicate] True to allow duplicates, False not to (uses a simple shallow comparison
 //   		of subject ID or value) (default: True).
-func AddValue(subject interface{}, property string, value interface{}, propertyIsArray, valueAsArray, allowDuplicate bool) {
+func AddValue(subject interface{}, property string, value interface{}, propertyIsArray, valueAsArray, allowDuplicate,
+	prependValue bool) {
+
 	subjMap, _ := subject.(map[string]interface{})
 	propVal, propertyFound := subjMap[property]
 	if valueAsArray {
 		subjMap[property] = value
 	} else if valueArray, isArray := value.([]interface{}); isArray {
-		if len(valueArray) == 0 && propertyIsArray && !propertyFound {
+		if prependValue {
+			if propertyIsArray {
+				valueArray = append(subjMap[property].([]interface{}), valueArray...)
+			} else {
+				valueArray = append([]interface{}{subjMap[property]}, valueArray...)
+			}
+			subjMap[property] = make([]interface{}, 0)
+		} else if len(valueArray) == 0 && propertyIsArray && !propertyFound {
 			subjMap[property] = make([]interface{}, 0)
 		}
 		for _, v := range valueArray {
-			AddValue(subject, property, v, propertyIsArray, valueAsArray, allowDuplicate)
+			AddValue(subject, property, v, propertyIsArray, valueAsArray, allowDuplicate, prependValue)
 		}
 	} else if propertyFound {
 		// check if subject already has value if duplicates not allowed
@@ -422,7 +431,11 @@ func AddValue(subject interface{}, property string, value interface{}, propertyI
 
 		// add new value
 		if !hasValue {
-			subjMap[property] = append(valArray, value)
+			if prependValue {
+				subjMap[property] = append([]interface{}{value}, valArray...)
+			} else {
+				subjMap[property] = append(valArray, value)
+			}
 		}
 	} else if propertyIsArray {
 		subjMap[property] = []interface{}{value}
