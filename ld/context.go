@@ -703,7 +703,11 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		if !isString {
 			return NewJsonLdError(InvalidTypeMapping, typeValue)
 		}
-		if typeStr != "@id" && typeStr != "@vocab" && typeStr != "@json" {
+		if (typeStr == "@json" || typeStr == "@none") && c.processingMode(1.0) {
+			return NewJsonLdError(InvalidTypeMapping,
+				fmt.Sprintf("unknown mapping for @type: %s on term %s", typeStr, term))
+		}
+		if typeStr != "@id" && typeStr != "@vocab" && typeStr != "@json" && typeStr != "@none" {
 			// expand @type to full IRI
 			var err error
 			typeStr, err = c.ExpandIri(typeStr, false, true, context, defined)
@@ -1291,19 +1295,18 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 					check = hasResultID && idVal == resultIDVal
 				}
 				if check {
-					preferredValues = append(preferredValues, "@vocab")
-					preferredValues = append(preferredValues, "@id")
+					preferredValues = append(preferredValues, "@vocab", "@id", "@none")
 				} else {
-					// 2.12.2)
-					preferredValues = append(preferredValues, "@id")
-					preferredValues = append(preferredValues, "@vocab")
+					preferredValues = append(preferredValues, "@id", "@vocab", "@none")
 				}
 			} else {
-				// 2.13)
-				preferredValues = append(preferredValues, typeLanguageValue)
+				if valueList, containsList := valueMap["@list"]; containsList && valueList == nil {
+					typeLanguage = "@any"
+				}
+				preferredValues = append(preferredValues, typeLanguageValue, "@none")
 			}
 
-			preferredValues = append(preferredValues, "@none")
+			preferredValues = append(preferredValues, "@any")
 
 			// if containers included `@language` and preferred_values includes something
 			// of the form language-tag_direction, add just the _direction part, to select
@@ -1316,6 +1319,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 
 			// 2.14)
 			term := c.SelectTerm(iri, containers, typeLanguage, preferredValues)
+
 			// 2.15)
 			if term != "" {
 				return term
@@ -1497,6 +1501,7 @@ func (c *Context) GetInverse() map[string]interface{} {
 
 		langVal, hasLang := definition["@language"]
 		dirVal, hasDir := definition["@direction"]
+		typeVal, hasType := definition["@type"]
 
 		// 3.8)
 		if reverseVal, hasValue := definition["@reverse"]; hasValue && reverseVal.(bool) {
@@ -1504,8 +1509,20 @@ func (c *Context) GetInverse() map[string]interface{} {
 			if _, hasValue := typeMap["@reverse"]; !hasValue {
 				typeMap["@reverse"] = term
 			}
-			// 3.9)
-		} else if typeVal, hasValue := definition["@type"]; hasValue {
+		} else if hasType && typeVal == "@none" {
+			typeMap := typeLanguageMap["@type"].(map[string]interface{})
+			if _, hasAny := typeMap["@any"]; !hasAny {
+				typeMap["@any"] = term
+			}
+			languageMap := typeLanguageMap["@language"].(map[string]interface{})
+			if _, hasAny := languageMap["@any"]; !hasAny {
+				languageMap["@any"] = term
+			}
+			anyMap := typeLanguageMap["@any"].(map[string]interface{})
+			if _, hasAny := anyMap["@any"]; !hasAny {
+				anyMap["@any"] = term
+			}
+		} else if hasType {
 			typeMap := typeLanguageMap["@type"].(map[string]interface{})
 			if _, hasValue := typeMap["@type"]; !hasValue {
 				typeMap[typeVal.(string)] = term
@@ -1756,7 +1773,8 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 	// 3)
 	rval["@value"] = value
 	// 4)
-	if typeVal, containsType := td["@type"]; td != nil && containsType && typeVal != "@id" && typeVal != "@vocab" {
+	if typeVal, containsType := td["@type"]; td != nil && containsType && typeVal != "@id" && typeVal != "@vocab" &&
+		typeVal != "@none" {
 		rval["@type"] = typeVal
 	} else if _, isString := value.(string); isString {
 		// 5.1)
