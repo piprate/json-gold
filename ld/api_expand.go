@@ -225,7 +225,7 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 					"value object must not include @type with either @language or @direction")
 			}
 			// 8.2)
-			if rval == nil {
+			if rval == nil && typeValue != "@json" {
 				// nothing else is possible with result if we set it to
 				// null, so simply return it
 				return nil, nil
@@ -315,16 +315,21 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 }
 
 func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, expandedActiveProperty string, elem map[string]interface{}, resultMap map[string]interface{}, typeKey string, opts *JsonLdOptions, typeScopedContext *Context, frameExpansion bool) error {
-
 	inputType := elem[typeKey]
 	if inputType != nil {
 		if itArray, isArray := inputType.([]interface{}); isArray {
-			inputType = itArray[len(itArray)-1]
+			if len(itArray) > 0 {
+				inputType = itArray[len(itArray)-1]
+			} else {
+				inputType = nil
+			}
 		}
-		var err error
-		inputType, err = activeCtx.ExpandIri(inputType.(string), false, true, nil, nil)
-		if err != nil {
-			return err
+		if inputType != nil {
+			var err error
+			inputType, err = activeCtx.ExpandIri(inputType.(string), false, true, nil, nil)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

@@ -50,7 +50,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 	// use any scoped context on active_property
 	td := activeCtx.GetTermDefinition(activeProperty)
 	if ctx, hasCtx := td["@context"]; hasCtx {
-		newCtx, err := activeCtx.Parse(ctx)
+		newCtx, err := activeCtx.Parse(ctx) // TODO override_protected: true
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +62,10 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 		// do value compaction on @values and subject references
 		if IsValue(elem) || IsSubjectReference(elem) {
 			compactedValue := activeCtx.CompactValue(activeProperty, elem)
-			return compactedValue, nil
+			propType := activeCtx.GetTermDefinition(activeProperty)["@type"]
+			if _, isMap := compactedValue.(map[string]interface{}); !isMap || propType == "@json" {
+				return compactedValue, nil
+			}
 		}
 
 		// if expanded property is @list and we're contained within a list container,
