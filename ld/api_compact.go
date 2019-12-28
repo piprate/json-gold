@@ -309,12 +309,14 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 						// container includes @graph but not @id or @index and value is a
 						// simple graph object add compact value
-						// if compactedItem contains multiple values, it is wrapped in
-						// @included
 						compactedItemArray, isArray := compactedItem.([]interface{})
 						if isArray && len(compactedItemArray) > 1 {
+							// multiple objects in the same graph can't be represented directly,
+							// as they would be interpreted as two different graphs.
+							// Need to wrap in @included.
+							includedKey := activeCtx.CompactIri("@included", nil, true, false)
 							compactedItem = map[string]interface{}{
-								"@included": compactedItem,
+								includedKey: compactedItem,
 							}
 						}
 
