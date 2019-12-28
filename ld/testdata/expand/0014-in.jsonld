@@ -13,7 +13,7 @@
     "set": "@set",
     "value": "@value",
     "type": "@type",
-    "xsd": { "@id": "http://www.w3.org/2001/XMLSchema#" }
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
   },
   "property1": {
     "uri": "ex:example2",

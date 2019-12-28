@@ -1,8 +1,0 @@
-[
-  {
-    "http://example.com/sealed1": [{
-      "http://example.com/sealed1": [{"@value": "this should have the property http://example.com/sealed1"}],
-      "http://example.com/sealed2": [{"@value": "this should have the property http://example.com/sealed2"}]
-    }]
-  }
-]
