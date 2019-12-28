@@ -74,6 +74,7 @@ const (
 	InvalidPropagateValue       ErrorCode = "invalid @propagate value"
 	InvalidBaseDirection        ErrorCode = "invalid base direction"
 	InvalidIncludedValue        ErrorCode = "invalid @included value"
+	InvalidImportValue          ErrorCode = "invalid @import value"
 
 	// non spec related errors
 	SyntaxError    ErrorCode = "syntax error"

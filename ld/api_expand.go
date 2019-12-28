@@ -125,7 +125,7 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 
 		if propertyScopedCtx != nil {
 			// apply property-scoped context after reverting term-scoped context
-			newCtx, err := activeCtx.parse(propertyScopedCtx, nil, false, true, true)
+			newCtx, err := activeCtx.parse(propertyScopedCtx, nil, false, true, false, true)
 			if err != nil {
 				return nil, err
 			}
@@ -178,7 +178,7 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 				for _, tt := range types {
 					td := typeScopedContext.GetTermDefinition(tt)
 					if ctx, hasCtx := td["@context"]; hasCtx {
-						newCtx, err := activeCtx.parse(ctx, nil, false, false, false)
+						newCtx, err := activeCtx.parse(ctx, nil, false, false, false, false)
 						if err != nil {
 							return nil, err
 						}
@@ -654,7 +654,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		if ctx, hasCtx := td["@context"]; hasCtx {
 			// TODO: fix calling a private method
 			//termCtx, err = activeCtx.Parse(ctx)
-			termCtx, err = activeCtx.parse(ctx, make([]string, 0), false, true, true)
+			termCtx, err = activeCtx.parse(ctx, make([]string, 0), false, true, false, true)
 			if err != nil {
 				return err
 			}

@@ -28,6 +28,7 @@ var (
 	nonTermDefKeys = map[string]bool{
 		"@base":      true,
 		"@direction": true,
+		"@import":    true,
 		"@language":  true,
 		"@protected": true,
 		"@version":   true,
@@ -113,7 +114,7 @@ func CopyContext(ctx *Context) *Context {
 // than just parsing the context. In particular, we need to check if additional logic is required
 // to load remote scoped contexts.
 func (c *Context) Parse(localContext interface{}) (*Context, error) {
-	return c.parse(localContext, make([]string, 0), false, true, false)
+	return c.parse(localContext, make([]string, 0), false, true, false, false)
 }
 
 // parse processes a local context, retrieving any URLs as necessary, and
@@ -122,7 +123,7 @@ func (c *Context) Parse(localContext interface{}) (*Context, error) {
 // If parsingARemoteContext is true, localContext represents a remote context
 // that has been parsed and sent into this method. This must be set to know
 // whether to propagate the @base key from the context to the result.
-func (c *Context) parse(localContext interface{}, remoteContexts []string, parsingARemoteContext, propagate, overrideProtected bool) (*Context, error) {
+func (c *Context) parse(localContext interface{}, remoteContexts []string, parsingARemoteContext, propagate, protected, overrideProtected bool) (*Context, error) {
 
 	// normalize local context to an array of @context objects
 	contexts := Arrayify(localContext)
@@ -196,7 +197,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			}
 
 			// 3.2.4
-			resultRef, err := result.parse(context, remoteContexts, true, true, overrideProtected)
+			resultRef, err := result.parse(context, remoteContexts, true, true, false, overrideProtected)
 			if err != nil {
 				return nil, err
 			}
@@ -230,6 +231,46 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			result.values["processingMode"] = pm
 		}
 
+		// handle @import
+		if importValue, importFound := contextMap["@import"]; importFound {
+			if result.processingMode(1.0) {
+				return nil, NewJsonLdError(InvalidContextMember, "@import may only be used in 1.1 mode")
+			}
+			importStr, isString := importValue.(string)
+			if !isString {
+				return nil, NewJsonLdError(InvalidImportValue, "@import must be a string")
+			}
+			uri := Resolve(result.values["@base"].(string), importStr)
+
+			rd, err := c.options.DocumentLoader.LoadDocument(uri)
+			if err != nil {
+				return nil, NewJsonLdError(LoadingRemoteContextFailed,
+					fmt.Sprintf("Dereferencing a URL did not result in a valid JSON-LD context: %s", uri))
+			}
+			importCtxDocMap, isMap := rd.Document.(map[string]interface{})
+			context, hasContextKey := importCtxDocMap["@context"]
+			if !isMap || !hasContextKey {
+				// If the de-referenced document has no top-level JSON object
+				// with an @context member
+				return nil, NewJsonLdError(InvalidRemoteContext, context)
+			}
+
+			if importCtxMap, isMap := context.(map[string]interface{}); isMap {
+				if _, found := importCtxMap["@import"]; found {
+					return nil, NewJsonLdError(InvalidContextMember,
+						fmt.Sprintf("%s must not include @import entry", importStr))
+				}
+
+				// merge import context into the outer context
+				for k, v := range contextMap {
+					importCtxMap[k] = v
+				}
+				contextMap = importCtxMap
+			} else {
+				return nil, NewJsonLdError(InvalidRemoteContext, fmt.Sprintf("%s must be an object", importStr))
+			}
+		}
+
 		// 3.4
 		baseValue, basePresent := contextMap["@base"]
 		if !parsingARemoteContext && basePresent {
@@ -247,24 +288,6 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 				}
 			} else {
 				return nil, NewJsonLdError(InvalidBaseIRI, "the value of @base in a @context must be a string or null")
-			}
-		}
-
-		// 3.5
-		if vocabValue, vocabPresent := contextMap["@vocab"]; vocabPresent {
-			if vocabValue == nil {
-				delete(result.values, "@vocab")
-			} else if vocabString, isString := vocabValue.(string); isString {
-				if !IsAbsoluteIri(vocabString) && c.processingMode(1.0) {
-					return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode")
-				}
-				expandedVocab, err := result.ExpandIri(vocabString, true, true, nil, nil)
-				if err != nil {
-					return nil, err
-				}
-				result.values["@vocab"] = expandedVocab
-			} else {
-				return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be a string or null")
 			}
 		}
 
@@ -312,11 +335,30 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			}
 		}
 
+		if vocabValue, vocabPresent := contextMap["@vocab"]; vocabPresent {
+			if vocabValue == nil {
+				delete(result.values, "@vocab")
+			} else if vocabString, isString := vocabValue.(string); isString {
+				if !IsAbsoluteIri(vocabString) && c.processingMode(1.0) {
+					return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode")
+				}
+				expandedVocab, err := result.ExpandIri(vocabString, true, true, nil, nil)
+				if err != nil {
+					return nil, err
+				}
+				result.values["@vocab"] = expandedVocab
+			} else {
+				return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be a string or null")
+			}
+		}
+
 		// handle @protected; determine whether this sub-context is declaring
 		// all its terms to be "protected" (exceptions can be made on a
 		// per-definition basis)
 		if protectedVal, protectedPresent := contextMap["@protected"]; protectedPresent {
 			defined["@protected"] = protectedVal.(bool)
+		} else if protected {
+			defined["@protected"] = true
 		}
 
 		for key := range contextMap {
