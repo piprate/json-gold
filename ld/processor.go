@@ -79,7 +79,10 @@ func (jldp *JsonLdProcessor) Compact(input interface{}, context interface{},
 		if len(compactedList) == 0 {
 			compacted = make(map[string]interface{})
 		} else {
-			compactedIRI := activeCtx.CompactIri("@graph", nil, false, false)
+			compactedIRI, err := activeCtx.CompactIri("@graph", nil, false, false)
+			if err != nil {
+				return nil, err
+			}
 			compacted = map[string]interface{}{
 				compactedIRI: compacted,
 			}
@@ -300,8 +303,14 @@ func (jldp *JsonLdProcessor) Flatten(input interface{}, context interface{}, opt
 		if _, isList := compacted.([]interface{}); !isList {
 			compacted = []interface{}{compacted}
 		}
-		alias := activeCtx.CompactIri("@graph", nil, false, false)
-		rval := activeCtx.Serialize()
+		alias, err := activeCtx.CompactIri("@graph", nil, false, false)
+		if err != nil {
+			return nil, err
+		}
+		rval, err := activeCtx.Serialize()
+		if err != nil {
+			return nil, err
+		}
 		rval[alias] = compacted
 		return rval, nil
 	}
@@ -376,9 +385,15 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 		bnodesToClear = make([]string, 0)
 	}
 
-	rval := activeCtx.Serialize()
+	rval, err := activeCtx.Serialize()
+	if err != nil {
+		return nil, err
+	}
 
-	graphAlias := activeCtx.CompactIri("@graph", nil, false, false)
+	graphAlias, err := activeCtx.CompactIri("@graph", nil, false, false)
+	if err != nil {
+		return nil, err
+	}
 	if _, isList := compacted.([]interface{}); isList {
 		rval[graphAlias] = compacted
 	} else if opts.OmitGraph {

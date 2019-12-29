@@ -75,6 +75,7 @@ const (
 	InvalidBaseDirection        ErrorCode = "invalid base direction"
 	InvalidIncludedValue        ErrorCode = "invalid @included value"
 	InvalidImportValue          ErrorCode = "invalid @import value"
+	IRIConfusedWithPrefix       ErrorCode = "IRI confused with prefix"
 
 	// non spec related errors
 	SyntaxError    ErrorCode = "syntax error"

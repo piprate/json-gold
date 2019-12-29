@@ -379,7 +379,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 
 // CompactValue performs value compaction on an object with @value or @id as the only property.
 // See https://www.w3.org/TR/2019/CR-json-ld11-api-20191212/#value-compaction
-func (c *Context) CompactValue(activeProperty string, value map[string]interface{}) interface{} {
+func (c *Context) CompactValue(activeProperty string, value map[string]interface{}) (interface{}, error) {
 
 	// 1
 	var result interface{} = value
@@ -409,15 +409,30 @@ func (c *Context) CompactValue(activeProperty string, value map[string]interface
 
 	languageVal := value["@language"]
 	directionVal := value["@direction"]
+	var err error
 
 	if hasId && idOrIndex { // 4
 		if propType == "@id" { // 4.1
-			result = c.CompactIri(idVal.(string), nil, false, false)
+			result, err = c.CompactIri(idVal.(string), nil, false, false)
+			if err != nil {
+				return nil, err
+			}
 		} else if propType == "@vocab" { // 4.2
-			result = c.CompactIri(idVal.(string), nil, true, false)
+			result, err = c.CompactIri(idVal.(string), nil, true, false)
+			if err != nil {
+				return nil, err
+			}
 		} else {
+			compactedID, err := c.CompactIri("@id", nil, true, false)
+			if err != nil {
+				return nil, err
+			}
+			compactedValue, err := c.CompactIri(idVal.(string), nil, false, false)
+			if err != nil {
+				return nil, err
+			}
 			result = map[string]interface{}{
-				c.CompactIri("@id", nil, true, false): c.CompactIri(idVal.(string), nil, false, false),
+				compactedID: compactedValue,
 			}
 		}
 	} else if hasType && typeVal == propType { // 5
@@ -436,22 +451,37 @@ func (c *Context) CompactValue(activeProperty string, value map[string]interface
 		if (hasIndex && isIndexContainer) || !hasIndex {
 			result = value["@value"]
 
-			return result
+			return result, nil
 		}
 	}
 
 	resultMap, isMap := result.(map[string]interface{})
 	if isMap && resultMap["@type"] != nil && value["@type"] != "@json" { // 6.1
+
+		// create a copy of result (because it can be the same map as 'value'
+		newMap := make(map[string]interface{}, len(resultMap))
+		for k, v := range resultMap {
+			newMap[k] = v
+		}
+
 		// compact values of @type
-		if tt, isArray := resultMap["@type"].([]interface{}); isArray {
+		if tt, isArray := newMap["@type"].([]interface{}); isArray {
 			newTT := make([]interface{}, len(tt))
 			for i, t := range tt {
-				newTT[i] = c.CompactIri(t.(string), nil, true, false)
+				newTT[i], err = c.CompactIri(t.(string), nil, true, false)
+				if err != nil {
+					return nil, err
+				}
 			}
-			resultMap["@type"] = newTT
+			newMap["@type"] = newTT
 		} else {
-			resultMap["@type"] = c.CompactIri(resultMap["@type"].(string), nil, true, false)
+			newMap["@type"], err = c.CompactIri(newMap["@type"].(string), nil, true, false)
+			if err != nil {
+				return nil, err
+			}
 		}
+
+		result = newMap
 	}
 
 	// 9
@@ -463,14 +493,17 @@ func (c *Context) CompactValue(activeProperty string, value map[string]interface
 				//// don't preserve @index
 				continue
 			}
-			keyAlias := c.CompactIri(k, nil, true, false)
+			keyAlias, err := c.CompactIri(k, nil, true, false)
+			if err != nil {
+				return nil, err
+			}
 			newMap[keyAlias] = v
 		}
 
 		result = newMap
 	}
 
-	return result
+	return result, nil
 }
 
 // processingMode returns true if the given version is compatible with the current processing mode
@@ -1048,10 +1081,10 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 // reverse: true if a reverse property is being compacted, false if not.
 //
 // Returns the compacted term, prefix, keyword alias, or original IRI.
-func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool, reverse bool) string {
+func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool, reverse bool) (string, error) {
 	// 1)
 	if iri == "" {
-		return ""
+		return "", nil
 	}
 
 	inverseCtx := c.GetInverse() // TODO: optimise
@@ -1063,7 +1096,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 			if v, found = v.(map[string]interface{})["@none"]; found {
 				if v, found = v.(map[string]interface{})["@type"]; found {
 					if v, found = v.(map[string]interface{})["@none"]; found {
-						return v.(string)
+						return v.(string), nil
 					}
 				}
 			}
@@ -1291,7 +1324,10 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 				}
 
 				// 2.12.1)
-				result := c.CompactIri(idVal.(string), nil, true, false)
+				result, err := c.CompactIri(idVal.(string), nil, true, false)
+				if err != nil {
+					return "", err
+				}
 				resultVal, hasResult := c.termDefinitions[result]
 				check := false
 				if hasResult {
@@ -1326,7 +1362,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 
 			// 2.15)
 			if term != "" {
-				return term
+				return term, nil
 			}
 		}
 
@@ -1340,7 +1376,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 				// active context
 				suffix := iri[len(vocab):]
 				if _, hasSuffix := c.termDefinitions[suffix]; !hasSuffix {
-					return suffix
+					return suffix, nil
 				}
 			}
 		}
@@ -1379,18 +1415,24 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 		}
 	}
 
-	// 6)
 	if compactIRI != "" {
-		return compactIRI
+		return compactIRI, nil
 	}
 
-	// 7)
+	for term, td := range c.termDefinitions {
+		if tdMap, isMap := td.(map[string]interface{}); isMap {
+			prefix, hasPrefix := tdMap["_prefix"]
+			if hasPrefix && prefix.(bool) && strings.HasPrefix(iri, term+":") {
+				return "", NewJsonLdError(IRIConfusedWithPrefix, fmt.Sprintf("Absolute IRI %s confused with prefix %s", iri, term))
+			}
+		}
+	}
+
 	if !relativeToVocab {
-		return RemoveBase(c.values["@base"], iri)
+		return RemoveBase(c.values["@base"], iri), nil
 	}
 
-	// 8)
-	return iri
+	return iri, nil
 }
 
 // GetPrefixes returns a map of potential RDF prefixes based on the JSON-LD Term Definitions
@@ -1803,7 +1845,7 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 }
 
 // Serialize transforms the context back into JSON form.
-func (c *Context) Serialize() map[string]interface{} {
+func (c *Context) Serialize() (map[string]interface{}, error) {
 	ctx := make(map[string]interface{})
 
 	baseVal, hasBase := c.values["@base"]
@@ -1839,7 +1881,11 @@ func (c *Context) Serialize() map[string]interface{} {
 			} else if IsKeyword(id) {
 				ctx[term] = id
 			} else {
-				cid = c.CompactIri(id.(string), nil, false, false)
+				var err error
+				cid, err = c.CompactIri(id.(string), nil, false, false)
+				if err != nil {
+					return nil, err
+				}
 				if term == cid {
 					ctx[term] = id
 				} else {
@@ -1849,7 +1895,10 @@ func (c *Context) Serialize() map[string]interface{} {
 			}
 		} else {
 			defn := make(map[string]interface{})
-			cid := c.CompactIri(definition["@id"].(string), nil, false, false)
+			cid, err := c.CompactIri(definition["@id"].(string), nil, false, false)
+			if err != nil {
+				return nil, err
+			}
 			reverseProperty := reverseVal.(bool)
 			if !(term == cid && !reverseProperty) {
 				if reverseProperty {
@@ -1863,7 +1912,10 @@ func (c *Context) Serialize() map[string]interface{} {
 				if IsKeyword(typeMapping) {
 					defn["@type"] = typeMapping
 				} else {
-					defn["@type"] = c.CompactIri(typeMapping, nil, true, false)
+					defn["@type"], err = c.CompactIri(typeMapping, nil, true, false)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 			if hasContainer {
@@ -1888,5 +1940,5 @@ func (c *Context) Serialize() map[string]interface{} {
 	if !(ctx == nil || len(ctx) == 0) {
 		rval["@context"] = ctx
 	}
-	return rval
+	return rval, nil
 }

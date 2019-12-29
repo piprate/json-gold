@@ -307,13 +307,16 @@ func isEmptyObject(v interface{}) bool {
 // compactArrays: compactArrays flag
 //
 // Returns the resulting output.
-func RemovePreserve(ctx *Context, input interface{}, bnodesToClear []string, compactArrays bool) interface{} {
+func RemovePreserve(ctx *Context, input interface{}, bnodesToClear []string, compactArrays bool) (interface{}, error) {
 
 	// recurse through arrays
 	if inputList, isList := input.([]interface{}); isList {
 		output := make([]interface{}, 0)
 		for _, i := range inputList {
-			result := RemovePreserve(ctx, i, bnodesToClear, compactArrays)
+			result, err := RemovePreserve(ctx, i, bnodesToClear, compactArrays)
+			if err != nil {
+				return nil, err
+			}
 			// drop nulls from arrays
 			if result != nil {
 				output = append(output, result)
@@ -324,24 +327,31 @@ func RemovePreserve(ctx *Context, input interface{}, bnodesToClear []string, com
 		// remove @preserve
 		if preserveVal, present := inputMap["@preserve"]; present {
 			if preserveVal == "@null" {
-				return nil
+				return nil, nil
 			}
-			return preserveVal
+			return preserveVal, nil
 		}
 
 		// skip @values
 		if _, hasValue := inputMap["@value"]; hasValue {
-			return input
+			return input, nil
 		}
 
 		// recurse through @lists
 		if listVal, hasList := inputMap["@list"]; hasList {
-			inputMap["@list"] = RemovePreserve(ctx, listVal, bnodesToClear, compactArrays)
-			return input
+			var err error
+			inputMap["@list"], err = RemovePreserve(ctx, listVal, bnodesToClear, compactArrays)
+			if err != nil {
+				return nil, err
+			}
+			return input, nil
 		}
 
 		// potentially remove the id, if it is an unreference bnode
-		idAlias := ctx.CompactIri("@id", nil, false, false)
+		idAlias, err := ctx.CompactIri("@id", nil, false, false)
+		if err != nil {
+			return nil, err
+		}
 		if id, hasID := inputMap[idAlias]; hasID {
 			for _, bnode := range bnodesToClear {
 				if id == bnode {
@@ -350,9 +360,15 @@ func RemovePreserve(ctx *Context, input interface{}, bnodesToClear []string, com
 			}
 		}
 		// recurse through properties
-		graphAlias := ctx.CompactIri("@graph", nil, false, false)
+		graphAlias, err := ctx.CompactIri("@graph", nil, false, false)
+		if err != nil {
+			return nil, err
+		}
 		for prop, propVal := range inputMap {
-			result := RemovePreserve(ctx, propVal, bnodesToClear, compactArrays)
+			result, err := RemovePreserve(ctx, propVal, bnodesToClear, compactArrays)
+			if err != nil {
+				return nil, err
+			}
 			isListContainer := ctx.HasContainerMapping(prop, "@list")
 			isSetContainer := ctx.HasContainerMapping(prop, "@set")
 			resultList, isList := result.([]interface{})
@@ -363,7 +379,7 @@ func RemovePreserve(ctx *Context, input interface{}, bnodesToClear []string, com
 		}
 	}
 
-	return input
+	return input, nil
 }
 
 // HasValue determines if the given value is a property of the given subject
