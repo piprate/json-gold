@@ -1,6 +1,6 @@
 {
   "@context": {
-    "dc": "http://purl.org/dc/elements/1.1/",
+    "dc11": "http://purl.org/dc/elements/1.1/",
     "ex": "http://example.org/vocab#",
     "ex:authored": {"@type": "@id"},
     "ex:contains": {"@type": "@id"},
@@ -9,8 +9,8 @@
   "@graph": [
     {
       "@id": "http://example.org/test#chapter",
-      "dc:description": "Fun",
-      "dc:title": "Chapter One"
+      "dc11:description": "Fun",
+      "dc11:title": "Chapter One"
     },
     {
       "@id": "http://example.org/test#jane",
@@ -25,8 +25,8 @@
       "@id": "http://example.org/test#library",
       "ex:contains": {
         "@id": "http://example.org/test#book",
-        "dc:contributor": "Writer",
-        "dc:title": "My Book",
+        "dc11:contributor": "Writer",
+        "dc11:title": "My Book",
         "http://example.org/vocab#contains": "this-is-not-an-IRI"
       }
     }
