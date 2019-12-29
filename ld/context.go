@@ -156,7 +156,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		if context == nil {
 			// We can't nullify if there are protected terms and we're
 			// not allowing overrides (e.g. processing a property term scoped context)
-			if !overrideProtected && len(c.protected) != 0 {
+			if !overrideProtected && len(result.protected) != 0 {
 				return nil, NewJsonLdError(InvalidContextNullification,
 					"tried to nullify a context with protected terms outside of a term definition.")
 			}
