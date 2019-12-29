@@ -103,12 +103,14 @@ func (dl *DefaultDocumentLoader) LoadDocument(u string) (*RemoteDocument, error)
 	} else {
 
 		req, err := http.NewRequest("GET", u, nil)
+		if err != nil {
+			return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		}
 		// We prefer application/ld+json, but fallback to application/json
 		// or whatever is available
 		req.Header.Add("Accept", acceptHeader)
 
 		res, err := dl.httpClient.Do(req)
-
 		if err != nil {
 			return nil, NewJsonLdError(LoadingDocumentFailed, err)
 		}
@@ -146,7 +148,7 @@ func (dl *DefaultDocumentLoader) LoadDocument(u string) (*RemoteDocument, error)
 }
 
 var rSplitOnComma = regexp.MustCompile("(?:<[^>]*?>|\"[^\"]*?\"|[^,])+")
-var rLinkHeader = regexp.MustCompile("\\s*<([^>]*?)>\\s*(?:;\\s*(.*))?")
+var rLinkHeader = regexp.MustCompile(`\s*<([^>]*?)>\s*(?:;\s*(.*))?`)
 var rParams = regexp.MustCompile("(.*?)=(?:(?:\"([^\"]*?)\")|([^\"]*?))\\s*(?:(?:;\\s*)|$)")
 
 // ParseLinkHeader parses a link header. The results will be keyed by the value of "rel".
@@ -329,6 +331,9 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 	} else {
 
 		req, err := http.NewRequest("GET", u, nil)
+		if err != nil {
+			return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		}
 		// We prefer application/ld+json, but fallback to application/json
 		// or whatever is available
 		req.Header.Add("Accept", acceptHeader)

@@ -71,7 +71,7 @@ func TestParseLinkHeader(t *testing.T) {
 func TestCachingDocumentLoaderLoadDocument(t *testing.T) {
 	cl := NewCachingDocumentLoader(NewDefaultDocumentLoader(nil))
 
-	cl.PreloadWithMapping(map[string]string{
+	_ = cl.PreloadWithMapping(map[string]string{
 		"http://www.example.com/expand/0002-in.jsonld": "testdata/expand/0002-in.jsonld",
 	})
 

@@ -62,10 +62,8 @@ func NewContext(values map[string]interface{}, options *JsonLdOptions) *Context 
 
 	context.values["@base"] = options.Base
 
-	if values != nil {
-		for k, v := range values {
-			context.values[k] = v
-		}
+	for k, v := range values {
+		context.values[k] = v
 	}
 
 	context.values["processingMode"] = options.ProcessingMode
@@ -405,7 +403,7 @@ func (c *Context) CompactValue(activeProperty string, value map[string]interface
 		}
 	}
 
-	propType, _ := c.GetTermDefinition(activeProperty)["@type"]
+	propType := c.GetTermDefinition(activeProperty)["@type"]
 
 	languageVal := value["@language"]
 	directionVal := value["@direction"]
@@ -672,7 +670,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 				}
 				definition["@id"] = res
 
-				var checkRegex = regexp.MustCompile("(?::[^:])|\\/")
+				var checkRegex = regexp.MustCompile(`(?::[^:])|\/`)
 				if checkRegex.Match([]byte(term)) {
 					defined[term] = true
 					termIRI, err := c.ExpandIri(term, false, true, context, defined)
@@ -687,7 +685,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 					delete(defined, term)
 				}
 
-				var regexExp = regexp.MustCompile(".*[:/\\?#\\[\\]@]$")
+				var regexExp = regexp.MustCompile(`.*[:/\?#\[\]@]$`)
 				// NOTE: definition["_prefix"] is implemented in Python and JS libraries as follows:
 				//
 				// definition["_prefix"] = !termHasColon && regexExp.Match([]byte(res)) && (simpleTerm || c.processingMode(1.0))
@@ -1087,7 +1085,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 		return "", nil
 	}
 
-	inverseCtx := c.GetInverse() // TODO: optimise
+	inverseCtx := c.GetInverse()
 
 	// term is a keyword, force relativeToVocab to True
 	if IsKeyword(iri) {
@@ -1175,91 +1173,77 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 				typeLanguageValue = "@reverse"
 				containers = append(containers, "@set")
 			} else if valueList, containsList := valueMap["@list"]; containsList {
-				// 2.6)
-				// 2.6.1)
+
 				if _, containsIndex := valueMap["@index"]; !containsIndex {
 					containers = append(containers, "@list")
 				}
-				// 2.6.2)
+
 				list := valueList.([]interface{})
+
+				var commonType string
 				var commonLanguage string
-				// 2.6.3)
 				if len(list) == 0 {
 					commonLanguage = defaultLanguage
-					typeLanguage = "@any"
-					typeLanguageValue = "@none"
-				} else {
-					commonLanguage = ""
-					commonType := ""
-					if len(list) == 0 {
-						// TODO
-						commonType = "@id"
-					}
-					// 2.6.4)
-					for _, item := range list {
-						// 2.6.4.1)
-						itemLanguage := "@none"
-						itemType := "@none"
-						// 2.6.4.2)
-						if IsValue(item) {
-							// 2.6.4.2.1)
-							itemMap := item.(map[string]interface{})
-							dirVal, hasDir := itemMap["@direction"]
-							langVal, hasLang := itemMap["@language"]
-							if hasDir {
-								if hasLang {
-									itemLanguage = fmt.Sprintf("%s_%s", itemMap["@language"], dirVal)
-								} else {
-									itemLanguage = fmt.Sprintf("_%s", dirVal)
-								}
-							} else if hasLang {
-								itemLanguage = langVal.(string)
-							} else if typeVal, hasType := itemMap["@type"]; hasType {
-								// 2.6.4.2.2)
-								itemType = typeVal.(string)
+					commonType = "@id"
+				}
+
+				for _, item := range list {
+					// 2.6.4.1)
+					itemLanguage := "@none"
+					itemType := "@none"
+					// 2.6.4.2)
+					if IsValue(item) {
+						// 2.6.4.2.1)
+						itemMap := item.(map[string]interface{})
+						dirVal, hasDir := itemMap["@direction"]
+						langVal, hasLang := itemMap["@language"]
+						if hasDir {
+							if hasLang {
+								itemLanguage = fmt.Sprintf("%s_%s", itemMap["@language"], dirVal)
 							} else {
-								// 2.6.4.2.3)
-								itemLanguage = "@null"
+								itemLanguage = fmt.Sprintf("_%s", dirVal)
 							}
+						} else if hasLang {
+							itemLanguage = langVal.(string)
+						} else if typeVal, hasType := itemMap["@type"]; hasType {
+							itemType = typeVal.(string)
 						} else {
-							// 2.6.4.3)
-							itemType = "@id"
+							itemLanguage = "@null"
 						}
-						// 2.6.4.4)
-						if commonLanguage == "" {
-							commonLanguage = itemLanguage
-						} else if commonLanguage != itemLanguage && IsValue(item) {
-							// 2.6.4.5)
-							commonLanguage = "@none"
-						}
-						// 2.6.4.6)
-						if commonType == "" {
-							commonType = itemType
-						} else if commonType != itemType {
-							// 2.6.4.7)
-							commonType = "@none"
-						}
-						// 2.6.4.8)
-						if commonLanguage == "@none" && commonType == "@none" {
-							break
-						}
+					} else {
+						itemType = "@id"
 					}
-					// 2.6.5)
+
 					if commonLanguage == "" {
+						commonLanguage = itemLanguage
+					} else if commonLanguage != itemLanguage && IsValue(item) {
 						commonLanguage = "@none"
 					}
-					// 2.6.6)
+
 					if commonType == "" {
+						commonType = itemType
+					} else if commonType != itemType {
 						commonType = "@none"
 					}
-					// 2.6.7)
-					if commonType != "@none" {
-						typeLanguage = "@type"
-						typeLanguageValue = commonType
-					} else {
-						// 2.6.8)
-						typeLanguageValue = commonLanguage
+
+					if commonLanguage == "@none" && commonType == "@none" {
+						break
 					}
+				}
+
+				if commonLanguage == "" {
+					commonLanguage = "@none"
+				}
+
+				if commonType == "" {
+					commonType = "@none"
+				}
+
+				if commonType != "@none" {
+					typeLanguage = "@type"
+					typeLanguageValue = commonType
+				} else {
+					typeLanguageValue = commonLanguage
 				}
 			} else {
 				// 2.7)
@@ -1937,7 +1921,7 @@ func (c *Context) Serialize() (map[string]interface{}, error) {
 	}
 
 	rval := make(map[string]interface{})
-	if !(ctx == nil || len(ctx) == 0) {
+	if len(ctx) != 0 {
 		rval["@context"] = ctx
 	}
 	return rval, nil

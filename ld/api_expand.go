@@ -67,9 +67,7 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 				// 3.2.3)
 				vList, isList := v.([]interface{})
 				if isList {
-					for _, vElement := range vList {
-						resultList = append(resultList, vElement)
-					}
+					resultList = append(resultList, vList...)
 				} else {
 					resultList = append(resultList, v)
 				}
@@ -282,11 +280,9 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 				}
 			}
 		}
-		var result interface{} = resultMap
 		// 11)
 		if _, hasLanguage := resultMap["@language"]; hasLanguage && len(resultMap) == 1 {
 			resultMap = nil
-			result = nil
 		}
 		// 12)
 		if activeProperty == "" || activeProperty == "@graph" {
@@ -296,14 +292,16 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 			_, hasID := resultMap["@id"]
 			if resultMap != nil && (len(resultMap) == 0 || hasValue || hasList) {
 				resultMap = nil
-				result = nil
 			} else if resultMap != nil && !frameExpansion && hasID && len(resultMap) == 1 { // 12.2)
 				resultMap = nil
-				result = nil
 			}
 		}
 		// 13)
-		return result, nil
+		if resultMap != nil {
+			return resultMap, nil
+		} else {
+			return nil, nil
+		}
 	default:
 		// 2) If element is a scalar
 		// 2.1)
@@ -542,11 +540,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 				expandedValue, _ = api.Expand(activeCtx, activeProperty, value, opts, false, nil)
 
 				// NOTE: step not in the spec yet
-				expandedValueList, isList := expandedValue.([]interface{})
-				if !isList {
-					expandedValueList = []interface{}{expandedValue}
-					expandedValue = expandedValueList
-				}
+				expandedValue = Arrayify(expandedValue)
 
 			} else if expandedProperty == "@set" { // 7.4.10)
 				expandedValue, _ = api.Expand(activeCtx, activeProperty, value, opts, false, nil)

@@ -105,7 +105,7 @@ func (api *JsonLdApi) Frame(input interface{}, frame []interface{}, opts *JsonLd
 	// 1.
 	// If frame is an array, set frame to the first member of the array.
 	var frameParam map[string]interface{}
-	if frame != nil && len(frame) > 0 {
+	if len(frame) > 0 {
 		frameParam = frame[0].(map[string]interface{})
 	} else {
 		frameParam = make(map[string]interface{})
@@ -329,7 +329,7 @@ func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 							// recurse into subject reference
 							itemid := listitem.(map[string]interface{})["@id"].(string)
 
-							subframe := make(map[string]interface{})
+							var subframe map[string]interface{}
 							if containsProp && IsList(framePropVal.([]interface{})[0]) {
 								subframe = framePropVal.([]interface{})[0].(map[string]interface{})["@list"].([]interface{})[0].(map[string]interface{})
 							} else {
@@ -347,7 +347,7 @@ func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 						}
 					}
 				} else {
-					subframe := make(map[string]interface{})
+					var subframe map[string]interface{}
 					if containsProp {
 						subframe = framePropVal.([]interface{})[0].(map[string]interface{})
 					} else {
@@ -856,9 +856,9 @@ func nodeMatch(state *FramingContext, pattern, value map[string]interface{}, req
 //     and `pattern[@language]` is `{}`, or `value[@language]` is None
 //     and `pattern[@language]` is None or `[]`
 func valueMatch(pattern, value map[string]interface{}) bool {
-	v2v, _ := pattern["@value"]
-	t2v, _ := pattern["@type"]
-	l2v, _ := pattern["@language"]
+	v2v := pattern["@value"]
+	t2v := pattern["@type"]
+	l2v := pattern["@language"]
 
 	if v2v == nil && t2v == nil && l2v == nil {
 		return true
@@ -877,9 +877,9 @@ func valueMatch(pattern, value map[string]interface{}) bool {
 		l2 = Arrayify(l2v)
 	}
 
-	v1, _ := value["@value"]
-	t1, _ := value["@type"]
-	l1, _ := value["@language"]
+	v1 := value["@value"]
+	t1 := value["@type"]
+	l1 := value["@language"]
 
 	if !(inArray(v1, v2) || (len(v2) > 0 && isEmptyObject(v2[0]))) {
 		return false

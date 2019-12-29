@@ -96,8 +96,6 @@ func (jldp *JsonLdProcessor) Compact(input interface{}, context interface{},
 		} else if contextMap, isMap := context.(map[string]interface{}); len(contextMap) > 0 || !isMap {
 			// otherwise keep the context as is
 			compactedMap["@context"] = context
-		} else {
-			// unless it's empty, then omit the context altogether
 		}
 	}
 
@@ -408,7 +406,11 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 		rval[graphAlias] = compacted
 	}
 
-	RemovePreserve(activeCtx, rval, bnodesToClear, opts.CompactArrays)
+	_, err = RemovePreserve(activeCtx, rval, bnodesToClear, opts.CompactArrays)
+	if err != nil {
+		return nil, err
+	}
+
 	return rval, nil
 }
 
@@ -512,7 +514,9 @@ func (jldp *JsonLdProcessor) ToRDF(input interface{}, opts *JsonLdOptions) (inte
 		}
 		for _, e := range _input {
 			if ctxVal, hasCtx := e["@context"]; hasCtx {
-				dataset.ParseContext(ctxVal, opts)
+				if err = dataset.ParseContext(ctxVal, opts); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}

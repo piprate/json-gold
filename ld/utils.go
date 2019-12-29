@@ -284,11 +284,9 @@ func (s ShortestLeast) Less(i, j int) bool {
 }
 
 func inArray(v interface{}, array []interface{}) bool {
-	if array != nil {
-		for _, x := range array {
-			if v == x {
-				return true
-			}
+	for _, x := range array {
+		if v == x {
+			return true
 		}
 	}
 	return false
