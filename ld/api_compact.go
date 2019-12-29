@@ -124,7 +124,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 			for _, tt := range types {
 				td := inputCtx.GetTermDefinition(tt)
 				if ctx, hasCtx := td["@context"]; hasCtx {
-					newCtx, err := activeCtx.parse(ctx, nil, false, false, false, true)
+					newCtx, err := activeCtx.parse(ctx, nil, false, false, false, false)
 					if err != nil {
 						return nil, err
 					}
