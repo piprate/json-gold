@@ -134,8 +134,8 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 	}
 
 	// override propagate if first resolved context has `@propagate`
-	firxtCtxMap, isMap := contexts[0].(map[string]interface{})
-	propagateVal, propagateFound := firxtCtxMap["@propagate"]
+	firstCtxMap, isMap := contexts[0].(map[string]interface{})
+	propagateVal, propagateFound := firstCtxMap["@propagate"]
 	if isMap && propagateFound {
 		// retrieve early, error checking done later
 		if propagateBool, isBool := propagateVal.(bool); isBool {
@@ -162,7 +162,11 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 				return nil, NewJsonLdError(InvalidContextNullification,
 					"tried to nullify a context with protected terms outside of a term definition.")
 			}
-			result = NewContext(nil, c.options)
+			nullCtx := NewContext(nil, c.options)
+			if !propagate {
+				nullCtx.previousContext = result
+			}
+			result = nullCtx
 			continue
 		}
 
