@@ -20,15 +20,15 @@ import (
 
 // GenerateNodeMap recursively flattens the subjects in the given JSON-LD expanded
 // input into a node map.
-func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]interface{}, activeGraph string,
+func (api *JsonLdApi) GenerateNodeMap(element interface{}, graphMap map[string]interface{}, activeGraph string,
 	issuer *IdentifierIssuer, name string, list []interface{}) ([]interface{}, error) {
 
 	// recurse through array
-	if elementList, isList := input.([]interface{}); isList {
+	if elementList, isList := element.([]interface{}); isList {
 		// 1.1)
 		for _, item := range elementList {
 			var err error
-			list, err = api.GenerateNodeMap(item, graphs, activeGraph, issuer, "", list)
+			list, err = api.GenerateNodeMap(item, graphMap, activeGraph, issuer, "", list)
 			if err != nil {
 				return nil, err
 			}
@@ -37,16 +37,16 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 	}
 
 	// add non-object to list
-	elem, isMap := input.(map[string]interface{})
+	elem, isMap := element.(map[string]interface{})
 	if !isMap {
 		if list != nil {
-			list = append(list, input)
+			list = append(list, element)
 		}
 		return list, nil
 	}
 
 	// add values to list
-	if IsValue(input) {
+	if IsValue(element) {
 		if typeVal, hasType := elem["@type"]; hasType {
 			// relabel @type blank node
 			typeStr := typeVal.(string)
@@ -56,8 +56,17 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 			}
 		}
 		if list != nil {
-			list = append(list, input)
+			list = append(list, element)
 		}
+		return list, nil
+	} else if list != nil && IsList(element) {
+		newList, err := api.GenerateNodeMap(elem["@list"], graphMap, activeGraph, issuer, name, make([]interface{}, 0))
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, map[string]interface{}{
+			"@list": newList,
+		})
 		return list, nil
 	}
 
@@ -93,7 +102,7 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 	// create new subject or merge into existing one
 	subject := setDefault(
 		setDefault(
-			graphs,
+			graphMap,
 			activeGraph,
 			make(map[string]interface{}),
 		).(map[string]interface{}),
@@ -123,11 +132,11 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 					if IsBlankNodeValue(item) {
 						itemName = issuer.GetId(itemName)
 					}
-					_, err := api.GenerateNodeMap(item, graphs, activeGraph, issuer, itemName, nil)
+					_, err := api.GenerateNodeMap(item, graphMap, activeGraph, issuer, itemName, nil)
 					if err != nil {
 						return nil, err
 					}
-					AddValue(graphs[activeGraph].(map[string]interface{})[itemName], reverseProperty, referencedNode,
+					AddValue(graphMap[activeGraph].(map[string]interface{})[itemName], reverseProperty, referencedNode,
 						true, false, false, false)
 				}
 			}
@@ -140,14 +149,14 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 		// recurse into graph
 		if property == "@graph" {
 			// add graph subjects map entry
-			if _, hasName := graphs[name]; !hasName {
-				graphs[name] = make(map[string]interface{})
+			if _, hasName := graphMap[name]; !hasName {
+				graphMap[name] = make(map[string]interface{})
 			}
 			g := name
 			if activeGraph == "@merged" {
 				g = "@merged"
 			}
-			_, err := api.GenerateNodeMap(objects, graphs, g, issuer, "", nil)
+			_, err := api.GenerateNodeMap(objects, graphMap, g, issuer, "", nil)
 			if err != nil {
 				return nil, err
 			}
@@ -199,14 +208,16 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 				AddValue(subject, property, map[string]interface{}{
 					"@id": id,
 				}, true, false, false, false)
-				if _, err := api.GenerateNodeMap(o, graphs, activeGraph, issuer, id, nil); err != nil {
+				if _, err := api.GenerateNodeMap(o, graphMap, activeGraph, issuer, id, nil); err != nil {
 					return nil, err
 				}
+			} else if IsValue(o) {
+				AddValue(subject, property, o, true, false, false, false)
 			} else if IsList(o) {
 				// handle @list
 				oList := make([]interface{}, 0)
 				var err error
-				if oList, err = api.GenerateNodeMap(o.(map[string]interface{})["@list"], graphs, activeGraph, issuer, name, oList); err != nil {
+				if oList, err = api.GenerateNodeMap(o.(map[string]interface{})["@list"], graphMap, activeGraph, issuer, name, oList); err != nil {
 					return nil, err
 				}
 				newO := map[string]interface{}{
@@ -215,7 +226,7 @@ func (api *JsonLdApi) GenerateNodeMap(input interface{}, graphs map[string]inter
 				AddValue(subject, property, newO, true, false, false, false)
 			} else {
 				// handle @value
-				if _, err := api.GenerateNodeMap(o, graphs, activeGraph, issuer, name, nil); err != nil {
+				if _, err := api.GenerateNodeMap(o, graphMap, activeGraph, issuer, name, nil); err != nil {
 					return nil, err
 				}
 				AddValue(subject, property, o, true, false, false, false)
