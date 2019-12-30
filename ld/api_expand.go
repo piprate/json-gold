@@ -153,8 +153,9 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 				// set scoped contexts from @type
 				types := make([]string, 0)
 
-				if valArray, isArray := elem[key].([]interface{}); isArray {
-					for _, t := range valArray {
+				switch v := elem[key].(type) {
+				case []interface{}:
+					for _, t := range v {
 						if typeStr, isString := t.(string); isString {
 							types = append(types, typeStr)
 						} else {
@@ -164,13 +165,16 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 					}
 					// process in lexicographical order, see https://github.com/json-ld/json-ld.org/issues/616
 					sort.Strings(types)
-				} else {
-					if v, isString := elem[key].(string); isString {
-						types = append(types, v)
-					} else {
+				case string:
+					types = append(types, v)
+				case map[string]interface{}:
+					if !frameExpansion {
 						return nil, NewJsonLdError(InvalidTypeValue,
 							"@type value must be a string or array of strings")
 					}
+				default:
+					return nil, NewJsonLdError(InvalidTypeValue,
+						"@type value must be a string or array of strings")
 				}
 
 				for _, tt := range types {
@@ -320,6 +324,13 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 				inputType = itArray[len(itArray)-1]
 			} else {
 				inputType = nil
+			}
+		}
+		if _, isMap := inputType.(map[string]interface{}); isMap {
+			if frameExpansion {
+				inputType = nil
+			} else {
+				return NewJsonLdError(InvalidTypedValue, "@type value must be a string or array of strings")
 			}
 		}
 		if inputType != nil {

@@ -377,7 +377,10 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 		return nil, err
 	}
 
-	compacted, _ := api.Compact(activeCtx, "", framed, opts.CompactArrays)
+	compacted, err := api.Compact(activeCtx, "", framed, opts.CompactArrays)
+	if err != nil {
+		return nil, err
+	}
 
 	if opts.ProcessingMode == JsonLd_1_0 {
 		// don't prune blank nodes in JSON-LD 1.1 mode
