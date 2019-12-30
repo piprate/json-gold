@@ -235,12 +235,13 @@ func (jldp *JsonLdProcessor) Flatten(input interface{}, context interface{}, opt
 	// http://json-ld.org/spec/latest/json-ld-api/#flattening-algorithm
 
 	// 1)
-	nodeMap := make(map[string]interface{})
-	nodeMap["@default"] = make(map[string]interface{})
+	nodeMap := map[string]interface{}{
+		"@default": make(map[string]interface{}),
+	}
 	// 2)
 	api := NewJsonLdApi()
 	issuer := NewIdentifierIssuer("_:b")
-	if _, err = api.GenerateNodeMap(expanded, nodeMap, "@default", issuer, "", nil); err != nil {
+	if _, err = api.GenerateNodeMap(expanded, nodeMap, "@default", issuer, nil, "", nil); err != nil {
 		return nil, err
 	}
 

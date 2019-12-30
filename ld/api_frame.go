@@ -87,7 +87,7 @@ func (api *JsonLdApi) Frame(input interface{}, frame []interface{}, opts *JsonLd
 
 	// produce a map of all graphs and name each bnode
 	issuer := NewIdentifierIssuer("_:b")
-	if _, err := api.GenerateNodeMap(input, state.graphMap, "@default", issuer, "", nil); err != nil {
+	if _, err := api.GenerateNodeMap(input, state.graphMap, "@default", issuer, "", "", nil); err != nil {
 		return nil, nil, err
 	}
 
