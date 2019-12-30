@@ -1,9 +1,9 @@
 {
-  "@context": "context.jsonld",
+  "@context": ["context.jsonld", {"@base": "flatten-manifest"}],
   "@id": "",
   "@type": "mf:Manifest",
   "name": "Flattening",
-  "description": "JSON-LD flattening tests use object comparison.",
+  "description": "JSON-LD Flattening tests.",
   "baseIri": "https://w3c.github.io/json-ld-api/tests/",
   "sequence": [
     {
@@ -103,7 +103,8 @@
       "name": "@set of @value objects with keyword aliases",
       "purpose": "Flattening aliased @set and @value",
       "input": "flatten/0014-in.jsonld",
-      "expect": "flatten/0014-out.jsonld"
+      "expect": "flatten/0014-out.jsonld",
+      "option": {"specVersion": "json-ld-1.0"}
     }, {
       "@id": "#t0015",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
@@ -187,7 +188,8 @@
       "name": "Term definition with @id: @type",
       "purpose": "Flattening term mapping to @type uses @type syntax",
       "input": "flatten/0026-in.jsonld",
-      "expect": "flatten/0026-out.jsonld"
+      "expect": "flatten/0026-out.jsonld",
+      "option": {"specVersion": "json-ld-1.0"}
     }, {
       "@id": "#t0027",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
@@ -263,7 +265,7 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
       "name": "Flattening blank node labels",
       "purpose": "Blank nodes are not relabeled during expansion",
-      "option": {"processingMode": "json-ld-1.0"},
+      "option": {"specVersion": "json-ld-1.0"},
       "input": "flatten/0038-in.jsonld",
       "expect": "flatten/0038-out.jsonld"
     }, {
@@ -342,59 +344,73 @@
       "input": "flatten/0048-in.jsonld",
       "expect": "flatten/0048-out.jsonld"
     }, {
+      "@id": "#t0049",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
+      "name": "context with JavaScript Object property names",
+      "purpose": "Flatten with context including JavaScript Object property names",
+      "input": "flatten/0049-in.jsonld",
+      "expect": "flatten/0049-out.jsonld"
+    }, {
       "@id": "#te001",
       "@type": [ "jld:NegativeEvaluationTest", "jld:FlattenTest" ],
       "name": "Conflicting indexes",
       "purpose": "Verifies that an exception is raised in Flattening when conflicting indexes are found",
       "option": {"specVersion": "json-ld-1.1"},
       "input": "flatten/e001-in.jsonld",
-      "expect": "conflicting indexes"
+      "expectErrorCode": "conflicting indexes"
     }, {
-      "@id": "#th001",
+      "@id": "#tin01",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
-      "name": "Flattens embedded JSON-LD script element",
-      "purpose": "Tests embedded JSON-LD in HTML",
-      "input": "flatten/h001-in.html",
-      "context": "flatten/h001-context.jsonld",
-      "expect": "flatten/h001-out.jsonld",
-      "skip": true,
+      "name": "Basic Included array",
+      "purpose": "Tests included maps.",
+      "input": "flatten/in01-in.jsonld",
+      "expect": "flatten/in01-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
     }, {
-      "@id": "#th002",
+      "@id": "#tin02",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
-      "name": "Flattens first embedded JSON-LD script element",
-      "purpose": "Tests embedded JSON-LD in HTML",
-      "input": "flatten/h002-in.html",
-      "context": "flatten/h002-context.jsonld",
-      "expect": "flatten/h002-out.jsonld",
-      "skip": true,
-      "option": {"specVersion": "json-ld-1.1", "extractAllScripts": false}
-    }, {
-      "@id": "#th003",
-      "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
-      "name": "Flattens targeted JSON-LD script element",
-      "purpose": "Tests embedded JSON-LD in HTML with fragment identifier",
-      "input": "flatten/h003-in.html#second",
-      "context": "flatten/h003-context.jsonld",
-      "expect": "flatten/h003-out.jsonld",
-      "skip": true,
+      "name": "Basic Included object",
+      "purpose": "Tests included maps.",
+      "input": "flatten/in02-in.jsonld",
+      "expect": "flatten/in02-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
     }, {
-      "@id": "#th004",
+      "@id": "#tin03",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
-      "name": "Flattens all script elements by default",
-      "purpose": "Tests embedded JSON-LD in HTML with fragment identifier",
-      "input": "flatten/h004-in.html",
-      "context": "flatten/h004-context.jsonld",
-      "expect": "flatten/h004-out.jsonld",
-      "skip": true,
+      "name": "Multiple properties mapping to @included are folded together",
+      "purpose": "Tests included maps.",
+      "input": "flatten/in03-in.jsonld",
+      "expect": "flatten/in03-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tin04",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
+      "name": "Included containing @included",
+      "purpose": "Tests included maps.",
+      "input": "flatten/in04-in.jsonld",
+      "expect": "flatten/in04-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tin05",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
+      "name": "Property value with @included",
+      "purpose": "Tests included maps.",
+      "input": "flatten/in05-in.jsonld",
+      "expect": "flatten/in05-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#tin06",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
+      "name": "json.api example",
+      "purpose": "Tests included maps.",
+      "input": "flatten/in06-in.jsonld",
+      "expect": "flatten/in06-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#tli01",
       "@type": [ "jld:PositiveEvaluationTest", "jld:FlattenTest" ],
       "name": "@list containing an deep list",
       "purpose": "Lists of lists",
-      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "flatten/li01-in.jsonld",
       "expect": "flatten/li01-out.jsonld"
@@ -403,7 +419,6 @@
       "@type": [ "jld:PositiveEvaluationTest", "jld:FlattenTest" ],
       "name": "@list containing empty @list",
       "purpose": "Lists of lists",
-      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "flatten/li02-in.jsonld",
       "expect": "flatten/li02-out.jsonld"
@@ -412,7 +427,6 @@
       "@type": [ "jld:PositiveEvaluationTest", "jld:FlattenTest" ],
       "name": "@list containing mixed list values",
       "purpose": "Lists of lists",
-      "skip": true,
       "option": {"specVersion": "json-ld-1.1"},
       "input": "flatten/li03-in.jsonld",
       "expect": "flatten/li03-out.jsonld"
