@@ -237,36 +237,10 @@ func (ds *RDFDataset) GraphToRDF(graphName string, graph map[string]interface{},
 			}
 
 			for _, item := range values {
-				// convert @list to triples
-				itemMap, isMap := item.(map[string]interface{})
-				listVal, hasList := itemMap["@list"]
-				if isMap && hasList {
-					list := listVal.([]interface{})
-					var last Node
-					var firstBNode Node
-					firstBNode = nilIRI
-					if len(list) > 0 {
-						last = objectToRDF(list[len(list)-1])
-						firstBNode = NewBlankNode(issuer.GetId(""))
-					}
-					triples = append(triples, NewQuad(subject, predicate, firstBNode, graphName))
-					for i := 0; i < len(list)-1; i++ {
-						object := objectToRDF(list[i])
-						triples = append(triples, NewQuad(firstBNode, first, object, graphName))
-						restBNode := NewBlankNode(issuer.GetId(""))
-						triples = append(triples, NewQuad(firstBNode, rest, restBNode, graphName))
-						firstBNode = restBNode
-					}
-					if last != nil {
-						triples = append(triples, NewQuad(firstBNode, first, last, graphName))
-						triples = append(triples, NewQuad(firstBNode, rest, nilIRI, graphName))
-					}
-				} else {
-					// convert value or node object to triple
-					object := objectToRDF(item)
-					if object != nil {
-						triples = append(triples, NewQuad(subject, predicate, object, graphName))
-					}
+				var object Node
+				object, triples = objectToRDF(item, issuer, graphName, triples)
+				if object != nil {
+					triples = append(triples, NewQuad(subject, predicate, object, graphName))
 				}
 			}
 		}
