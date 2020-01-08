@@ -152,7 +152,10 @@ func (api *JsonLdApi) FromRDF(dataset *RDFDataset, opts *JsonLdOptions) ([]inter
 			}
 
 			// 3.5.5)
-			value, _ := rdfToObject(object, opts.UseNativeTypes)
+			value, err := rdfToObject(object, opts.UseNativeTypes)
+			if err != nil {
+				return nil, err
+			}
 
 			// 3.5.6+7)
 			MergeValue(node.Values, predicate, value)
@@ -202,26 +205,12 @@ func (api *JsonLdApi) FromRDF(dataset *RDFDataset, opts *JsonLdOptions) ([]inter
 				node = nodeUsage.node
 				property = nodeUsage.property
 				head = nodeUsage.value
-				// 4.3.3.5)
+				// if node is not a blank node, then list head found
 				if !IsBlankNodeValue(node.Values) {
 					break
 				}
 			}
 
-			// 4.3.4)
-			if property == RDFFirst {
-				// 4.3.4.1)
-				if node.Values["@id"] == RDFNil {
-					continue
-				}
-				// 4.3.4.3)
-				headID := head["@id"].(string)
-				// 4.3.4.4-5)
-				head = graph[headID].Values[RDFRest].([]interface{})[0].(map[string]interface{})
-				// 4.3.4.6)
-				list = list[0 : len(list)-1]
-				listNodes = listNodes[0 : len(listNodes)-1]
-			}
 			// 4.3.5)
 			delete(head, "@id")
 			// 4.3.6)
