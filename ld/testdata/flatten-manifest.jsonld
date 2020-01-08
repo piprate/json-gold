@@ -362,7 +362,7 @@
       "@id": "#tin01",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
       "name": "Basic Included array",
-      "purpose": "Tests included maps.",
+      "purpose": "Tests included blocks.",
       "input": "flatten/in01-in.jsonld",
       "expect": "flatten/in01-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
@@ -370,7 +370,7 @@
       "@id": "#tin02",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
       "name": "Basic Included object",
-      "purpose": "Tests included maps.",
+      "purpose": "Tests included blocks.",
       "input": "flatten/in02-in.jsonld",
       "expect": "flatten/in02-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
@@ -378,7 +378,7 @@
       "@id": "#tin03",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
       "name": "Multiple properties mapping to @included are folded together",
-      "purpose": "Tests included maps.",
+      "purpose": "Tests included blocks.",
       "input": "flatten/in03-in.jsonld",
       "expect": "flatten/in03-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
@@ -386,7 +386,7 @@
       "@id": "#tin04",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
       "name": "Included containing @included",
-      "purpose": "Tests included maps.",
+      "purpose": "Tests included blocks.",
       "input": "flatten/in04-in.jsonld",
       "expect": "flatten/in04-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
@@ -394,7 +394,7 @@
       "@id": "#tin05",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
       "name": "Property value with @included",
-      "purpose": "Tests included maps.",
+      "purpose": "Tests included blocks.",
       "input": "flatten/in05-in.jsonld",
       "expect": "flatten/in05-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
@@ -402,7 +402,7 @@
       "@id": "#tin06",
       "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest"],
       "name": "json.api example",
-      "purpose": "Tests included maps.",
+      "purpose": "Tests included blocks.",
       "input": "flatten/in06-in.jsonld",
       "expect": "flatten/in06-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}

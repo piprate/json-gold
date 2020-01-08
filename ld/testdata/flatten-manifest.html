@@ -56,11 +56,20 @@ comprehensive JSON-LD testing solution for developers creating JSON-LD Processor
 
 <h1>Running tests</h1>
 
-<p>The top-level <a href="manifest.jsonld">manifest</a> references the specific test manifests, which in turn reference each test associated with a particular type of behavior.
-Implementations create their own infrastructure for running the test suite. In particular, the following should be considered:</p>
+<p>The top-level <a href="manifest.jsonld">manifest</a> references the specific test manifests, which in turn reference each test associated with a particular type of behavior.</p>
+
+<p>Implementations create their own infrastructure for running the test suite. In particular, the following should be considered:</p>
 
 <ul>
 <li><em>remote-doc</em> tests will likely not return expected HTTP headers, so the <em>options</em> should be used to determine what headers are associated with the input document.</li>
+<li>Test case properties identifying a file (<em>input</em>, <em>output</em>, <em>context</em>, <em>expectContext</em>, and <em>frame</em>) are presumed to have a media type appropriate for the file extension.
+
+<ul>
+<li><code>application/ld+json</code> for <code>.jsonld</code></li>
+<li><code>text/html</code> for <code>.html</code></li>
+<li><code>application/n-quads</code> for <code>.nq</code></li>
+</ul></li>
+<li>The media type for the file associated with the <em>input</em> property can be overridden using the <code>contentType</code> option.</li>
 <li>Some algorithms, particularly <em>fromRdf</em>, may not preserve the order of statements listed in the input document, and provision should be taken for performing unordered array comparison, for arrays other than values of <code>@list</code>. (This may be difficult for compacted results, where array value ordering is dependent on the associated term definition).</li>
 <li>When comparing documents after flattening, framing or generating RDF, blank node identifiers may not be predictable. Implementations using the JSON-LD 1.0 algorithm, where output is always sorted and blank node identifiers are generated sequentially from <code>_:b0</code> may continue to use a simple object comparison. Otherwise, implementations should take this into consideration. (One way to do this may be to reduce both results and <em>expected</em> to datsets to extract a bijective mapping of blank node labels between the two datasets as described in <a href="https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism">RDF Dataset Isomorphism</a>).</li>
 </ul>
@@ -1182,7 +1191,7 @@ Test tin01 Basic Included array
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:FlattenTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='flatten/in01-in.jsonld'>flatten/in01-in.jsonld</a>
@@ -1210,7 +1219,7 @@ Test tin02 Basic Included object
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:FlattenTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='flatten/in02-in.jsonld'>flatten/in02-in.jsonld</a>
@@ -1238,7 +1247,7 @@ Test tin03 Multiple properties mapping to @included are folded together
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:FlattenTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='flatten/in03-in.jsonld'>flatten/in03-in.jsonld</a>
@@ -1266,7 +1275,7 @@ Test tin04 Included containing @included
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:FlattenTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='flatten/in04-in.jsonld'>flatten/in04-in.jsonld</a>
@@ -1294,7 +1303,7 @@ Test tin05 Property value with @included
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:FlattenTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='flatten/in05-in.jsonld'>flatten/in05-in.jsonld</a>
@@ -1322,7 +1331,7 @@ Test tin06 json.api example
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:FlattenTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='flatten/in06-in.jsonld'>flatten/in06-in.jsonld</a>

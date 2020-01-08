@@ -51,11 +51,20 @@ comprehensive JSON-LD testing solution for developers creating JSON-LD Processor
 
 <h1>Running tests</h1>
 
-<p>The top-level <a href="manifest.jsonld">manifest</a> references the specific test manifests, which in turn reference each test associated with a particular type of behavior.
-Implementations create their own infrastructure for running the test suite. In particular, the following should be considered:</p>
+<p>The top-level <a href="manifest.jsonld">manifest</a> references the specific test manifests, which in turn reference each test associated with a particular type of behavior.</p>
+
+<p>Implementations create their own infrastructure for running the test suite. In particular, the following should be considered:</p>
 
 <ul>
 <li><em>remote-doc</em> tests will likely not return expected HTTP headers, so the <em>options</em> should be used to determine what headers are associated with the input document.</li>
+<li>Test case properties identifying a file (<em>input</em>, <em>output</em>, <em>context</em>, <em>expectContext</em>, and <em>frame</em>) are presumed to have a media type appropriate for the file extension.
+
+<ul>
+<li><code>application/ld+json</code> for <code>.jsonld</code></li>
+<li><code>text/html</code> for <code>.html</code></li>
+<li><code>application/n-quads</code> for <code>.nq</code></li>
+</ul></li>
+<li>The media type for the file associated with the <em>input</em> property can be overridden using the <code>contentType</code> option.</li>
 <li>Some algorithms, particularly <em>fromRdf</em>, may not preserve the order of statements listed in the input document, and provision should be taken for performing unordered array comparison, for arrays other than values of <code>@list</code>. (This may be difficult for compacted results, where array value ordering is dependent on the associated term definition).</li>
 <li>When comparing documents after flattening, framing or generating RDF, blank node identifiers may not be predictable. Implementations using the JSON-LD 1.0 algorithm, where output is always sorted and blank node identifiers are generated sequentially from <code>_:b0</code> may continue to use a simple object comparison. Otherwise, implementations should take this into consideration. (One way to do this may be to reduce both results and <em>expected</em> to datsets to extract a bijective mapping of blank node labels between the two datasets as described in <a href="https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism">RDF Dataset Isomorphism</a>).</li>
 </ul>
@@ -5412,6 +5421,34 @@ Test te122 Ignore some IRIs when that start with @ when expanding.
 </dd>
 </dl>
 </dd>
+<dt id='te123'>
+Test te123 Value objects including invalid literal datatype IRIs are rejected
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#te123</dd>
+<dt>Type</dt>
+<dd>jld:NegativeEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Processors MUST validate datatype IRIs.</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/e123-in.jsonld'>toRdf/e123-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+invalid typed value
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
 <dt id='tin01'>
 Test tin01 Basic Included array
 </dt>
@@ -5422,7 +5459,7 @@ Test tin01 Basic Included array
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/in01-in.jsonld'>toRdf/in01-in.jsonld</a>
@@ -5450,7 +5487,7 @@ Test tin02 Basic Included object
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/in02-in.jsonld'>toRdf/in02-in.jsonld</a>
@@ -5478,7 +5515,7 @@ Test tin03 Multiple properties mapping to @included are folded together
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/in03-in.jsonld'>toRdf/in03-in.jsonld</a>
@@ -5506,7 +5543,7 @@ Test tin04 Included containing @included
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/in04-in.jsonld'>toRdf/in04-in.jsonld</a>
@@ -5534,7 +5571,7 @@ Test tin05 Property value with @included
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/in05-in.jsonld'>toRdf/in05-in.jsonld</a>
@@ -5562,7 +5599,7 @@ Test tin06 json.api example
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/in06-in.jsonld'>toRdf/in06-in.jsonld</a>
@@ -5786,7 +5823,7 @@ Test tjs08 Transform JSON literal with array canonicalization
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests Transforming JSON literal with array canonicalization.</dd>
+<dd>Tests transforming JSON literal with array canonicalization.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/js08-in.jsonld'>toRdf/js08-in.jsonld</a>
@@ -5945,7 +5982,7 @@ Test tjs13 Transform JSON literal with wierd canonicalization
 </dl>
 </dd>
 <dt id='tjs14'>
-Test tjs14 Tests transforming property with @type @json to a JSON literal (string)
+Test tjs14 Transform JSON literal without expanding contents
 </dt>
 <dd>
 <dl class='entry'>
@@ -5954,7 +5991,7 @@ Test tjs14 Tests transforming property with @type @json to a JSON literal (strin
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests transforming JSON literal with wierd canonicalization.</dd>
+<dd>Tests transforming JSON literal does not expand terms inside json.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/js14-in.jsonld'>toRdf/js14-in.jsonld</a>
@@ -5973,7 +6010,7 @@ Test tjs14 Tests transforming property with @type @json to a JSON literal (strin
 </dl>
 </dd>
 <dt id='tjs15'>
-Test tjs15 Tests transforming property with @type @json to a JSON literal (null)
+Test tjs15 Transform JSON literal aleady in expanded form
 </dt>
 <dd>
 <dl class='entry'>
@@ -5982,7 +6019,7 @@ Test tjs15 Tests transforming property with @type @json to a JSON literal (null)
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>Tests transforming JSON literal with wierd canonicalization.</dd>
+<dd>Tests transforming JSON literal in expanded form.</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/js15-in.jsonld'>toRdf/js15-in.jsonld</a>
@@ -5990,6 +6027,230 @@ Test tjs15 Tests transforming property with @type @json to a JSON literal (null)
 <dt>expect</dt>
 <dd>
 <a href='toRdf/js15-out.nq'>toRdf/js15-out.nq</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs16'>
+Test tjs16 Transform JSON literal aleady in expanded form with aliased keys
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs16</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Tests transforming JSON literal in expanded form with aliased keys in value object.</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/js16-in.jsonld'>toRdf/js16-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='toRdf/js16-out.nq'>toRdf/js16-out.nq</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs17'>
+Test tjs17 Transform JSON literal (string)
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs17</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Tests transforming property with @type @json to a JSON literal (string).</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/js17-in.jsonld'>toRdf/js17-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='toRdf/js17-out.nq'>toRdf/js17-out.nq</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs18'>
+Test tjs18 Transform JSON literal (null)
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs18</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Tests transforming property with @type @json to a JSON literal (null).</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/js18-in.jsonld'>toRdf/js18-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='toRdf/js18-out.nq'>toRdf/js18-out.nq</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs19'>
+Test tjs19 Transform JSON literal with aliased @type
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs19</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Tests transforming JSON literal with aliased @type.</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/js19-in.jsonld'>toRdf/js19-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='toRdf/js19-out.nq'>toRdf/js19-out.nq</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs20'>
+Test tjs20 Transform JSON literal with aliased @value
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs20</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Tests transforming JSON literal with aliased @value.</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/js20-in.jsonld'>toRdf/js20-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='toRdf/js20-out.nq'>toRdf/js20-out.nq</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs21'>
+Test tjs21 Transform JSON literal with @context
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs21</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Tests transforming JSON literal with a @context.</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/js21-in.jsonld'>toRdf/js21-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='toRdf/js21-out.nq'>toRdf/js21-out.nq</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs22'>
+Test tjs22 Transform JSON literal (null) aleady in expanded form.
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs22</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Tests transforming property with @type @json to a JSON literal (null).</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/js22-in.jsonld'>toRdf/js22-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='toRdf/js22-out.nq'>toRdf/js22-out.nq</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs23'>
+Test tjs23 Transform JSON literal (empty array).
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs23</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
+<dt>Purpose</dt>
+<dd>Tests transforming property with @type @json to a JSON literal (empty array).</dd>
+<dt>input</dt>
+<dd>
+<a href='toRdf/js23-in.jsonld'>toRdf/js23-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='toRdf/js23-out.nq'>toRdf/js23-out.nq</a>
 </dd>
 <dt>Options</dt>
 <dd>
@@ -6395,7 +6656,7 @@ Test tm012 type map with alias of @none
 </dl>
 </dd>
 <dt id='tm013'>
-Test tm013 index map with @none
+Test tm013 graph index map with @none
 </dt>
 <dd>
 <dl class='entry'>
@@ -6423,7 +6684,7 @@ Test tm013 index map with @none
 </dl>
 </dd>
 <dt id='tm014'>
-Test tm014 index map with alias @none
+Test tm014 graph index map with alias @none
 </dt>
 <dd>
 <dl class='entry'>
@@ -6451,7 +6712,7 @@ Test tm014 index map with alias @none
 </dl>
 </dd>
 <dt id='tm015'>
-Test tm015 index map with alias @none
+Test tm015 graph id index map with aliased @none
 </dt>
 <dd>
 <dl class='entry'>
@@ -6460,7 +6721,7 @@ Test tm015 index map with alias @none
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>index on @graph and @index</dd>
+<dd>index on @graph and @id with @none</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/m015-in.jsonld'>toRdf/m015-in.jsonld</a>
@@ -6479,7 +6740,7 @@ Test tm015 index map with alias @none
 </dl>
 </dd>
 <dt id='tm016'>
-Test tm016 index map with alias @none
+Test tm016 graph id index map with aliased @none
 </dt>
 <dd>
 <dl class='entry'>
@@ -6488,7 +6749,7 @@ Test tm016 index map with alias @none
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
 <dt>Purpose</dt>
-<dd>index on @graph and @index</dd>
+<dd>index on @graph and @id with @none</dd>
 <dt>input</dt>
 <dd>
 <a href='toRdf/m016-in.jsonld'>toRdf/m016-in.jsonld</a>
@@ -8429,7 +8690,7 @@ Test tpr31 Protected keyword aliases cannot be overridden.
 </dd>
 <dt>expect</dt>
 <dd>
-term redefinition
+protected term redefinition
 </dd>
 <dt>Options</dt>
 <dd>
@@ -9160,34 +9421,6 @@ Test twf05 Triples including invalid language tags are rejected
 <dt>expect</dt>
 <dd>
 <a href='toRdf/wf05-out.nq'>toRdf/wf05-out.nq</a>
-</dd>
-<dt>Options</dt>
-<dd>
-<dl class='options'>
-<dt>specVersion</dt>
-<dd>json-ld-1.1</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-<dt id='twf06'>
-Test twf06 Triples including invalid literal datatype IRIs are rejected
-</dt>
-<dd>
-<dl class='entry'>
-<dt>id</dt>
-<dd>#twf06</dd>
-<dt>Type</dt>
-<dd>jld:PositiveEvaluationTest, jld:ToRDFTest</dd>
-<dt>Purpose</dt>
-<dd>ToRdf emits only well-formed statements.</dd>
-<dt>input</dt>
-<dd>
-<a href='toRdf/wf06-in.jsonld'>toRdf/wf06-in.jsonld</a>
-</dd>
-<dt>expect</dt>
-<dd>
-<a href='toRdf/wf06-out.nq'>toRdf/wf06-out.nq</a>
 </dd>
 <dt>Options</dt>
 <dd>

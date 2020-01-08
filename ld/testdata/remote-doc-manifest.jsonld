@@ -129,8 +129,6 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "load JSON document with link to HTML document",
       "purpose": "If a context is specified in a link header, it is used for JSON, extracting from HTML.",
-      "skip": true,
-      "skipReason": "HTML documents aren't supported yet",
       "option": {
         "httpLink": "<0013-context.html>; rel=\"http://www.w3.org/ns/json-ld#context\""
       },
@@ -141,8 +139,6 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Redirects if type is text/html",
       "purpose": "Load an alternate link if type is not ld+json and rel=alternate.",
-      "skip": true,
-      "skipReason": "HTML documents aren't supported yet",
       "option": {
         "httpLink": "<la01-alternate.jsonld>; rel=\"alternate\"; type=\"application/ld+json\""
       },
@@ -183,8 +179,6 @@
       "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
       "name": "Base is that of the alternate URL",
       "purpose": "Load an alternate link if type is not ld+json and rel=alternate.",
-      "skip": true,
-      "skipReason": "HTML documents aren't supported yet",
       "option": {
         "httpLink": "<la05-alternate.jsonld>; rel=\"alternate\"; type=\"application/ld+json\""
       },

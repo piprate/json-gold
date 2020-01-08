@@ -14,6 +14,14 @@
     "expect": "html/e001-out.jsonld",
     "option": {"specVersion": "json-ld-1.1"}
   }, {
+    "@id": "#tex01",
+    "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest", "jld:HtmlTest"],
+    "name": "Expands embedded JSON-LD script element (xhtml)",
+    "purpose": "Tests embedded JSON-LD in XHTML",
+    "input": "html/e001-in.html",
+    "expect": "html/e001-out.jsonld",
+    "option": {"specVersion": "json-ld-1.1", "contentType": "application/xhtml+xml"}
+  }, {
     "@id": "#te002",
     "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest", "jld:HtmlTest"],
     "name": "Expands first embedded JSON-LD script element",
@@ -232,7 +240,7 @@
     "@id": "#tf004",
     "@type": ["jld:PositiveEvaluationTest", "jld:FlattenTest", "jld:HtmlTest"],
     "name": "Flattens all script elements by default",
-    "purpose": "Tests embedded JSON-LD in HTML with fragment identifier",
+    "purpose": "Tests embedded JSON-LD in HTML multiple script elements",
     "input": "html/f004-in.html",
     "context": "html/f004-context.jsonld",
     "expect": "html/f004-out.jsonld",

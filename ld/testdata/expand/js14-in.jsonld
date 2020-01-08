@@ -1,12 +1,7 @@
 {
   "@context": {
     "@version": 1.1,
-    "value": "@value"
+    "e": {"@id": "http://example.org/vocab#array", "@type": "@json"}
   },
-  "ex:foo": {
-    "@type": "@json",
-    "value": {
-      "test": 1
-    }
-  }
+  "e": [{"e": "bar"}]
 }

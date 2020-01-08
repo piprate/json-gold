@@ -56,11 +56,20 @@ comprehensive JSON-LD testing solution for developers creating JSON-LD Processor
 
 <h1>Running tests</h1>
 
-<p>The top-level <a href="manifest.jsonld">manifest</a> references the specific test manifests, which in turn reference each test associated with a particular type of behavior.
-Implementations create their own infrastructure for running the test suite. In particular, the following should be considered:</p>
+<p>The top-level <a href="manifest.jsonld">manifest</a> references the specific test manifests, which in turn reference each test associated with a particular type of behavior.</p>
+
+<p>Implementations create their own infrastructure for running the test suite. In particular, the following should be considered:</p>
 
 <ul>
 <li><em>remote-doc</em> tests will likely not return expected HTTP headers, so the <em>options</em> should be used to determine what headers are associated with the input document.</li>
+<li>Test case properties identifying a file (<em>input</em>, <em>output</em>, <em>context</em>, <em>expectContext</em>, and <em>frame</em>) are presumed to have a media type appropriate for the file extension.
+
+<ul>
+<li><code>application/ld+json</code> for <code>.jsonld</code></li>
+<li><code>text/html</code> for <code>.html</code></li>
+<li><code>application/n-quads</code> for <code>.nq</code></li>
+</ul></li>
+<li>The media type for the file associated with the <em>input</em> property can be overridden using the <code>contentType</code> option.</li>
 <li>Some algorithms, particularly <em>fromRdf</em>, may not preserve the order of statements listed in the input document, and provision should be taken for performing unordered array comparison, for arrays other than values of <code>@list</code>. (This may be difficult for compacted results, where array value ordering is dependent on the associated term definition).</li>
 <li>When comparing documents after flattening, framing or generating RDF, blank node identifiers may not be predictable. Implementations using the JSON-LD 1.0 algorithm, where output is always sorted and blank node identifiers are generated sequentially from <code>_:b0</code> may continue to use a simple object comparison. Otherwise, implementations should take this into consideration. (One way to do this may be to reduce both results and <em>expected</em> to datsets to extract a bijective mapping of blank node labels between the two datasets as described in <a href="https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism">RDF Dataset Isomorphism</a>).</li>
 </ul>
@@ -2988,6 +2997,34 @@ Test t0122 Ignore some IRIs when that start with @ when expanding.
 </dd>
 </dl>
 </dd>
+<dt id='t0123'>
+Test t0123 Value objects including invalid literal datatype IRIs are rejected
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#t0123</dd>
+<dt>Type</dt>
+<dd>jld:NegativeEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Processors MUST validate datatype IRIs.</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/0123-in.jsonld'>expand/0123-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+invalid typed value
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
 <dt id='tc001'>
 Test tc001 adding new term
 </dt>
@@ -5605,7 +5642,7 @@ Test tin01 Basic Included array
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in01-in.jsonld'>expand/in01-in.jsonld</a>
@@ -5633,7 +5670,7 @@ Test tin02 Basic Included object
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in02-in.jsonld'>expand/in02-in.jsonld</a>
@@ -5661,7 +5698,7 @@ Test tin03 Multiple properties mapping to @included are folded together
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in03-in.jsonld'>expand/in03-in.jsonld</a>
@@ -5689,7 +5726,7 @@ Test tin04 Included containing @included
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in04-in.jsonld'>expand/in04-in.jsonld</a>
@@ -5717,7 +5754,7 @@ Test tin05 Property value with @included
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in05-in.jsonld'>expand/in05-in.jsonld</a>
@@ -5745,7 +5782,7 @@ Test tin06 json.api example
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in06-in.jsonld'>expand/in06-in.jsonld</a>
@@ -5773,7 +5810,7 @@ Test tin07 Error if @included value is a string
 <dt>Type</dt>
 <dd>jld:NegativeEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in07-in.jsonld'>expand/in07-in.jsonld</a>
@@ -5801,7 +5838,7 @@ Test tin08 Error if @included value is a value object
 <dt>Type</dt>
 <dd>jld:NegativeEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in08-in.jsonld'>expand/in08-in.jsonld</a>
@@ -5829,7 +5866,7 @@ Test tin09 Error if @included value is a list object
 <dt>Type</dt>
 <dd>jld:NegativeEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests included maps.</dd>
+<dd>Tests included blocks.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/in09-in.jsonld'>expand/in09-in.jsonld</a>
@@ -6044,7 +6081,7 @@ Test tjs07 Expand JSON literal (array)
 </dl>
 </dd>
 <dt id='tjs08'>
-Test tjs08 Expand JSON literal without expanding contents
+Test tjs08 Expand JSON literal with array canonicalization
 </dt>
 <dd>
 <dl class='entry'>
@@ -6053,7 +6090,7 @@ Test tjs08 Expand JSON literal without expanding contents
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests expanding JSON literal does not expand terms inside json.</dd>
+<dd>Tests expanding JSON literal with array canonicalization.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/js08-in.jsonld'>expand/js08-in.jsonld</a>
@@ -6072,7 +6109,7 @@ Test tjs08 Expand JSON literal without expanding contents
 </dl>
 </dd>
 <dt id='tjs09'>
-Test tjs09 Expand JSON literal aleady in expanded form
+Test tjs09 Transform JSON literal with string canonicalization
 </dt>
 <dd>
 <dl class='entry'>
@@ -6081,7 +6118,7 @@ Test tjs09 Expand JSON literal aleady in expanded form
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests expanding JSON literal in expanded form.</dd>
+<dd>Tests expanding JSON literal with string canonicalization.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/js09-in.jsonld'>expand/js09-in.jsonld</a>
@@ -6100,7 +6137,7 @@ Test tjs09 Expand JSON literal aleady in expanded form
 </dl>
 </dd>
 <dt id='tjs10'>
-Test tjs10 Expand JSON literal aleady in expanded form with aliased keys
+Test tjs10 Expand JSON literal with structural canonicalization
 </dt>
 <dd>
 <dl class='entry'>
@@ -6109,7 +6146,7 @@ Test tjs10 Expand JSON literal aleady in expanded form with aliased keys
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests expanding JSON literal in expanded form with aliased keys in value object.</dd>
+<dd>Tests expanding JSON literal with structural canonicalization.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/js10-in.jsonld'>expand/js10-in.jsonld</a>
@@ -6128,7 +6165,7 @@ Test tjs10 Expand JSON literal aleady in expanded form with aliased keys
 </dl>
 </dd>
 <dt id='tjs11'>
-Test tjs11 Expand JSON literal (string)
+Test tjs11 Expand JSON literal with unicode canonicalization
 </dt>
 <dd>
 <dl class='entry'>
@@ -6137,7 +6174,7 @@ Test tjs11 Expand JSON literal (string)
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests expanding JSON literal in expanded form with aliased keys in value object.</dd>
+<dd>Tests expanding JSON literal with unicode canonicalization.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/js11-in.jsonld'>expand/js11-in.jsonld</a>
@@ -6156,7 +6193,7 @@ Test tjs11 Expand JSON literal (string)
 </dl>
 </dd>
 <dt id='tjs12'>
-Test tjs12 Expand JSON literal (null)
+Test tjs12 Expand JSON literal with value canonicalization
 </dt>
 <dd>
 <dl class='entry'>
@@ -6165,7 +6202,7 @@ Test tjs12 Expand JSON literal (null)
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>Tests expanding JSON literal in expanded form with aliased keys in value object.</dd>
+<dd>Tests expanding JSON literal with value canonicalization.</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/js12-in.jsonld'>expand/js12-in.jsonld</a>
@@ -6173,6 +6210,314 @@ Test tjs12 Expand JSON literal (null)
 <dt>expect</dt>
 <dd>
 <a href='expand/js12-out.jsonld'>expand/js12-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs13'>
+Test tjs13 Expand JSON literal with wierd canonicalization
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs13</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding JSON literal with wierd canonicalization.</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js13-in.jsonld'>expand/js13-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js13-out.jsonld'>expand/js13-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs14'>
+Test tjs14 Expand JSON literal without expanding contents
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs14</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding JSON literal does not expand terms inside json.</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js14-in.jsonld'>expand/js14-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js14-out.jsonld'>expand/js14-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs15'>
+Test tjs15 Expand JSON literal aleady in expanded form
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs15</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding JSON literal in expanded form.</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js15-in.jsonld'>expand/js15-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js15-out.jsonld'>expand/js15-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs16'>
+Test tjs16 Expand JSON literal aleady in expanded form with aliased keys
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs16</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding JSON literal in expanded form with aliased keys in value object.</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js16-in.jsonld'>expand/js16-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js16-out.jsonld'>expand/js16-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs17'>
+Test tjs17 Expand JSON literal (string)
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs17</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding property with @type @json to a JSON literal (string).</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js17-in.jsonld'>expand/js17-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js17-out.jsonld'>expand/js17-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs18'>
+Test tjs18 Expand JSON literal (null)
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs18</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding property with @type @json to a JSON literal (null).</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js18-in.jsonld'>expand/js18-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js18-out.jsonld'>expand/js18-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs19'>
+Test tjs19 Expand JSON literal with aliased @type
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs19</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding JSON literal with aliased @type.</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js19-in.jsonld'>expand/js19-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js19-out.jsonld'>expand/js19-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs20'>
+Test tjs20 Expand JSON literal with aliased @value
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs20</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding JSON literal with aliased @value.</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js20-in.jsonld'>expand/js20-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js20-out.jsonld'>expand/js20-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs21'>
+Test tjs21 Expand JSON literal with @context
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs21</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding JSON literal with a @context.</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js21-in.jsonld'>expand/js21-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js21-out.jsonld'>expand/js21-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs22'>
+Test tjs22 Expand JSON literal (null) aleady in expanded form.
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs22</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding property with @type @json to a JSON literal (null).</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js22-in.jsonld'>expand/js22-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js22-out.jsonld'>expand/js22-out.jsonld</a>
+</dd>
+<dt>Options</dt>
+<dd>
+<dl class='options'>
+<dt>specVersion</dt>
+<dd>json-ld-1.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt id='tjs23'>
+Test tjs23 Expand JSON literal (empty array).
+</dt>
+<dd>
+<dl class='entry'>
+<dt>id</dt>
+<dd>#tjs23</dd>
+<dt>Type</dt>
+<dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
+<dt>Purpose</dt>
+<dd>Tests expanding property with @type @json to a JSON literal (empty array).</dd>
+<dt>input</dt>
+<dd>
+<a href='expand/js23-in.jsonld'>expand/js23-in.jsonld</a>
+</dd>
+<dt>expect</dt>
+<dd>
+<a href='expand/js23-out.jsonld'>expand/js23-out.jsonld</a>
 </dd>
 <dt>Options</dt>
 <dd>
@@ -6830,7 +7175,7 @@ Test tm012 type map with alias of @none
 </dl>
 </dd>
 <dt id='tm013'>
-Test tm013 index map with @none
+Test tm013 graph index map with @none
 </dt>
 <dd>
 <dl class='entry'>
@@ -6858,7 +7203,7 @@ Test tm013 index map with @none
 </dl>
 </dd>
 <dt id='tm014'>
-Test tm014 index map with alias @none
+Test tm014 graph index map with alias @none
 </dt>
 <dd>
 <dl class='entry'>
@@ -6886,7 +7231,7 @@ Test tm014 index map with alias @none
 </dl>
 </dd>
 <dt id='tm015'>
-Test tm015 index map with alias @none
+Test tm015 graph id index map with aliased @none
 </dt>
 <dd>
 <dl class='entry'>
@@ -6895,7 +7240,7 @@ Test tm015 index map with alias @none
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>index on @graph and @index</dd>
+<dd>index on @graph and @id with @none</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/m015-in.jsonld'>expand/m015-in.jsonld</a>
@@ -6914,7 +7259,7 @@ Test tm015 index map with alias @none
 </dl>
 </dd>
 <dt id='tm016'>
-Test tm016 index map with alias @none
+Test tm016 graph id index map with aliased @none
 </dt>
 <dd>
 <dl class='entry'>
@@ -6923,7 +7268,7 @@ Test tm016 index map with alias @none
 <dt>Type</dt>
 <dd>jld:PositiveEvaluationTest, jld:ExpandTest</dd>
 <dt>Purpose</dt>
-<dd>index on @graph and @index</dd>
+<dd>index on @graph and @id with @none</dd>
 <dt>input</dt>
 <dd>
 <a href='expand/m016-in.jsonld'>expand/m016-in.jsonld</a>
