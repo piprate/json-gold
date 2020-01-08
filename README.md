@@ -25,14 +25,14 @@ This library aims to pass the official [test suite](https://json-ld.org/test-sui
   2019-12-12 or [newer JSON-LD latest](https://json-ld.org/spec/latest/json-ld/)
 - [JSON-LD 1.1 Processing Algorithms and API](https://www.w3.org/TR/2019/CR-json-ld11-api-20191212/),
   W3C Candidate Recommendation,
-  2019-12-12 or [newer <JSON-LD Processing Algorithms and API latest](https://www.w3.org/TR/json-ld11-api/)
+  2019-12-12 or [newer JSON-LD Processing Algorithms and API latest](https://www.w3.org/TR/json-ld11-api/)
 - [JSON-LD Framing 1.1](https://www.w3.org/TR/2019/CR-json-ld11-framing-20191212/)
   W3C Candidate Recommendation
   2019-12-12 or [newer](https://www.w3.org/TR/json-ld11-framing/)
 
 ### Current JSON-LD 1.1 Conformance Status
 
-This library provides a comprehensive support of JSON-LD 1.1 specification, except in the areas mentioned below:
+This library provides comprehensive support of JSON-LD 1.1 specification, except in the areas mentioned below:
 
 #### Expansion
 
@@ -42,14 +42,14 @@ Good coverage.
 
 Good coverage, except:
 
-- '@included' directive not supported
+- `@included` directive not supported
 
 #### RDF Serialization/Deserialization
 
 Good coverage, except:
 
-- JSON literals ('@json') aren't supported
-- _rdfDirection_ option is not yet supported (including _i18n-datatype_ and _compound-literal_ forms)
+- JSON literals (`@json`) aren't supported
+- `rdfDirection` option is not yet supported (including _i18n-datatype_ and _compound-literal_ forms)
 
 #### HTML based processing
 
@@ -105,8 +105,6 @@ See complete code in [examples/compact.go](examples/compact.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
-// add the processing mode explicitly if you need JSON-LD 1.1 features
-options.ProcessingMode = ld.JsonLd_1_1
 
 doc := map[string]interface{}{
 	"@id": "http://example.org/test#book",
@@ -136,8 +134,6 @@ See complete code in [examples/flatten.go](examples/flatten.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
-// add the processing mode explicitly if you need JSON-LD 1.1 features
-options.ProcessingMode = ld.JsonLd_1_1
 
 doc := map[string]interface{}{
 	"@context": []interface{}{
@@ -169,8 +165,6 @@ See complete code in [examples/frame.go](examples/frame.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
-// add the processing mode explicitly if you need JSON-LD 1.1 features
-options.ProcessingMode = ld.JsonLd_1_1
 
 doc := map[string]interface{}{
 	"@context": map[string]interface{}{
@@ -224,8 +218,6 @@ See complete code in [examples/to_rdf.go](examples/to_rdf.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
-// add the processing mode explicitly if you need JSON-LD 1.1 features
-options.ProcessingMode = ld.JsonLd_1_1
 options.Format = "application/n-quads"
 
 // this JSON-LD document was taken from http://json-ld.org/test-suite/tests/toRdf-0028-in.jsonld
@@ -258,8 +250,6 @@ See complete code in [examples/from_rdf.go](examples/from_rdf.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
-// add the processing mode explicitly if you need JSON-LD 1.1 features
-options.ProcessingMode = ld.JsonLd_1_1
 
 triples := `
 	<http://example.com/Subj1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/Type> .
@@ -279,8 +269,6 @@ See complete code in [examples/normalize.go](examples/normalize.go).
 ```go
 proc := ld.NewJsonLdProcessor()
 options := ld.NewJsonLdOptions("")
-// add the processing mode explicitly if you need JSON-LD 1.1 features
-options.ProcessingMode = ld.JsonLd_1_1
 options.Format = "application/n-quads"
 options.Algorithm = "URDNA2015"
 
@@ -300,7 +288,7 @@ normalizedTriples, err := proc.Normalize(doc, options)
 
 ## Inspiration ##
 
-This implementation was heavily influenced by [JSONLD-Java](https://github.com/jsonld-java/jsonld-java) with some techniques borrowed from [PyLD](https://github.com/digitalbazaar/pyld) and [gojsonld](https://github.com/linkeddata/gojsonld). Big thank you to the contributors of the forementioned libraries for figuring out implementation details of the core algorithms.
+This implementation was influenced by [Ruby JSON-LD reader/writer](https://github.com/ruby-rdf/json-ld), [JSONLD-Java](https://github.com/jsonld-java/jsonld-java) with some techniques borrowed from [PyLD](https://github.com/digitalbazaar/pyld) and [gojsonld](https://github.com/linkeddata/gojsonld). Big thank you to the contributors of the aforementioned libraries for figuring out implementation details of the core algorithms.
 
 ## History ##
 
