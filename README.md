@@ -20,19 +20,50 @@ This library aims to pass the official [test suite](https://json-ld.org/test-sui
 - [JSON-LD 1.0 Processing Algorithms and API](http://www.w3.org/TR/2014/REC-json-ld-api-20140116/),
   W3C Recommendation,
   2014-01-16, and any [errata](http://www.w3.org/2014/json-ld-errata)
-- [JSON-LD 1.1](https://json-ld.org/spec/FCGS/json-ld/20180607/),
-  Final Community Group Report,
-  2018-06-07 or [newer JSON-LD latest](https://json-ld.org/spec/latest/json-ld/)
-- [JSON-LD 1.1 Processing Algorithms and API](https://json-ld.org/spec/ED/json-ld-api/20180215/),
-  W3C Editor's Draft,
-  2018-12-15 or [newer <JSON-LD Processing Algorithms and API latest](https://json-ld.org/spec/latest/json-ld-api/)
-- [JSON-LD Framing 1.1](https://json-ld.org/spec/latest/json-ld-framing/)
-  Draft Community Group Report
-  2018-09-05 or newer
+- [JSON-LD 1.1](https://www.w3.org/TR/2019/CR-json-ld11-20191212/),
+  W3C Candidate Recommendation,
+  2019-12-12 or [newer JSON-LD latest](https://json-ld.org/spec/latest/json-ld/)
+- [JSON-LD 1.1 Processing Algorithms and API](https://www.w3.org/TR/2019/CR-json-ld11-api-20191212/),
+  W3C Candidate Recommendation,
+  2019-12-12 or [newer <JSON-LD Processing Algorithms and API latest](https://www.w3.org/TR/json-ld11-api/)
+- [JSON-LD Framing 1.1](https://www.w3.org/TR/2019/CR-json-ld11-framing-20191212/)
+  W3C Candidate Recommendation
+  2019-12-12 or [newer](https://www.w3.org/TR/json-ld11-framing/)
 
-As of April 30th, 2019:
+### Current JSON-LD 1.1 Conformance Status
 
-* 89.9% of tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass. The failing tests are related to HTML based checks and the most recently added features of JSON 1.1 spec.
+This library provides a comprehensive support of JSON-LD 1.1 specification, except in the areas mentioned below:
+
+#### Expansion
+
+Good coverage.
+
+#### Compaction
+
+Good coverage, except:
+
+- '@included' directive not supported
+
+#### RDF Serialization/Deserialization
+
+Good coverage, except:
+
+- JSON literals ('@json') aren't supported
+- _rdfDirection_ option is not yet supported (including _i18n-datatype_ and _compound-literal_ forms)
+
+#### HTML based processing
+
+Not supported.
+
+### Current JSON-LD 1.1 Framing Conformance Status
+
+Not supported. The current implementation is still based on an earlier version of JSON-LD 1.1 Framing specification.
+
+### Official 1.1 Test Suite
+
+As of January 8th, 2020:
+
+* 88.7% of tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass.
 * all RDF Dataset Normalisation tests from the [current test suite](https://json-ld.github.io/normalization/tests/index.html) pass
 
 ## Examples ##
