@@ -564,6 +564,33 @@
       "approval": "rdft:Proposed",
       "action": "test059-in.nq",
       "result": "test059-urdna2015.nq"
+    },
+    {
+      "id": "manifest-urdna2015#test060",
+      "type": "rdfn:Urdna2015EvalTest",
+      "name": "n-quads escaping",
+      "comment": null,
+      "approval": "rdft:Proposed",
+      "action": "test060-in.nq",
+      "result": "test060-urdna2015.nq"
+    },
+    {
+      "id": "manifest-urdna2015#test061",
+      "type": "rdfn:Urdna2015EvalTest",
+      "name": "same literal value with multiple languages",
+      "comment": null,
+      "approval": "rdft:Proposed",
+      "action": "test061-in.nq",
+      "result": "test061-urdna2015.nq"
+    },
+    {
+      "id": "manifest-urdna2015#test062",
+      "type": "rdfn:Urdna2015EvalTest",
+      "name": "same literal value with multiple datatypes",
+      "comment": null,
+      "approval": "rdft:Proposed",
+      "action": "test062-in.nq",
+      "result": "test062-urdna2015.nq"
     }
   ]
 }

@@ -53,12 +53,18 @@ var skippedTests = map[string][]string{
 		"#te112", // Unclear reasons for failure. TODO
 		"#te123", // TODO
 
-		"#tjs",   // @json not yet supported
+		"#tjs", // @json not yet supported
 
 		"#tpr28", // Skipped in Expand test suite
 		"#ttn02", // Unclear what the correct behaviour should be: two values get collapsed into one
 	},
 	"testdata/html-manifest.jsonld": {
 		"#t", // HTML inputs not supported yet
+	},
+	"testdata/normalization/manifest-urgna2012.jsonld": {
+		"manifest-urgna2012#test060", // TODO
+	},
+	"testdata/normalization/manifest-urdna2015.jsonld": {
+		"manifest-urdna2015#test060", // TODO
 	},
 }

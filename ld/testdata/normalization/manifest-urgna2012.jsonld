@@ -537,6 +537,33 @@
       "approval": "rdft:Proposed",
       "action": "test056-in.nq",
       "result": "test056-urgna2012.nq"
+    },
+    {
+      "id": "manifest-urgna2012#test060",
+      "type": "rdfn:Urgna2012EvalTest",
+      "name": "n-quads escaping",
+      "comment": null,
+      "approval": "rdft:Proposed",
+      "action": "test060-in.nq",
+      "result": "test060-urgna2012.nq"
+    },
+    {
+      "id": "manifest-urgna2012#test061",
+      "type": "rdfn:Urgna2012EvalTest",
+      "name": "same literal value with multiple languages",
+      "comment": null,
+      "approval": "rdft:Proposed",
+      "action": "test061-in.nq",
+      "result": "test061-urgna2012.nq"
+    },
+    {
+      "id": "manifest-urgna2012#test062",
+      "type": "rdfn:Urgna2012EvalTest",
+      "name": "same literal value with multiple datatypes",
+      "comment": null,
+      "approval": "rdft:Proposed",
+      "action": "test062-in.nq",
+      "result": "test062-urgna2012.nq"
     }
   ]
 }
