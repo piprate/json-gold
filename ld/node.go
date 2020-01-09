@@ -228,12 +228,16 @@ func rdfToObject(n Node, useNativeTypes bool) (map[string]interface{}, error) {
 
 // objectToRDF converts a JSON-LD value object to an RDF literal or a JSON-LD string or
 // node object to an RDF resource.
-func objectToRDF(item interface{}) Node {
+func objectToRDF(item interface{}, issuer *IdentifierIssuer, graphName string, triples []*Quad) (Node, []*Quad) {
 	// convert value object to RDF
 	if IsValue(item) {
 		itemMap := item.(map[string]interface{})
 		value := itemMap["@value"]
 		datatype := itemMap["@type"]
+
+		if datatype == "@json" {
+			datatype = RDFJSONLiteral
+		}
 
 		// convert to XSD datatypes as appropriate
 		booleanVal, isBool := value.(bool)
@@ -251,7 +255,7 @@ func objectToRDF(item interface{}) Node {
 			if number, isNumber := value.(json.Number); isNumber {
 				var floatErr error
 				floatVal, floatErr = number.Float64()
-				isFloat = (floatErr == nil)
+				isFloat = floatErr == nil
 			}
 		}
 
@@ -262,53 +266,100 @@ func objectToRDF(item interface{}) Node {
 			// convert to XSD datatype
 			if isBool {
 				if datatype == nil {
-					return NewLiteral(strconv.FormatBool(booleanVal), XSDBoolean, "")
+					return NewLiteral(strconv.FormatBool(booleanVal), XSDBoolean, ""), triples
 				} else {
-					return NewLiteral(strconv.FormatBool(booleanVal), datatypeStr, "")
+					return NewLiteral(strconv.FormatBool(booleanVal), datatypeStr, ""), triples
 				}
 			} else if (isFloat && !isInteger) || XSDDouble == datatypeStr {
 				canonicalDouble := GetCanonicalDouble(floatVal)
 				if datatype == nil {
-					return NewLiteral(canonicalDouble, XSDDouble, "")
+					return NewLiteral(canonicalDouble, XSDDouble, ""), triples
 				} else {
-					return NewLiteral(canonicalDouble, datatypeStr, "")
+					return NewLiteral(canonicalDouble, datatypeStr, ""), triples
 				}
 			} else {
 				if datatype == nil {
-					return NewLiteral(fmt.Sprintf("%d", int(floatVal)), XSDInteger, "")
+					return NewLiteral(fmt.Sprintf("%d", int(floatVal)), XSDInteger, ""), triples
 				} else {
-					return NewLiteral(fmt.Sprintf("%d", int(floatVal)), datatype.(string), "")
+					return NewLiteral(fmt.Sprintf("%d", int(floatVal)), datatype.(string), ""), triples
 				}
 			}
 		} else if langVal, hasLang := itemMap["@language"]; hasLang {
 			if datatype == nil {
-				return NewLiteral(value.(string), RDFLangString, langVal.(string))
+				return NewLiteral(value.(string), RDFLangString, langVal.(string)), triples
 			} else {
-				return NewLiteral(value.(string), datatype.(string), langVal.(string))
+				return NewLiteral(value.(string), datatype.(string), langVal.(string)), triples
 			}
 		} else {
 			if datatype == nil {
-				return NewLiteral(value.(string), XSDString, "")
+				return NewLiteral(value.(string), XSDString, ""), triples
 			} else {
-				return NewLiteral(value.(string), datatype.(string), "")
+				if datatype != RDFJSONLiteral {
+					return NewLiteral(value.(string), datatype.(string), ""), triples
+				} else {
+					// TODO: add JSON Canonicalization
+					return NewLiteral("JSON literals not supported", datatype.(string), ""), triples
+				}
 			}
 		}
+	} else if IsList(item) {
+		// if item is a list object, initialize list_results as an empty array,
+		// and object to the result of the List Conversion algorithm, passing
+		// the value associated with the @list key from item and list_results.
+		return parseList(item.(map[string]interface{})["@list"].([]interface{}), issuer, graphName, triples)
 	} else {
 		// convert string/node object to RDF
 		id := ""
 		if itemMap, isMap := item.(map[string]interface{}); isMap {
 			id = itemMap["@id"].(string)
 			if IsRelativeIri(id) {
-				return nil
+				return nil, triples
 			}
 		} else {
 			id = item.(string)
 		}
 		if strings.Index(id, "_:") == 0 {
 			// NOTE: once again no need to rename existing blank nodes
-			return NewBlankNode(id)
+			return NewBlankNode(id), triples
 		} else {
-			return NewIRI(id)
+			return NewIRI(id), triples
 		}
 	}
+}
+
+func parseList(list []interface{}, issuer *IdentifierIssuer, graphName string, triples []*Quad) (Node, []*Quad) {
+
+	var res Node
+	var last interface{}
+
+	// is result is the head of the list?
+	if len(list) > 0 {
+		last = list[len(list)-1]
+		res = NewBlankNode(issuer.GetId(""))
+	} else {
+		res = nilIRI
+	}
+	subj := res
+
+	var obj Node
+	for i := 0; i < len(list)-1; i++ {
+		obj, triples = objectToRDF(list[i], issuer, graphName, triples)
+		next := NewBlankNode(issuer.GetId(""))
+		triples = append(triples,
+			NewQuad(subj, first, obj, graphName),
+			NewQuad(subj, rest, next, graphName),
+		)
+		subj = next
+	}
+
+	// tail of list
+	if last != nil {
+		obj, triples = objectToRDF(last, issuer, graphName, triples)
+		triples = append(triples,
+			NewQuad(subj, first, obj, graphName),
+			NewQuad(subj, rest, nilIRI, graphName),
+		)
+	}
+
+	return res, triples
 }

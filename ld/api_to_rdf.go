@@ -20,7 +20,7 @@ func (api *JsonLdApi) ToRDF(input interface{}, opts *JsonLdOptions) (*RDFDataset
 
 	nodeMap := make(map[string]interface{})
 	nodeMap["@default"] = make(map[string]interface{})
-	if _, err := api.GenerateNodeMap(input, nodeMap, "@default", issuer, "", nil); err != nil {
+	if _, err := api.GenerateNodeMap(input, nodeMap, "@default", issuer, "", "", nil); err != nil {
 		return nil, err
 	}
 

@@ -23,8 +23,6 @@ import (
 func main() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
-	// add the processing mode explicitly if you need JSON-LD 1.1 features
-	options.ProcessingMode = ld.JsonLd_1_1
 
 	triples := `
 		<http://example.com/Subj1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/Type> .

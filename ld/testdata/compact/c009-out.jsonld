@@ -4,5 +4,5 @@
     "Foo": {"@context": {"baz": {"@type": "@vocab"}}}
   },
   "@type": "Foo",
-  "bar": {"baz": "buzz"}
+  "bar": {"baz": {"@id": "http://example/buzz"}}
 }

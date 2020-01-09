@@ -108,7 +108,7 @@ func NewMockServer(base string, testFolder string) *MockServer {
 						w.Header().Set("Link", strings.Join(mockServer.HttpLink, ", "))
 					}
 					w.WriteHeader(http.StatusOK)
-					w.Write(inputBytes)
+					_, _ = w.Write(inputBytes)
 				} else {
 					w.WriteHeader(http.StatusNotFound)
 				}
@@ -185,29 +185,41 @@ type TestDefinition struct {
 
 func TestSuite(t *testing.T) {
 	testDir := "testdata"
-	fileInfoList, err := ioutil.ReadDir(testDir)
+
+	globalManifestBytes, err := ioutil.ReadFile(filepath.Join(testDir, "manifest.jsonld"))
 	assert.NoError(t, err)
 
-	// read all manifests
-	manifestMap := make(map[string]map[string]interface{})
-	for _, fileInfo := range fileInfoList {
-		if strings.HasSuffix(fileInfo.Name(), "-manifest.jsonld") {
-			inputBytes, err := ioutil.ReadFile(filepath.Join(testDir, fileInfo.Name()))
-			assert.NoError(t, err)
+	var globalManifest map[string]interface{}
+	err = json.Unmarshal(globalManifestBytes, &globalManifest)
+	assert.NoError(t, err)
 
-			var manifest map[string]interface{}
-			err = json.Unmarshal(inputBytes, &manifest)
-			assert.NoError(t, err)
+	// JSON-LD 1.1 official test suite
 
-			manifestMap[fileInfo.Name()] = manifest
-		}
+	manifestList := make([]string, 0)
+	for _, val := range globalManifest["sequence"].([]interface{}) {
+		manifestList = append(manifestList, filepath.Join(testDir, val.(string)))
 	}
+
+	// Framing and Normalisation test suites
+
+	manifestList = append(manifestList,
+		filepath.Join(testDir, "frame-manifest.jsonld"),
+		filepath.Join(testDir, "normalization", "manifest-urgna2012.jsonld"),
+		filepath.Join(testDir, "normalization", "manifest-urdna2015.jsonld"),
+	)
 
 	dl := NewDefaultDocumentLoader(nil)
 	proc := NewJsonLdProcessor()
 	earlReport := NewEarlReport()
 
-	for manifestName, manifest := range manifestMap {
+	for _, manifestName := range manifestList {
+		inputBytes, err := ioutil.ReadFile(manifestName)
+		assert.NoError(t, err)
+
+		var manifest map[string]interface{}
+		err = json.Unmarshal(inputBytes, &manifest)
+		assert.NoError(t, err)
+
 		baseIri := ""
 		testListKey := "entries"
 		if baseValue, hasBase := manifest["baseIri"]; hasBase {
@@ -216,12 +228,16 @@ func TestSuite(t *testing.T) {
 			testListKey = "sequence"
 		}
 		manifestURI := baseIri + manifestName
+		manifestBaseDir := filepath.Dir(manifestName)
 
 		// start a mock HTTP server
-		mockServer := NewMockServer(baseIri, testDir)
+		mockServer := NewMockServer(baseIri, manifestBaseDir)
 		defer mockServer.Close()
 
+		testsToSkip := skippedTests[manifestName]
+
 		testList := make([]*TestDefinition, 0)
+
 		for _, testData := range manifest[testListKey].([]interface{}) {
 			testMap := testData.(map[string]interface{})
 			testId := ""
@@ -233,11 +249,14 @@ func TestSuite(t *testing.T) {
 			if baseIri != "" {
 				// JSON-LD test manifest
 				testId = testMap["@id"].(string)
-				testType = testMap["@type"].([]interface{})[1].(string)
+
+				testTypes := testMap["@type"].([]interface{})
+				testType = testTypes[len(testTypes)-1].(string)
+
 				testEvaluationType = testMap["@type"].([]interface{})[0].(string)
 				inputURL = baseIri + testMap["input"].(string)
 				inputFileName = testMap["input"].(string)
-				if testEvaluationType != "jld:PositiveSyntaxTest" {
+				if testEvaluationType != "jld:PositiveSyntaxTest" && testEvaluationType != "jld:NegativeEvaluationTest" {
 					expectedFileName = testMap["expect"].(string)
 				}
 			} else {
@@ -249,6 +268,16 @@ func TestSuite(t *testing.T) {
 			}
 
 			skip := false
+
+			if testsToSkip != nil {
+				for _, prefix := range testsToSkip {
+					if strings.HasPrefix(testId, prefix) {
+						skip = true
+						break
+					}
+				}
+			}
+
 			if skipVal, hasSkip := testMap["skip"]; hasSkip {
 				skip = skipVal.(bool)
 			}
@@ -264,8 +293,8 @@ func TestSuite(t *testing.T) {
 				Type:             testType,
 				EvaluationType:   testEvaluationType,
 				InputURL:         inputURL,
-				InputFileName:    filepath.Join(testDir, inputFileName),
-				ExpectedFileName: filepath.Join(testDir, expectedFileName),
+				InputFileName:    filepath.Join(manifestBaseDir, inputFileName),
+				ExpectedFileName: filepath.Join(manifestBaseDir, expectedFileName),
 				Raw:              testMap,
 				Skip:             skip,
 			}
@@ -326,7 +355,7 @@ func TestSuite(t *testing.T) {
 					options.Base = value.(string)
 				}
 				if value, hasValue := testOpts["expandContext"]; hasValue {
-					contextDoc, err := dl.LoadDocument(filepath.Join(testDir, value.(string)))
+					contextDoc, err := dl.LoadDocument(filepath.Join(filepath.Dir(td.InputFileName), value.(string)))
 					assert.NoError(t, err)
 					options.ExpandContext = contextDoc.Document
 				}
@@ -382,7 +411,7 @@ func TestSuite(t *testing.T) {
 				log.Println("Running Compact test", td.Id, ":", td.Name)
 
 				contextFilename := td.Raw["context"].(string)
-				contextDoc, err := dl.LoadDocument(filepath.Join(testDir, contextFilename))
+				contextDoc, err := dl.LoadDocument(filepath.Join(manifestBaseDir, contextFilename))
 				assert.NoError(t, err)
 
 				result, opError = proc.Compact(td.InputURL, contextDoc.Document, options)
@@ -392,7 +421,7 @@ func TestSuite(t *testing.T) {
 				var ctxDoc interface{}
 				if ctxVal, hasContext := td.Raw["context"]; hasContext {
 					contextFilename := ctxVal.(string)
-					contextDoc, err := dl.LoadDocument(filepath.Join(testDir, contextFilename))
+					contextDoc, err := dl.LoadDocument(filepath.Join(manifestBaseDir, contextFilename))
 					assert.NoError(t, err)
 					ctxDoc = contextDoc.Document
 				}
@@ -402,7 +431,7 @@ func TestSuite(t *testing.T) {
 				log.Println("Running Frame test", td.Id, ":", td.Name)
 
 				frameFilename := td.Raw["frame"].(string)
-				frameDoc, err := dl.LoadDocument(filepath.Join(testDir, frameFilename))
+				frameDoc, err := dl.LoadDocument(filepath.Join(manifestBaseDir, frameFilename))
 				assert.NoError(t, err)
 
 				result, opError = proc.Frame(td.InputURL, frameDoc.Document, options)
@@ -413,12 +442,16 @@ func TestSuite(t *testing.T) {
 				assert.NoError(t, err)
 				input := string(inputBytes)
 
-				result, err = proc.FromRDF(input, options)
+				result, opError = proc.FromRDF(input, options)
 			case "jld:ToRDFTest":
 				log.Println("Running ToRDF test", td.Id, ":", td.Name)
 
 				options.Format = "application/n-quads"
 				result, opError = proc.ToRDF(td.InputURL, options)
+			case "jld:HtmlTest":
+				log.Println("Running HTML test", td.Id, ":", td.Name)
+				// TODO
+				result, opError = proc.Expand(td.InputURL, options)
 			case "rdfn:Urgna2012EvalTest":
 				log.Println("Running URGNA2012 test", td.Id, ":", td.Name)
 
@@ -449,6 +482,7 @@ func TestSuite(t *testing.T) {
 				// we don't expect any errors here
 				if !assert.NoError(t, opError) {
 					earlReport.addAssertion(td.Name, false, false)
+					continue
 				}
 
 				// load expected document
@@ -463,7 +497,7 @@ func TestSuite(t *testing.T) {
 					expectedBytes, err := ioutil.ReadFile(td.ExpectedFileName)
 					assert.NoError(t, err)
 
-					// for now, we don't apply RDF Isonorphism method to compare NQuads.
+					// for now, we don't apply RDF Isomorphism method to compare NQuads.
 					// we sort for the actual and the expected results to ignore differences in the order.
 					result = sortNQuads(result.(string))
 					expected = sortNQuads(string(expectedBytes))
@@ -471,18 +505,22 @@ func TestSuite(t *testing.T) {
 
 				// marshal/unmarshal the result to avoid any differences due to formatting & key sequences
 				resultBytes, _ := json.MarshalIndent(result, "", "  ")
-				err = json.Unmarshal(resultBytes, &result)
+				_ = json.Unmarshal(resultBytes, &result)
 			} else if td.EvaluationType == "jld:NegativeEvaluationTest" {
-				expected = td.Raw["expect"].(string)
+				if v, found := td.Raw["expectErrorCode"]; found {
+					expected = v.(string)
+				} else if v, found := td.Raw["expect"]; found {
+					expected = v.(string)
+				}
 
 				if opError != nil {
 					result = string(opError.(*JsonLdError).Code)
 				} else {
+					//PrintDocument("RESULT", result)
 					result = ""
 				}
 			} else if td.EvaluationType == "jld:PositiveSyntaxTest" {
 				if opError != nil {
-					//PrintDocument("ERROR", opError)
 					result = string(opError.(*JsonLdError).Code)
 				} else {
 					result = ""
@@ -506,8 +544,10 @@ func TestSuite(t *testing.T) {
 				} else if expectedType == ".nq" {
 					log.Println("==== ACTUAL ====")
 					_, _ = os.Stdout.WriteString(result.(string))
+					_, _ = os.Stdout.WriteString("\n\n")
 					log.Println("==== EXPECTED ====")
 					_, _ = os.Stdout.WriteString(expected.(string))
+					_, _ = os.Stdout.WriteString("\n\n")
 				} else {
 					log.Println("==== ACTUAL ====")
 					_, _ = os.Stdout.WriteString(result.(string))
@@ -518,8 +558,11 @@ func TestSuite(t *testing.T) {
 				}
 				log.Println("Error when running", td.Id, "for", td.Type)
 				earlReport.addAssertion(td.Name, false, false)
-				return
+				if os.Getenv("FULL_RUN") != "true" {
+					return
+				}
 			} else {
+				//assert.Fail(t, "XX")
 				earlReport.addAssertion(td.Name, false, true)
 			}
 		}
@@ -626,6 +669,6 @@ func (er *EarlReport) write(filename string) {
 
 	f, _ := os.Create(filename)
 	defer f.Close()
-	f.Write(b)
-	f.WriteString("\n")
+	_, _ = f.Write(b)
+	_, _ = f.WriteString("\n")
 }

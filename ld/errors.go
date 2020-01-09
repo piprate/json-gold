@@ -30,7 +30,6 @@ type JsonLdError struct {
 
 const (
 	LoadingDocumentFailed       ErrorCode = "loading document failed"
-	ListOfLists                 ErrorCode = "list of lists"
 	InvalidIndexValue           ErrorCode = "invalid @index value"
 	ConflictingIndexes          ErrorCode = "conflicting indexes"
 	InvalidIDValue              ErrorCode = "invalid @id value"
@@ -60,7 +59,6 @@ const (
 	InvalidTypedValue           ErrorCode = "invalid typed value"
 	InvalidSetOrListObject      ErrorCode = "invalid set or list object"
 	InvalidLanguageMapValue     ErrorCode = "invalid language map value"
-	CompactionToListOfLists     ErrorCode = "compaction to list of lists"
 	InvalidReversePropertyMap   ErrorCode = "invalid reverse property map"
 	InvalidReverseValue         ErrorCode = "invalid @reverse value"
 	InvalidReversePropertyValue ErrorCode = "invalid reverse property value"
@@ -70,10 +68,18 @@ const (
 	InvalidEmbedValue           ErrorCode = "invalid @embed value"
 	InvalidPrefixValue          ErrorCode = "invalid @prefix value"
 	InvalidNestValue            ErrorCode = "invalid @nest value"
+	InvalidContextNullification ErrorCode = "invalid context nullification"
+	ProtectedTermRedefinition   ErrorCode = "protected term redefinition"
+	InvalidContextMember        ErrorCode = "invalid context member"
+	InvalidPropagateValue       ErrorCode = "invalid @propagate value"
+	InvalidBaseDirection        ErrorCode = "invalid base direction"
+	InvalidIncludedValue        ErrorCode = "invalid @included value"
+	InvalidImportValue          ErrorCode = "invalid @import value"
+	IRIConfusedWithPrefix       ErrorCode = "IRI confused with prefix"
 
 	// non spec related errors
 	SyntaxError    ErrorCode = "syntax error"
-	NotImplemented ErrorCode = "not implemnted"
+	NotImplemented ErrorCode = "not implemented"
 	UnknownFormat  ErrorCode = "unknown format"
 	InvalidInput   ErrorCode = "invalid input"
 	ParseError     ErrorCode = "parse error"

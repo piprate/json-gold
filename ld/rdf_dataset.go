@@ -17,8 +17,10 @@ package ld
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 // Quad represents an RDF quad.
@@ -60,6 +62,34 @@ func (q Quad) Equal(o *Quad) bool {
 	}
 
 	return q.Subject.Equal(o.Subject) && q.Predicate.Equal(o.Predicate) && q.Object.Equal(o.Object)
+}
+
+func (q Quad) Valid() bool {
+	if q.Subject != nil {
+		if InvalidNode(q.Subject) {
+			return false
+		}
+	}
+
+	if q.Predicate != nil {
+		if InvalidNode(q.Predicate) {
+			return false
+		}
+	}
+
+	if q.Object != nil {
+		if InvalidNode(q.Object) {
+			return false
+		}
+	}
+
+	if q.Graph != nil {
+		if InvalidNode(q.Graph) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // RDFDataset is an internal representation of an RDF dataset.
@@ -237,42 +267,23 @@ func (ds *RDFDataset) GraphToRDF(graphName string, graph map[string]interface{},
 			}
 
 			for _, item := range values {
-				// convert @list to triples
-				itemMap, isMap := item.(map[string]interface{})
-				listVal, hasList := itemMap["@list"]
-				if isMap && hasList {
-					list := listVal.([]interface{})
-					var last Node
-					var firstBNode Node
-					firstBNode = nilIRI
-					if len(list) > 0 {
-						last = objectToRDF(list[len(list)-1])
-						firstBNode = NewBlankNode(issuer.GetId(""))
-					}
-					triples = append(triples, NewQuad(subject, predicate, firstBNode, graphName))
-					for i := 0; i < len(list)-1; i++ {
-						object := objectToRDF(list[i])
-						triples = append(triples, NewQuad(firstBNode, first, object, graphName))
-						restBNode := NewBlankNode(issuer.GetId(""))
-						triples = append(triples, NewQuad(firstBNode, rest, restBNode, graphName))
-						firstBNode = restBNode
-					}
-					if last != nil {
-						triples = append(triples, NewQuad(firstBNode, first, last, graphName))
-						triples = append(triples, NewQuad(firstBNode, rest, nilIRI, graphName))
-					}
-				} else {
-					// convert value or node object to triple
-					object := objectToRDF(item)
-					if object != nil {
-						triples = append(triples, NewQuad(subject, predicate, object, graphName))
-					}
+				var object Node
+				object, triples = objectToRDF(item, issuer, graphName, triples)
+				if object != nil {
+					triples = append(triples, NewQuad(subject, predicate, object, graphName))
 				}
 			}
 		}
 	}
 
-	ds.Graphs[graphName] = triples
+	// drop invalid statements (other than IRIs)
+	sanitisedTriples := make([]*Quad, 0, len(triples))
+	for _, t := range triples {
+		if t.Valid() {
+			sanitisedTriples = append(sanitisedTriples, t)
+		}
+	}
+	ds.Graphs[graphName] = sanitisedTriples
 }
 
 // GetQuads returns a list of quads for the given graph
@@ -285,4 +296,80 @@ var canonicalDoubleRegEx = regexp.MustCompile("(\\d)0*E\\+?0*(\\d)")
 // GetCanonicalDouble returns a canonical string representation of a float64 number.
 func GetCanonicalDouble(v float64) string {
 	return canonicalDoubleRegEx.ReplaceAllString(fmt.Sprintf("%1.15E", v), "${1}E${2}")
+}
+
+var (
+	validLanguageRegex = regexp.MustCompile("^[a-zA-Z]+(-[a-zA-Z0-9]+)*$")
+)
+
+func InvalidNode(node Node) bool {
+
+	switch v := node.(type) {
+	case *IRI:
+		if !validIRI(v.Value) {
+			return true
+		}
+	case *Literal:
+		if v.Language != "" && !validLanguageRegex.MatchString(v.Language) {
+			return true
+		}
+		if v.Datatype != "" && !validIRI(v.Datatype) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func validIRI(val string) bool {
+	if (strings.HasPrefix(val, "http://") || strings.HasPrefix(val, "https://")) && !IsURL(val) {
+		return false
+	}
+
+	return true
+}
+
+/*
+  ===========
+  The URL validation logic below was borrowed from github.com/asaskevich/govalidator package.
+  The original code is distributed under MIT license. Copyright (c) 2014 Alex Saskevich
+  ===========
+*/
+var (
+	IP           = `(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`
+	URLSchema    = `((ftp|tcp|udp|wss?|https?):\/\/)`
+	URLUsername  = `(\S+(:\S*)?@)`
+	URLPath      = `((\/|\?|#)[^\s]*)`
+	URLPort      = `(:(\d{1,5}))`
+	URLIP        = `([1-9]\d?|1\d\d|2[01]\d|22[0-3])(\.(1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.([0-9]\d?|1\d\d|2[0-4]\d|25[0-4]))`
+	URLSubdomain = `((www\.)|([a-zA-Z0-9]+([-_\.]?[a-zA-Z0-9])*[a-zA-Z0-9]\.[a-zA-Z0-9]+))`
+	URL          = `^` + URLSchema + `?` + URLUsername + `?` + `((` + URLIP + `|(\[` + IP + `\])|(([a-zA-Z0-9]([a-zA-Z0-9-_]+)?[a-zA-Z0-9]([-\.][a-zA-Z0-9]+)*)|(` + URLSubdomain + `?))?(([a-zA-Z\x{00a1}-\x{ffff}0-9]+-?-?)*[a-zA-Z\x{00a1}-\x{ffff}0-9]+)(?:\.([a-zA-Z\x{00a1}-\x{ffff}]{1,}))?))\.?` + URLPort + `?` + URLPath + `?$`
+	rxURL        = regexp.MustCompile(URL)
+)
+
+const maxURLRuneCount = 2083
+const minURLRuneCount = 3
+
+// IsURL check if the string is an URL.
+func IsURL(str string) bool {
+	if str == "" || utf8.RuneCountInString(str) >= maxURLRuneCount || len(str) <= minURLRuneCount || strings.HasPrefix(str, ".") {
+		return false
+	}
+	strTemp := str
+	if strings.Contains(str, ":") && !strings.Contains(str, "://") {
+		// support no indicated urlscheme but with colon for port number
+		// http:// is appended so url.Parse will succeed, strTemp used so it does not impact rxURL.MatchString
+		strTemp = "http://" + str
+	}
+	u, err := url.Parse(strTemp)
+	if err != nil {
+		return false
+	}
+	if strings.HasPrefix(u.Host, ".") {
+		return false
+	}
+	if u.Host == "" && (u.Path != "" && !strings.Contains(u.Path, ".")) {
+		return false
+	}
+	return rxURL.MatchString(str)
 }

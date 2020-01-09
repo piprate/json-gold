@@ -25,8 +25,6 @@ import (
 func main() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
-	// add the processing mode explicitly if you need JSON-LD 1.1 features
-	options.ProcessingMode = ld.JsonLd_1_1
 	options.Format = "application/n-quads"
 
 	// this JSON-LD document was taken from http://json-ld.org/test-suite/tests/toRdf-0028-in.jsonld

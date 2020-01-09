@@ -1,5 +1,15 @@
 # JSON-goLD Change Log
 
+## v0.3.0 - 2020-01-08
+
+- Substantial conformance to the latest W3C Recommendation for JSON-LD 1.1 specification.
+- Default processing mode set to JSON-LD 1.1
+
+### IMPORTANT NOTES
+
+- JSON-LD 1.1 introduces several changes in internal (and some external) interfaces
+- JSON-LD 1.1 algorithms are considerably more complex than 1.0. Performance impact hasn't been evaluated yet. There were no attempts yet to optimise the implementation.
+
 ## v0.2.0 - 2019-01-16
 
 - JSON 1.1 support

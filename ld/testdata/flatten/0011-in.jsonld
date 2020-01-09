@@ -1,6 +1,6 @@
 {
   "@context": {
-    "dc": "http://purl.org/dc/elements/1.1/",
+    "dc11": "http://purl.org/dc/elements/1.1/",
     "ex": "http://example.org/vocab#",
     "ex:contains": {
       "@type": "@id"
@@ -8,6 +8,6 @@
     "xsd": "http://www.w3.org/2001/XMLSchema#"
   },
   "@id": "http://example.org/test#book",
-  "dc:title": "Title",
+  "dc11:title": "Title",
   "ex:contains": "http://example.org/test#chapter"
 }

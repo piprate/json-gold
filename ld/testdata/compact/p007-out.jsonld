@@ -1,8 +1,8 @@
 {
   "@context": {
     "foo": "http://example.org/",
-    "foo:bar": "foo:baz/"
+    "foo:bar": {"@type": "@id"}
   },
-  "@id": "foo:baz/a",
-  "foo:baz/b": "c"
+  "@id": "foo:bar/a",
+  "foo:bar/b": "c"
 }
