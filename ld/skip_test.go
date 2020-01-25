@@ -33,17 +33,6 @@ var skippedTests = map[string][]string{
 		"#tla05", // HTML documents aren't supported yet
 	},
 	"testdata/toRdf-manifest.jsonld": {
-		"#tc019", // Results are isomorphic, but blank node sequence is different.
-		"#te075", // Results are isomorphic, but blank node sequence is different.
-		"#te085", // Results are isomorphic, but blank node sequence is different.
-		"#te086", // Results are isomorphic, but blank node sequence is different.
-		"#te087", // Results are isomorphic, but blank node sequence is different.
-		"#tli01", // Results are isomorphic, but blank node sequence is different.
-		"#tli02", // Results are isomorphic, but blank node sequence is different.
-		"#tm003", // Results are isomorphic, but blank node sequence is different.
-		"#tm004", // Results are isomorphic, but blank node sequence is different.
-		"#tpr25", // Results are isomorphic, but blank node sequence is different.
-
 		"#tdi09", // No support for i18n-datatype yet
 		"#tdi10", // No support for i18n-datatype yet
 		"#tdi11", // No support for compound-literal yet

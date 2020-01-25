@@ -16,8 +16,6 @@ package ld_test
 
 import (
 	"encoding/json"
-	. "github.com/piprate/json-gold/ld"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -25,10 +23,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	. "github.com/piprate/json-gold/ld"
+	"github.com/stretchr/testify/assert"
 )
 
 // RewriteHostTransport is an http.RoundTripper that rewrites requests
@@ -492,20 +492,24 @@ func TestSuite(t *testing.T) {
 					rdOut, err := dl.LoadDocument(td.ExpectedFileName)
 					assert.NoError(t, err)
 					expected = rdOut.Document
+
+					// marshal/unmarshal the result to avoid any differences due to formatting & key sequences
+					resultBytes, _ := json.MarshalIndent(result, "", "  ")
+					_ = json.Unmarshal(resultBytes, &result)
 				} else if expectedType == ".nq" {
 					// load as N-Quads
 					expectedBytes, err := ioutil.ReadFile(td.ExpectedFileName)
 					assert.NoError(t, err)
 
-					// for now, we don't apply RDF Isomorphism method to compare NQuads.
 					// we sort for the actual and the expected results to ignore differences in the order.
 					result = sortNQuads(result.(string))
 					expected = sortNQuads(string(expectedBytes))
-				}
 
-				// marshal/unmarshal the result to avoid any differences due to formatting & key sequences
-				resultBytes, _ := json.MarshalIndent(result, "", "  ")
-				_ = json.Unmarshal(resultBytes, &result)
+					if Isomorphic(string(expectedBytes), result.(string)) {
+						expected = "_equal_"
+						result = "_equal_"
+					}
+				}
 			} else if td.EvaluationType == "jld:NegativeEvaluationTest" {
 				if v, found := td.Raw["expectErrorCode"]; found {
 					expected = v.(string)
@@ -568,12 +572,6 @@ func TestSuite(t *testing.T) {
 		}
 	}
 	earlReport.write("earl.jsonld")
-}
-
-func sortNQuads(input string) string {
-	temp := strings.Split(input, "\n")
-	sort.Strings(temp)
-	return strings.Join(temp, "\n")
 }
 
 const (
