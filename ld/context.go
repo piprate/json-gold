@@ -199,7 +199,9 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			}
 
 			// 3.2.4
-			resultRef, err := result.parse(context, remoteContexts, true, true, false, overrideProtected)
+			remoteContextsCpy := make([]string, 0, len(remoteContexts))
+			copy(remoteContextsCpy, remoteContexts)
+			resultRef, err := result.parse(context, remoteContextsCpy, true, true, false, overrideProtected)
 			if err != nil {
 				return nil, err
 			}
