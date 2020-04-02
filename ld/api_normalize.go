@@ -36,6 +36,7 @@ type NormalisationAlgorithm struct {
 	hashToBlankNodes map[string][]string
 	canonicalIssuer  *IdentifierIssuer
 	quads            []*Quad
+	lines            []string
 	version          string
 }
 
@@ -48,7 +49,11 @@ func NewNormalisationAlgorithm(version string) *NormalisationAlgorithm {
 	}
 }
 
-func (na *NormalisationAlgorithm) Main(dataset *RDFDataset, opts *JsonLdOptions) (interface{}, error) {
+func (na *NormalisationAlgorithm) Quads() []*Quad {
+	return na.quads
+}
+
+func (na *NormalisationAlgorithm) Normalize(dataset *RDFDataset) {
 	// 1) Create the normalisation state
 
 	// 2) For every quad in input dataset:
@@ -228,8 +233,8 @@ func (na *NormalisationAlgorithm) Main(dataset *RDFDataset, opts *JsonLdOptions)
 	// blank nodes its new identifier.
 
 	// 7) For each quad, quad, in input dataset:
-	normalized := make([]string, 0)
-	for _, quad := range na.quads {
+	na.lines = make([]string, len(na.quads))
+	for i, quad := range na.quads {
 		// 7.1) Create a copy, quad copy, of quad and replace any existing blank
 		// node identifiers using the canonical identifiers previously issued by
 		// canonical issuer.
@@ -250,18 +255,23 @@ func (na *NormalisationAlgorithm) Main(dataset *RDFDataset, opts *JsonLdOptions)
 		if nameVal != nil {
 			name = nameVal.(Node).GetValue()
 		}
-		normalized = append(normalized, toNQuad(quad, name))
+		na.lines[i] = toNQuad(quad, name)
 	}
 
 	// sort normalized output
-	sort.Strings(normalized)
+	sort.Sort(na)
+}
+
+func (na *NormalisationAlgorithm) Main(dataset *RDFDataset, opts *JsonLdOptions) (interface{}, error) {
+	// Steps 1 through 7.2, plus sorting
+	na.Normalize(dataset)
 
 	// 8) Return the normalized dataset.
 	// handle output format
 	if opts.Format != "" {
 		if opts.Format == "application/n-quads" || opts.Format == "application/nquads" {
 			rval := ""
-			for _, n := range normalized {
+			for _, n := range na.lines {
 				rval += n
 			}
 			return rval, nil
@@ -270,10 +280,18 @@ func (na *NormalisationAlgorithm) Main(dataset *RDFDataset, opts *JsonLdOptions)
 		}
 	}
 	rval := ""
-	for _, n := range normalized {
+	for _, n := range na.lines {
 		rval += n
 	}
 	return ParseNQuads(rval)
+}
+
+// Sort interface
+func (na *NormalisationAlgorithm) Len() int           { return len(na.quads) }
+func (na *NormalisationAlgorithm) Less(i, j int) bool { return na.lines[i] < na.lines[j] }
+func (na *NormalisationAlgorithm) Swap(i, j int) {
+	na.lines[i], na.lines[j] = na.lines[j], na.lines[i]
+	na.quads[i], na.quads[j] = na.quads[j], na.quads[i]
 }
 
 // 4.6) Hash First Degree Quads
