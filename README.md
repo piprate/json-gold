@@ -65,7 +65,7 @@ Not supported. The current implementation is still based on an earlier version o
 
 As of April 4th, 2020:
 
-* 88.2% of tests from the [official JSON-LD test suite](https://github.com/w3c/json-ld-api/tree/master/tests) pass.
+* 92.3% of tests from the [official JSON-LD test suite](https://github.com/w3c/json-ld-api/tree/master/tests) pass.
 * all RDF Dataset Normalisation tests from the [current test suite](https://json-ld.github.io/normalization/tests/index.html) pass
 
 ## Examples ##

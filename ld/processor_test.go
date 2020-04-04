@@ -320,7 +320,11 @@ func TestSuite(t *testing.T) {
 			if td.Skip {
 				log.Println("Test marked as skipped:", td.Id, ":", td.Name)
 
-				earlReport.addAssertion(td.Name, true, false)
+				if os.Getenv("SKIP_MODE") == "fail" {
+					earlReport.addAssertion(td.Name, false, false)
+				} else {
+					earlReport.addAssertion(td.Name, true, false)
+				}
 
 				continue
 			}

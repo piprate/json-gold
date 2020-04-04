@@ -25,10 +25,6 @@ var skippedTests = map[string][]string{
 	"testdata/fromRdf-manifest.jsonld": {
 		"#tdi05", // No support for i18n-datatype yet
 		"#tdi06", // No support for i18n-datatype yet
-		"#tdi07", // No support for i18n-datatype yet
-		"#tdi08", // No support for i18n-datatype yet
-		"#tdi09", // No support for compound-literal yet
-		"#tdi10", // No support for compound-literal yet
 		"#tdi11", // No support for compound-literal yet
 		"#tdi12", // No support for compound-literal yet
 		"#tjs",   // @json not yet supported
@@ -44,30 +40,16 @@ var skippedTests = map[string][]string{
 		"#tec02", // TODO
 		"#ter52", // TODO
 
-		"#tdi09", // No support for i18n-datatype yet
-		"#tdi10", // No support for i18n-datatype yet
-		"#tdi11", // No support for compound-literal yet
-		"#tdi12", // No support for compound-literal yet
-
-		"#te111", // Unclear reasons for failure. TODO
-		"#te112", // Unclear reasons for failure. TODO
 		"#te123", // TODO
-
-		"#tjs", // @json not yet supported
 
 		"#tpr28", // Skipped in Expand test suite
 		"#tpr38", // TODO
 		"#tpr39", // TODO
-		"#ttn02", // Unclear what the correct behaviour should be: two values get collapsed into one
 	},
 	"testdata/html-manifest.jsonld": {
 		"#t", // HTML inputs not supported yet
 	},
 	"testdata/frame-manifest.jsonld": {},
-	"testdata/normalization/manifest-urgna2012.jsonld": {
-		"manifest-urgna2012#test060", // TODO
-	},
-	"testdata/normalization/manifest-urdna2015.jsonld": {
-		"manifest-urdna2015#test060", // TODO
-	},
+	"testdata/normalization/manifest-urgna2012.jsonld": {},
+	"testdata/normalization/manifest-urdna2015.jsonld": {},
 }
