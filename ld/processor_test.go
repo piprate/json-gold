@@ -355,7 +355,7 @@ func TestSuite(t *testing.T) {
 					options.Base = value.(string)
 				}
 				if value, hasValue := testOpts["expandContext"]; hasValue {
-					contextDoc, err := dl.LoadDocument(filepath.Join(filepath.Dir(td.InputFileName), value.(string)))
+					contextDoc, err := dl.LoadDocument(filepath.Join(testDir, value.(string)))
 					assert.NoError(t, err)
 					options.ExpandContext = contextDoc.Document
 				}
