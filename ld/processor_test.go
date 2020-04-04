@@ -480,7 +480,7 @@ func TestSuite(t *testing.T) {
 			var expectedType string
 			if td.EvaluationType == "jld:PositiveEvaluationTest" {
 				// we don't expect any errors here
-				if !assert.NoError(t, opError) {
+				if !assert.NoError(t, opError, td.Name) {
 					earlReport.addAssertion(td.Name, false, false)
 					continue
 				}

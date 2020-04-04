@@ -12,8 +12,14 @@ var skippedTests = map[string][]string{
 	},
 	"testdata/expand-manifest.jsonld": {
 		"#tpr28", // TODO
+		"#tpr38", // TODO
+		"#tpr39", // TODO
 		"#t0122", // TODO
 		"#t0123", // TODO
+		"#tc032", // TODO
+		"#tc033", // TODO
+		"#tec02", // TODO
+		"#ter52", // TODO
 	},
 	"testdata/flatten-manifest.jsonld": {},
 	"testdata/fromRdf-manifest.jsonld": {
@@ -33,6 +39,11 @@ var skippedTests = map[string][]string{
 		"#tla05", // HTML documents aren't supported yet
 	},
 	"testdata/toRdf-manifest.jsonld": {
+		"#tc032", // TODO
+		"#tc033", // TODO
+		"#tec02", // TODO
+		"#ter52", // TODO
+
 		"#tdi09", // No support for i18n-datatype yet
 		"#tdi10", // No support for i18n-datatype yet
 		"#tdi11", // No support for compound-literal yet
@@ -45,6 +56,8 @@ var skippedTests = map[string][]string{
 		"#tjs", // @json not yet supported
 
 		"#tpr28", // Skipped in Expand test suite
+		"#tpr38", // TODO
+		"#tpr39", // TODO
 		"#ttn02", // Unclear what the correct behaviour should be: two values get collapsed into one
 	},
 	"testdata/html-manifest.jsonld": {
