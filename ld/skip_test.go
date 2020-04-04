@@ -12,17 +12,19 @@ var skippedTests = map[string][]string{
 	},
 	"testdata/expand-manifest.jsonld": {
 		"#tpr28", // TODO
+		"#tpr38", // TODO
+		"#tpr39", // TODO
 		"#t0122", // TODO
 		"#t0123", // TODO
+		"#tc032", // TODO
+		"#tc033", // TODO
+		"#tec02", // TODO
+		"#ter52", // TODO
 	},
 	"testdata/flatten-manifest.jsonld": {},
 	"testdata/fromRdf-manifest.jsonld": {
 		"#tdi05", // No support for i18n-datatype yet
 		"#tdi06", // No support for i18n-datatype yet
-		"#tdi07", // No support for i18n-datatype yet
-		"#tdi08", // No support for i18n-datatype yet
-		"#tdi09", // No support for compound-literal yet
-		"#tdi10", // No support for compound-literal yet
 		"#tdi11", // No support for compound-literal yet
 		"#tdi12", // No support for compound-literal yet
 		"#tjs",   // @json not yet supported
@@ -33,27 +35,21 @@ var skippedTests = map[string][]string{
 		"#tla05", // HTML documents aren't supported yet
 	},
 	"testdata/toRdf-manifest.jsonld": {
-		"#tdi09", // No support for i18n-datatype yet
-		"#tdi10", // No support for i18n-datatype yet
-		"#tdi11", // No support for compound-literal yet
-		"#tdi12", // No support for compound-literal yet
+		"#tc032", // TODO
+		"#tc033", // TODO
+		"#tec02", // TODO
+		"#ter52", // TODO
 
-		"#te111", // Unclear reasons for failure. TODO
-		"#te112", // Unclear reasons for failure. TODO
 		"#te123", // TODO
 
-		"#tjs", // @json not yet supported
-
 		"#tpr28", // Skipped in Expand test suite
-		"#ttn02", // Unclear what the correct behaviour should be: two values get collapsed into one
+		"#tpr38", // TODO
+		"#tpr39", // TODO
 	},
 	"testdata/html-manifest.jsonld": {
 		"#t", // HTML inputs not supported yet
 	},
-	"testdata/normalization/manifest-urgna2012.jsonld": {
-		"manifest-urgna2012#test060", // TODO
-	},
-	"testdata/normalization/manifest-urdna2015.jsonld": {
-		"manifest-urdna2015#test060", // TODO
-	},
+	"testdata/frame-manifest.jsonld": {},
+	"testdata/normalization/manifest-urgna2012.jsonld": {},
+	"testdata/normalization/manifest-urdna2015.jsonld": {},
 }

@@ -18,8 +18,11 @@ Tests driven from a top-level [manifest](manifest.jsonld) and are defined into [
 * [expand](expand-manifest.jsonld) tests have _input_ and _expected_ documents.
   The _expected_ results can be compared using [JSON-LD object comparison](#json-ld-object-comparison) with the processor output.
 
+  Expansion tests may have a `expandContext` option, which is treated
+  as an IRI relative to the manifest.
+
   For *NegativeEvaluationTests*, the result is a string associated with the expected error code.
-* [html](html.jsonld) tests have _input_ and _expected_ documents and an optional _context_ document.
+* [html](html-manifest.jsonld) tests have _input_ and _expected_ documents and an optional _context_ document.
   The _expected_ results can be compared using [JSON-LD object comparison](#json-ld-object-comparison) with the processor output
   after potentially remapping blank node identifiers (see below).
   Additionally, if the result is compacted and the `ordered` option is not set, result should be expanded and compared with the expanded _expected_ document also using [JSON-LD object comparison](#json-ld-object-comparison).
@@ -46,6 +49,9 @@ Tests driven from a top-level [manifest](manifest.jsonld) and are defined into [
 * [toRdf](toRdf-manifest.jsonld) tests have _input_ and _expected_ documents.
   The _expected_ results can be compared using [RDF Dataset Isomorphism](https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism).
 
+  ToRdf tests may have a `expandContext` option, which is treated
+  as an IRI relative to the manifest.
+
 Unless `processingMode` is set explicitly in a test entry, `processingMode` is compatible with both `json-ld-1.0` and `json-ld-1.1`.
 
 Test results that include a context input presume that the context is provided locally, and not from the referenced location, thus the results will include the content of the context file, rather than a reference.
@@ -66,11 +72,19 @@ Note that some tests require re-expansion and comparison, as list values may exi
 # Running tests
 
 The top-level [manifest](manifest.jsonld) references the specific test manifests, which in turn reference each test associated with a particular type of behavior.
+
 Implementations create their own infrastructure for running the test suite. In particular, the following should be considered:
 
 * _remote-doc_ tests will likely not return expected HTTP headers, so the _options_ should be used to determine what headers are associated with the input document.
+* Test case properties identifying a file (_input_, _output_, _context_, _expectContext_, and _frame_) are presumed to have a media type appropriate for the file extension.
+  * `application/ld+json` for `.jsonld`
+  * `text/html` for `.html`
+  * `application/n-quads` for `.nq`
+* The media type for the file associated with the _input_ property can be overridden using the `contentType` option.
 * Some algorithms, particularly _fromRdf_, may not preserve the order of statements listed in the input document, and provision should be taken for performing unordered array comparison, for arrays other than values of `@list`. (This may be difficult for compacted results, where array value ordering is dependent on the associated term definition).
+* Some _toRdf_ tests require the use of [JSON Canonicalization Scheme](https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-05) to properly generate RDF Literals from JSON literal values. This algorithm is non-normative, but is assumed to be used to properly compare results using [RDF Dataset Isomorphism](https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism). These tests are marked using the `useJCS` option.
 * When comparing documents after flattening, framing or generating RDF, blank node identifiers may not be predictable. Implementations using the JSON-LD 1.0 algorithm, where output is always sorted and blank node identifiers are generated sequentially from `_:b0` may continue to use a simple object comparison. Otherwise, implementations should take this into consideration. (One way to do this may be to reduce both results and _expected_ to datsets to extract a bijective mapping of blank node labels between the two datasets as described in [RDF Dataset Isomorphism](https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism)).
+* Some tests may have a `requires` property, indicating some optional behavior described by a test vocabulary term.
 
 # Contributing
 

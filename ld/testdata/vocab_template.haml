@@ -48,5 +48,18 @@
                 %dt="Range"
                 %dd<
                   %strong=prop['rdfs:range']
+
+    %section
+      %h2<="Requirements"
+      %dl
+        - requirements.each do |req|
+          %dt<
+            %strong<~req["rdfs:label"]
+            = surround '(', ')' do
+              %strong<~req['@id']
+          %dd<
+            :markdown
+              #{req["rdfs:comment"].to_s.gsub(/^\s+/, '')}
+        
     %footer
       %span<= ontology["dc11:publisher"]

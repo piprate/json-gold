@@ -28,22 +28,25 @@ comprehensive JSON-LD testing solution for developers creating JSON-LD Processor
 
 <h2>General instructions for running the JSON-LD Test suites</h2>
 
-<h3><a href="compact-manifest.jsonld">compact</a> tests have <em>input</em>, <em>expected</em> and <em>context</em> documents.</h3>
+<h3><a href="compact-manifest.html">compact</a> tests have <em>input</em>, <em>expected</em> and <em>context</em> documents.</h3>
 
 <p>The <em>expected</em> results can be compared using <a href="#json-ld-object-comparison">JSON-LD object comparison</a> with the processor output. Additionally, if the <code>ordered</code> option is not set, result should be expanded and compared with the expanded <em>expected</em> document also using <a href="#json-ld-object-comparison">JSON-LD object comparison</a>.</p>
 
 <p>For <em>NegativeEvaluationTests</em>, the result is a string associated with the expected error code.</p>
-<h3><a href="expand-manifest.jsonld">expand</a> tests have <em>input</em> and <em>expected</em> documents.</h3>
+<h3><a href="expand-manifest.html">expand</a> tests have <em>input</em> and <em>expected</em> documents.</h3>
 
 <p>The <em>expected</em> results can be compared using <a href="#json-ld-object-comparison">JSON-LD object comparison</a> with the processor output.</p>
 
+<p>Expansion tests may have a <code>expandContext</code> option, which is treated
+as an IRI relative to the manifest.</p>
+
 <p>For <em>NegativeEvaluationTests</em>, the result is a string associated with the expected error code.</p>
-<h3><a href="html.jsonld">html</a> tests have <em>input</em> and <em>expected</em> documents and an optional <em>context</em> document.</h3>
+<h3><a href="html-manifest.html">html</a> tests have <em>input</em> and <em>expected</em> documents and an optional <em>context</em> document.</h3>
 
 <p>The <em>expected</em> results can be compared using <a href="#json-ld-object-comparison">JSON-LD object comparison</a> with the processor output after potentially remapping blank node identifiers (see below). Additionally, if the result is compacted and the <code>ordered</code> option is not set, result should be expanded and compared with the expanded <em>expected</em> document also using <a href="#json-ld-object-comparison">JSON-LD object comparison</a>.</p>
 
 <p>For <em>NegativeEvaluationTests</em>, the result is a string associated with the expected error code.</p>
-<h3><a href="flatten-manifest.jsonld">flatten</a> tests have <em>input</em> and <em>expected</em> documents and an optional <em>context</em> document.</h3>
+<h3><a href="flatten-manifest.html">flatten</a> tests have <em>input</em> and <em>expected</em> documents and an optional <em>context</em> document.</h3>
 
 <p>The <em>expected</em> results can be compared using <a href="#json-ld-object-comparison">JSON-LD object comparison</a> with the processor output after potentially remapping blank node identifiers (see below). Additionally, if the result is compacted and the <code>ordered</code> option is not set, result should be expanded and compared with the expanded <em>expected</em> document also using <a href="#json-ld-object-comparison">JSON-LD object comparison</a>.</p>
 
@@ -86,7 +89,9 @@ comprehensive JSON-LD testing solution for developers creating JSON-LD Processor
 </ul></li>
 <li>The media type for the file associated with the <em>input</em> property can be overridden using the <code>contentType</code> option.</li>
 <li>Some algorithms, particularly <em>fromRdf</em>, may not preserve the order of statements listed in the input document, and provision should be taken for performing unordered array comparison, for arrays other than values of <code>@list</code>. (This may be difficult for compacted results, where array value ordering is dependent on the associated term definition).</li>
+<li>Some <em>toRdf</em> tests require the use of <a href="https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-05">JSON Canonicalization Scheme</a> to properly generate RDF Literals from JSON literal values. This algorithm is non-normative, but is assumed to be used to properly compare results using <a href="https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism">RDF Dataset Isomorphism</a>. These tests are marked using the <code>useJCS</code> option.</li>
 <li>When comparing documents after flattening, framing or generating RDF, blank node identifiers may not be predictable. Implementations using the JSON-LD 1.0 algorithm, where output is always sorted and blank node identifiers are generated sequentially from <code>_:b0</code> may continue to use a simple object comparison. Otherwise, implementations should take this into consideration. (One way to do this may be to reduce both results and <em>expected</em> to datsets to extract a bijective mapping of blank node labels between the two datasets as described in <a href="https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism">RDF Dataset Isomorphism</a>).</li>
+<li>Some tests may have a <code>requires</code> property, indicating some optional behavior described by a test vocabulary term.</li>
 </ul>
 
 <h1>Contributing Tests</h1>
@@ -303,7 +308,7 @@ Test te006 Expands as empty with no embedded JSON-LD script elements
 <dt>id</dt>
 <dd>#te006</dd>
 <dt>Type</dt>
-<dd>jld:PositiveEvaluationTest, jld:ExpandTest, jld:HtmlTest</dd>
+<dd>jld:NegativeEvaluationTest, jld:ExpandTest, jld:HtmlTest</dd>
 <dt>Purpose</dt>
 <dd>Tests embedded JSON-LD in HTML when none exist</dd>
 <dt>input</dt>
@@ -312,7 +317,7 @@ Test te006 Expands as empty with no embedded JSON-LD script elements
 </dd>
 <dt>expect</dt>
 <dd>
-<a href='html/e006-out.jsonld'>html/e006-out.jsonld</a>
+loading document failed
 </dd>
 <dt>Options</dt>
 <dd>
@@ -398,7 +403,7 @@ Test te011 Errors if no element found at target
 </dd>
 <dt>expect</dt>
 <dd>
-invalid script element
+loading document failed
 </dd>
 <dt>Options</dt>
 <dd>
@@ -426,7 +431,7 @@ Test te012 Errors if targeted element is not a script element
 </dd>
 <dt>expect</dt>
 <dd>
-invalid script element
+loading document failed
 </dd>
 <dt>Options</dt>
 <dd>
@@ -454,7 +459,7 @@ Test te013 Errors if targeted element does not have type application/ld+json
 </dd>
 <dt>expect</dt>
 <dd>
-invalid script element
+loading document failed
 </dd>
 <dt>Options</dt>
 <dd>
@@ -1232,7 +1237,7 @@ Test tr011 Errors if no element found at target
 </dd>
 <dt>expect</dt>
 <dd>
-invalid script element
+loading document failed
 </dd>
 <dt>Options</dt>
 <dd>
@@ -1260,7 +1265,7 @@ Test tr012 Errors if targeted element is not a script element
 </dd>
 <dt>expect</dt>
 <dd>
-invalid script element
+loading document failed
 </dd>
 <dt>Options</dt>
 <dd>
@@ -1288,7 +1293,7 @@ Test tr013 Errors if targeted element does not have type application/ld+json
 </dd>
 <dt>expect</dt>
 <dd>
-invalid script element
+loading document failed
 </dd>
 <dt>Options</dt>
 <dd>

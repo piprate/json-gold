@@ -1,11 +1,9 @@
-# JSON-goLD [![Documentations][shield-godoc]][godoc] [![Travis CI results][shield-travis]][travis] [![GoCover.io][shield-gocover]][gocover]
+# JSON-goLD [![Documentations][shield-godoc]][godoc] [![Travis CI results][shield-travis]][travis]
 
 [travis]: https://travis-ci.org/piprate/json-gold
 [shield-travis]: https://api.travis-ci.org/piprate/json-gold.svg?branch=master
 [godoc]: https://godoc.org/github.com/piprate/json-gold/ld
 [shield-godoc]: https://img.shields.io/badge/godoc-reference-5272B4.svg
-[gocover]: https://gocover.io/github.com/piprate/json-gold/ld
-[shield-gocover]: https://gocover.io/_badge/github.com/piprate/json-gold/ld
 
 This library is an implementation of the [JSON-LD 1.1](http://json-ld.org/) specification in Go.
 It supports both URDNA2015 and URGNA2012 RDF dataset normalisation algorithms.
@@ -61,9 +59,9 @@ Not supported. The current implementation is still based on an earlier version o
 
 ### Official 1.1 Test Suite
 
-As of January 8th, 2020:
+As of April 4th, 2020:
 
-* 88.7% of tests from the [official JSON-LD test suite](https://github.com/json-ld/json-ld.org/tree/master/test-suite) pass.
+* 92.3% of tests from the [official JSON-LD test suite](https://github.com/w3c/json-ld-api/tree/master/tests) pass.
 * all RDF Dataset Normalisation tests from the [current test suite](https://json-ld.github.io/normalization/tests/index.html) pass
 
 ## Examples ##

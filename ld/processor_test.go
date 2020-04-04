@@ -320,7 +320,11 @@ func TestSuite(t *testing.T) {
 			if td.Skip {
 				log.Println("Test marked as skipped:", td.Id, ":", td.Name)
 
-				earlReport.addAssertion(td.Name, true, false)
+				if os.Getenv("SKIP_MODE") == "fail" {
+					earlReport.addAssertion(td.Name, false, false)
+				} else {
+					earlReport.addAssertion(td.Name, true, false)
+				}
 
 				continue
 			}
@@ -355,7 +359,7 @@ func TestSuite(t *testing.T) {
 					options.Base = value.(string)
 				}
 				if value, hasValue := testOpts["expandContext"]; hasValue {
-					contextDoc, err := dl.LoadDocument(filepath.Join(filepath.Dir(td.InputFileName), value.(string)))
+					contextDoc, err := dl.LoadDocument(filepath.Join(testDir, value.(string)))
 					assert.NoError(t, err)
 					options.ExpandContext = contextDoc.Document
 				}
@@ -480,7 +484,7 @@ func TestSuite(t *testing.T) {
 			var expectedType string
 			if td.EvaluationType == "jld:PositiveEvaluationTest" {
 				// we don't expect any errors here
-				if !assert.NoError(t, opError) {
+				if !assert.NoError(t, opError, td.Name) {
 					earlReport.addAssertion(td.Name, false, false)
 					continue
 				}
