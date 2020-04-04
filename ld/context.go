@@ -238,7 +238,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		// handle @import
 		if importValue, importFound := contextMap["@import"]; importFound {
 			if result.processingMode(1.0) {
-				return nil, NewJsonLdError(InvalidContextMember, "@import may only be used in 1.1 mode")
+				return nil, NewJsonLdError(InvalidContextEntry, "@import may only be used in 1.1 mode")
 			}
 			importStr, isString := importValue.(string)
 			if !isString {
@@ -261,7 +261,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 
 			if importCtxMap, isMap := context.(map[string]interface{}); isMap {
 				if _, found := importCtxMap["@import"]; found {
-					return nil, NewJsonLdError(InvalidContextMember,
+					return nil, NewJsonLdError(InvalidContextEntry,
 						fmt.Sprintf("%s must not include @import entry", importStr))
 				}
 
@@ -329,7 +329,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		// note: we've already extracted it, here we just do error checking
 		if propagateValue, propagatePresent := contextMap["@propagate"]; propagatePresent {
 			if c.processingMode(1.0) {
-				return nil, NewJsonLdError(InvalidContextMember,
+				return nil, NewJsonLdError(InvalidContextEntry,
 					fmt.Sprintf("@propagate not compatible with %s", c.values["processingMode"]))
 			}
 			if _, isBool := propagateValue.(bool); isBool {
