@@ -1,4 +1,4 @@
-# JSON-goLD [![Documentations][shield-godoc]][godoc] [![Travis CI results][shield-travis]][travis] [![GoCover.io][shield-gocover]][gocover]
+# JSON-goLD [![Documentations][shield-godoc]][godoc] [![Travis CI results][shield-travis]][travis]
 
 [travis]: https://travis-ci.org/piprate/json-gold
 [shield-travis]: https://api.travis-ci.org/piprate/json-gold.svg?branch=master
