@@ -55,11 +55,11 @@
     "option": {"specVersion": "json-ld-1.1", "extractAllScripts": true}
   }, {
     "@id": "#te006",
-    "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest", "jld:HtmlTest"],
+    "@type": ["jld:NegativeEvaluationTest", "jld:ExpandTest", "jld:HtmlTest"],
     "name": "Expands as empty with no embedded JSON-LD script elements",
     "purpose": "Tests embedded JSON-LD in HTML when none exist",
     "input": "html/e006-in.html",
-    "expect": "html/e006-out.jsonld",
+    "expectErrorCode": "loading document failed",
     "option": {"specVersion": "json-ld-1.1"}
   }, {
     "@id": "#te007",
@@ -83,7 +83,7 @@
     "name": "Errors if no element found at target",
     "purpose": "Tests embedded JSON-LD in HTML with fragment identifier that doesn't exist",
     "input": "html/e011-in.html#third",
-    "expectErrorCode": "invalid script element",
+    "expectErrorCode": "loading document failed",
     "option": {"specVersion": "json-ld-1.1"}
   }, {
     "@id": "#te012",
@@ -91,7 +91,7 @@
     "name": "Errors if targeted element is not a script element",
     "purpose": "Tests embedded JSON-LD in HTML which isn't a script element",
     "input": "html/e012-in.html#first",
-    "expectErrorCode": "invalid script element",
+    "expectErrorCode": "loading document failed",
     "option": {"specVersion": "json-ld-1.1"}
   }, {
     "@id": "#te013",
@@ -99,7 +99,7 @@
     "name": "Errors if targeted element does not have type application/ld+json",
     "purpose": "Tests embedded JSON-LD in HTML with wrong type",
     "input": "html/e013-in.html#first",
-    "expectErrorCode": "invalid script element",
+    "expectErrorCode": "loading document failed",
     "option": {"specVersion": "json-ld-1.1"}
   }, {
     "@id": "#te014",
@@ -315,7 +315,7 @@
     "name": "Errors if no element found at target",
     "purpose": "Tests embedded JSON-LD in HTML with fragment identifier that doesn't exist",
     "input": "html/r011-in.html#third",
-    "expectErrorCode": "invalid script element",
+    "expectErrorCode": "loading document failed",
     "option": {"specVersion": "json-ld-1.1"}
   }, {
     "@id": "#tr012",
@@ -323,7 +323,7 @@
     "name": "Errors if targeted element is not a script element",
     "purpose": "Tests embedded JSON-LD in HTML which isn't a script element",
     "input": "html/r012-in.html#first",
-    "expectErrorCode": "invalid script element",
+    "expectErrorCode": "loading document failed",
     "option": {"specVersion": "json-ld-1.1"}
   }, {
     "@id": "#tr013",
@@ -331,7 +331,7 @@
     "name": "Errors if targeted element does not have type application/ld+json",
     "purpose": "Tests embedded JSON-LD in HTML with wrong type",
     "input": "html/r013-in.html#first",
-    "expectErrorCode": "invalid script element",
+    "expectErrorCode": "loading document failed",
     "option": {"specVersion": "json-ld-1.1"}
   }, {
     "@id": "#tr014",

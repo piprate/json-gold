@@ -233,6 +233,14 @@
   rdfs:domain	 :Option ;
   rdfs:range   xsd:boolean .
 
+:useJCS a rdf:Property ;
+  rdfs:label "use JCS";
+  rdfs:comment """
+    Requires the use of JSON Canonicalization Scheme when generating RDF literals from JSON literal values.
+    """ ;
+  rdfs:domain	 :Option ;
+  rdfs:range   xsd:boolean .
+
 :useRdfType a rdf:Property ;
   rdfs:label "use RDF types";
   rdfs:comment """
@@ -295,3 +303,16 @@
   """ ;
   rdfs:domain	 :Option ;
   rdfs:range   xsd:string .
+
+# Test requirements (mf:requires)
+:I18nDatatype a mf:Requirement ;
+  rdfs:label "I18nDatatype" ;
+  rdfs:comment "Optional test to serialize text direction using `i18n-datatype`" .
+
+:CompoundLiteral a mf:Requirement ;
+  rdfs:label "CompoundLiteral" ;
+  rdfs:comment "Optional test to serialize text direction using `compound-literal`" .
+
+:GeneralizedRdf a mf:Requirement ;
+  rdfs:label "GeneralizedRdf" ;
+  rdfs:comment "Test generates Generalized RDF" .

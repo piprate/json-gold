@@ -1850,6 +1850,15 @@
       "expect": "compact/n010-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
     }, {
+      "@id": "#tn011",
+      "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
+      "name": "Nests using alias of @nest (defined with @id)",
+      "purpose": "Compaction using @nest",
+      "input": "compact/n011-in.jsonld",
+      "context": "compact/n011-context.jsonld",
+      "expect": "compact/n011-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
       "@id": "#tp001",
       "@type": ["jld:PositiveEvaluationTest", "jld:CompactTest"],
       "name": "Compact IRI will not use an expanded term definition in 1.0",

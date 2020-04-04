@@ -4,5 +4,5 @@
     "ignoreMe": {"@reverse": "@ignoreMe"}
   },
   "@type": "http://example.com/IgnoreTest",
-  "ignoreMe": {"text": "should not be here"}
+  "ignoreMe": {"text": "not reversed"}
 }

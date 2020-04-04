@@ -63,6 +63,7 @@ var skippedTests = map[string][]string{
 	"testdata/html-manifest.jsonld": {
 		"#t", // HTML inputs not supported yet
 	},
+	"testdata/frame-manifest.jsonld": {},
 	"testdata/normalization/manifest-urgna2012.jsonld": {
 		"manifest-urgna2012#test060", // TODO
 	},

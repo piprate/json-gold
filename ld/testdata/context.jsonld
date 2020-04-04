@@ -23,7 +23,7 @@
     "compactArrays":        { "@type": "xsd:boolean" },
     "compactToRelative":    { "@type": "xsd:boolean" },
     "contentType":          { "@type": "xsd:boolean" },
-    "expandContext":        { "@type": "xsd:string" },
+    "expandContext":        { "@type": "@id" },
     "httpLink":             { "@type": "xsd:string", "@container": "@set" },
     "httpStatus":           { "@type": "xsd:integer" },
     "processingMode":       { "@type": "xsd:string" },

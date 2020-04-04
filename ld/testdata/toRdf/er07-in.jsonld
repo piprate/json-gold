@@ -1,4 +1,4 @@
 {
-  "@context": "e002-in.jsonld",
+  "@context": {"@base": true},
   "@id": "http://example/test#example"
 }
