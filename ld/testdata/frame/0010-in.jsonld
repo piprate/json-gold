@@ -1,7 +1,7 @@
 {
   "@context": {
     "dc0": "http://purl.org/dc/terms/",
-    "dc:creator": {
+    "dcterms:creator": {
       "@type": "@id"
     },
     "foaf": "http://xmlns.com/foaf/0.1/",
@@ -9,7 +9,7 @@
   },
   "@id": "http://example.com/asset",
   "@type": "ps:Asset",
-  "dc:creator": {
+  "dcterms:creator": {
     "foaf:name": "John Doe"
   }
 }

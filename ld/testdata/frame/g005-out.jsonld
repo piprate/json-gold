@@ -1,6 +1,6 @@
 {
   "@context": {
-    "dc": "http://purl.org/dc/elements/1.1/",
+    "dcterms": "http://purl.org/dc/terms/",
     "ex": "http://example.org/vocab#"
   },
   "@graph": [{
@@ -10,13 +10,13 @@
     "ex:contains": {
       "@id": "http://example.org/test#book",
       "@type": "ex:Book",
-      "dc:contributor": "Writer",
-      "dc:title": "My Book about a library",
+      "dcterms:contributor": "Writer",
+      "dcterms:title": "My Book about a library",
       "ex:contains": {
         "@id": "http://example.org/test#chapter",
         "@type": "ex:Chapter",
-        "dc:description": "Fun",
-        "dc:title": "Chapter One",
+        "dcterms:description": "Fun",
+        "dcterms:title": "Chapter One",
         "ex:topic": [
           {
             "@id": "http://example.org/test/#library"

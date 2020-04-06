@@ -1,6 +1,6 @@
 {
   "@context": {
-    "dc": "http://purl.org/dc/elements/1.1/",
+    "dcterms": "http://purl.org/dc/terms/",
     "ex": "http://example.org/vocab#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "ex:contains": {
@@ -11,7 +11,7 @@
   "@graph": [
   {
     "@id": "_:Book",
-    "dc:title": "Book type"
+    "dcterms:title": "Book type"
   }, {
     "@id": "http://example.org/library",
     "@type": "ex:Library",
@@ -19,14 +19,14 @@
   }, {
     "@id": "http://example.org/library/the-republic",
     "@type": "_:Book",
-    "dc:creator": "Plato",
-    "dc:title": "The Republic",
+    "dcterms:creator": "Plato",
+    "dcterms:title": "The Republic",
     "ex:contains": "http://example.org/library/the-republic#introduction"
   }, {
     "@id": "http://example.org/library/the-republic#introduction",
     "@type": "ex:Chapter",
-    "dc:description": "An introductory chapter on The Republic.",
-    "dc:title": "The Introduction",
+    "dcterms:description": "An introductory chapter on The Republic.",
+    "dcterms:title": "The Introduction",
     "ex:list": [1, 2, 3, 4, 4, 4, 5]
   }]
 }

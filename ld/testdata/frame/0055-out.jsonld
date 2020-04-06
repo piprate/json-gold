@@ -1,13 +1,11 @@
 {
   "@context": {"ex": "http://example.org/"},
-  "@graph": [{
-    "@id": "ex:Sub1",
-    "@type": "ex:Type1",
-    "ex:mixedlist": {
-      "@list": [
-        {"@id": "ex:Sub2", "@type": "ex:Type2"},
-        "literal1"
-      ]
-    }
-  }]
+  "@id": "ex:Sub1",
+  "@type": "ex:Type1",
+  "ex:mixedlist": {
+    "@list": [
+      {"@id": "ex:Sub2", "@type": "ex:Type2"},
+      "literal1"
+    ]
+  }
 }
