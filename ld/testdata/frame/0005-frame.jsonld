@@ -1,6 +1,6 @@
 {
   "@context": {
-    "dc": "http://purl.org/dc/elements/1.1/",
+    "dcterms": "http://purl.org/dc/terms/",
     "ex": "http://example.org/vocab#"
   },
   "@explicit": true,
@@ -8,11 +8,11 @@
   "ex:contains": {
     "@explicit": true,
     "@type": "ex:Book",
-    "dc:title": {},
+    "dcterms:title": {},
     "ex:contains": {
       "@explicit": true,
       "@type": "ex:Chapter",
-      "dc:title": {},
+      "dcterms:title": {},
       "ex:null": {}
     }
   }

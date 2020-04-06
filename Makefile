@@ -14,6 +14,10 @@ lint:
 fmt:
 	gofmt -s -w .
 
+generate-report:
+	SKIP_MODE=fail make test
+	cp ld/earl.jsonld conformance_report.jsonld
+
 help:
 	@echo ''
 	@echo ' Targets:'

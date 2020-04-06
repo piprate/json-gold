@@ -7,31 +7,27 @@
     },
     "shouldExist": "ex:shouldExist"
   },
-  "@graph": [
+  "@id": "ex:root",
+  "@type": "ex:TreeRoot",
+  "embed": [
     {
-      "@id": "ex:root",
-      "@type": "ex:TreeRoot",
+      "@id": "ex:node-d1-with-leaf",
       "embed": [
         {
-          "@id": "ex:node-d1-with-leaf",
+          "@id": "ex:leaf",
+          "shouldExist": "shows when embedded"
+        }
+      ]
+    },
+    {
+      "@id": "ex:node-d1-with-node",
+      "embed": [
+        {
+          "@id": "ex:node-d2-with-leaf",
           "embed": [
             {
               "@id": "ex:leaf",
               "shouldExist": "shows when embedded"
-            }
-          ]
-        },
-        {
-          "@id": "ex:node-d1-with-node",
-          "embed": [
-            {
-              "@id": "ex:node-d2-with-leaf",
-              "embed": [
-                {
-                  "@id": "ex:leaf",
-                  "shouldExist": "shows when embedded"
-                }
-              ]
             }
           ]
         }

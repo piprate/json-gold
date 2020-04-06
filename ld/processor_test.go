@@ -16,6 +16,7 @@ package ld_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -227,7 +228,8 @@ func TestSuite(t *testing.T) {
 			// it must be a JSON-LD test manifest
 			testListKey = "sequence"
 		}
-		manifestURI := baseIri + manifestName
+		manifestPart := strings.Split(strings.Split(manifestName, "/")[1], ".")[0]
+		manifestURI := baseIri + manifestPart
 		manifestBaseDir := filepath.Dir(manifestName)
 
 		// start a mock HTTP server
@@ -589,6 +591,10 @@ type EarlReport struct {
 }
 
 func NewEarlReport() *EarlReport {
+	version := os.Getenv("VERSION")
+	if version == "" {
+		version = "v0.3.0"
+	}
 	rval := &EarlReport{
 		report: map[string]interface{}{
 			"@context": map[string]interface{}{
@@ -629,6 +635,16 @@ func NewEarlReport() *EarlReport {
 				},
 				"foaf:name":     assertorName,
 				"foaf:homepage": assertor,
+			},
+			"doap:release": map[string]interface{}{
+				"@id":           fmt.Sprintf("https://github.com/piprate/json-gold/tree/%s", version),
+				"@type":         "doap:Version",
+				"doap:revision": version,
+				"doap:name":     fmt.Sprintf("json-gold-%s", version),
+				"doap:created": map[string]interface{}{
+					"@value": time.Now().Format("2006-01-02"),
+					"@type":  "xsd:date",
+				},
 			},
 			"dc:date": map[string]interface{}{
 				"@value": time.Now().Format("2006-01-02"),

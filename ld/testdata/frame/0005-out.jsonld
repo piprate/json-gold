@@ -1,6 +1,6 @@
 {
   "@context": {
-    "dc": "http://purl.org/dc/elements/1.1/",
+    "dcterms": "http://purl.org/dc/terms/",
     "ex": "http://example.org/vocab#"
   },
   "@graph": [{
@@ -9,11 +9,11 @@
     "ex:contains": {
       "@id": "http://example.org/test#book",
       "@type": "ex:Book",
-      "dc:title": "My Book",
+      "dcterms:title": "My Book",
       "ex:contains": {
         "@id": "http://example.org/test#chapter",
         "@type": "ex:Chapter",
-        "dc:title": "Chapter One",
+        "dcterms:title": "Chapter One",
         "ex:null": null
       }
     }

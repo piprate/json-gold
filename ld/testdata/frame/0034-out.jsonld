@@ -1,8 +1,6 @@
 {
   "@context": {"ex": "http://example.org/"},
-  "@graph": [{
-    "@id": "ex:Sub1",
-    "ex:p": null,
-    "ex:q": "bar"
-  }]
+  "@id": "ex:Sub1",
+  "ex:p": null,
+  "ex:q": "bar"
 }
