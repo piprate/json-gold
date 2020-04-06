@@ -4,5 +4,6 @@ This library was originally written by Stan Nazarenko (@kazarena) with Pull Requ
 * Cícero Verneck Corrêa (@cicerocomp), see all commits [here](https://github.com/kazarena/json-gold/commits?author=cicerocomp)
 * Koala Yeung (@yookoala)
 * Koushik Roy (@Koshroy)
+* Joel Gustafson (@joeltg)
 
 All future contributors will be recorded in this file.
