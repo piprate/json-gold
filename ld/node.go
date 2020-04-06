@@ -160,8 +160,8 @@ func IsLiteral(node Node) bool {
 var patternInteger = regexp.MustCompile("^[\\-+]?[0-9]+$")
 var patternDouble = regexp.MustCompile("^(\\+|-)?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([Ee](\\+|-)?[0-9]+)?$")
 
-// rdfToObject converts an RDF triple object to a JSON-LD object.
-func rdfToObject(n Node, useNativeTypes bool) (map[string]interface{}, error) {
+// RdfToObject converts an RDF triple object to a JSON-LD object.
+func RdfToObject(n Node, useNativeTypes bool) (map[string]interface{}, error) {
 	// If value is an an IRI or a blank node identifier, return a new
 	// JSON object consisting
 	// of a single member @id whose value is set to value.
