@@ -152,7 +152,7 @@ func (api *JsonLdApi) FromRDF(dataset *RDFDataset, opts *JsonLdOptions) ([]inter
 			}
 
 			// 3.5.5)
-			value, err := rdfToObject(object, opts.UseNativeTypes)
+			value, err := RdfToObject(object, opts.UseNativeTypes)
 			if err != nil {
 				return nil, err
 			}
