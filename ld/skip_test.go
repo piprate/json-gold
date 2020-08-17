@@ -31,8 +31,6 @@ var skippedTests = map[string][]string{
 	},
 	"testdata/remote-doc-manifest.jsonld": {
 		"#t0013", // HTML documents aren't supported yet
-		"#tla01", // HTML documents aren't supported yet
-		"#tla05", // HTML documents aren't supported yet
 	},
 	"testdata/toRdf-manifest.jsonld": {
 		"#tc032", // TODO

@@ -31,6 +31,8 @@ const (
 	// An HTTP Accept header that prefers JSONLD.
 	acceptHeader = "application/ld+json, application/json;q=0.9, application/javascript;q=0.5, text/javascript;q=0.5, text/plain;q=0.2, */*;q=0.1"
 
+	ApplicationJSONLDType = "application/ld+json"
+
 	// JSON-LD link header rel
 	linkHeaderRel = "http://www.w3.org/ns/json-ld#context"
 )
@@ -86,20 +88,23 @@ func (dl *DefaultDocumentLoader) LoadDocument(u string) (*RemoteDocument, error)
 		return nil, NewJsonLdError(LoadingDocumentFailed, fmt.Sprintf("error parsing URL: %s", u))
 	}
 
-	var documentBody io.Reader
-	var finalURL, contextURL string
+	remoteDoc := &RemoteDocument{}
 
 	protocol := parsedURL.Scheme
 	if protocol != "http" && protocol != "https" {
 		// Can't use the HTTP client for those!
-		finalURL = u
+		remoteDoc.DocumentURL = u
 		var file *os.File
 		file, err = os.Open(u)
 		if err != nil {
 			return nil, NewJsonLdError(LoadingDocumentFailed, err)
 		}
 		defer file.Close()
-		documentBody = file
+
+		remoteDoc.Document, err = DocumentFromReader(file)
+		if err != nil {
+			return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		}
 	} else {
 
 		req, err := http.NewRequest("GET", u, nil)
@@ -121,34 +126,48 @@ func (dl *DefaultDocumentLoader) LoadDocument(u string) (*RemoteDocument, error)
 				fmt.Sprintf("Bad response status code: %d", res.StatusCode))
 		}
 
-		finalURL = res.Request.URL.String()
+		remoteDoc.DocumentURL = res.Request.URL.String()
 
 		contentType := res.Header.Get("Content-Type")
 		linkHeader := res.Header.Get("Link")
 
-		if len(linkHeader) > 0 && contentType != "application/ld+json" {
-			header := ParseLinkHeader(linkHeader)[linkHeaderRel]
-			if len(header) > 1 {
-				return nil, NewJsonLdError(MultipleContextLinkHeaders, nil)
-			} else if len(header) == 1 {
-				contextURL = header[0]["target"]
+		if len(linkHeader) > 0 {
+			parsedLinkHeader := ParseLinkHeader(linkHeader)
+			contextLink := parsedLinkHeader[linkHeaderRel]
+			if contextLink != nil && contentType != ApplicationJSONLDType &&
+				(contentType == "application/json" || rApplicationJSON.MatchString(contentType)) {
+
+				if len(contextLink) > 1 {
+					return nil, NewJsonLdError(MultipleContextLinkHeaders, nil)
+				} else if len(contextLink) == 1 {
+					remoteDoc.ContextURL = contextLink[0]["target"]
+				}
+			}
+
+			// If content-type is not application/ld+json, nor any other +json
+			// and a link with rel=alternate and type='application/ld+json' is found,
+			// use that instead
+			alternateLink := parsedLinkHeader["alternate"]
+			if alternateLink != nil &&
+				alternateLink[0]["type"] == ApplicationJSONLDType &&
+				!rApplicationJSON.MatchString(contentType) {
+
+				finalURL := Resolve(u, alternateLink[0]["target"])
+				return dl.LoadDocument(finalURL)
 			}
 		}
 
-		documentBody = res.Body
+		remoteDoc.Document, err = DocumentFromReader(res.Body)
+		if err != nil {
+			return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		}
 	}
-	if err != nil {
-		return nil, NewJsonLdError(LoadingDocumentFailed, err)
-	}
-	document, err := DocumentFromReader(documentBody)
-	if err != nil {
-		return nil, err
-	}
-	return &RemoteDocument{DocumentURL: finalURL, Document: document, ContextURL: contextURL}, nil
+	return remoteDoc, nil
 }
 
 var rSplitOnComma = regexp.MustCompile("(?:<[^>]*?>|\"[^\"]*?\"|[^,])+")
 var rLinkHeader = regexp.MustCompile(`\s*<([^>]*?)>\s*(?:;\s*(.*))?`)
+var rApplicationJSON = regexp.MustCompile(`^application/(\w*\+)?json$`)
 var rParams = regexp.MustCompile("(.*?)=(?:(?:\"([^\"]*?)\")|([^\"]*?))\\s*(?:(?:;\\s*)|$)")
 
 // ParseLinkHeader parses a link header. The results will be keyed by the value of "rel".
@@ -306,8 +325,7 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 		return nil, NewJsonLdError(LoadingDocumentFailed, fmt.Sprintf("error parsing URL: %s", u))
 	}
 
-	var documentBody io.Reader
-	var finalURL, contextURL string
+	remoteDoc := &RemoteDocument{}
 
 	// We use neverExpires, shouldCache, and expireTime at the end of this method
 	// to create an object to store in the cache. Set them to sane default values now
@@ -318,14 +336,17 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 	protocol := parsedURL.Scheme
 	if protocol != "http" && protocol != "https" {
 		// Can't use the HTTP client for those!
-		finalURL = u
+		remoteDoc.DocumentURL = u
 		var file *os.File
 		file, err = os.Open(u)
 		if err != nil {
 			return nil, NewJsonLdError(LoadingDocumentFailed, err)
 		}
 		defer file.Close()
-		documentBody = file
+		remoteDoc.Document, err = DocumentFromReader(file)
+		if err != nil {
+			return nil, NewJsonLdError(LoadingDocumentFailed, err)
+		}
 		neverExpires = true
 		shouldCache = true
 	} else {
@@ -339,7 +360,6 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 		req.Header.Add("Accept", acceptHeader)
 
 		res, err := rcdl.httpClient.Do(req)
-
 		if err != nil {
 			return nil, NewJsonLdError(LoadingDocumentFailed, err)
 		}
@@ -350,17 +370,35 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 				fmt.Sprintf("Bad response status code: %d", res.StatusCode))
 		}
 
-		finalURL = res.Request.URL.String()
+		remoteDoc.DocumentURL = res.Request.URL.String()
 
 		contentType := res.Header.Get("Content-Type")
 		linkHeader := res.Header.Get("Link")
 
-		if len(linkHeader) > 0 && contentType != "application/ld+json" {
-			header := ParseLinkHeader(linkHeader)[linkHeaderRel]
-			if len(header) > 1 {
-				return nil, NewJsonLdError(MultipleContextLinkHeaders, nil)
-			} else if len(header) == 1 {
-				contextURL = header[0]["target"]
+		if len(linkHeader) > 0 {
+			parsedLinkHeader := ParseLinkHeader(linkHeader)
+			contextLink := parsedLinkHeader[linkHeaderRel]
+			if contextLink != nil && contentType != ApplicationJSONLDType {
+				if len(contextLink) > 1 {
+					return nil, NewJsonLdError(MultipleContextLinkHeaders, nil)
+				} else if len(contextLink) == 1 {
+					remoteDoc.ContextURL = contextLink[0]["target"]
+				}
+			}
+
+			// If content-type is not application/ld+json, nor any other +json
+			// and a link with rel=alternate and type='application/ld+json' is found,
+			// use that instead
+			alternateLink := parsedLinkHeader["alternate"]
+			if alternateLink != nil &&
+				alternateLink[0]["type"] == ApplicationJSONLDType &&
+				!rApplicationJSON.MatchString(contentType) {
+
+				finalURL := Resolve(u, alternateLink[0]["target"])
+				remoteDoc, err = rcdl.LoadDocument(finalURL)
+				if err != nil {
+					return nil, NewJsonLdError(LoadingDocumentFailed, err)
+				}
 			}
 		}
 
@@ -371,16 +409,13 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 			expireTime = resExpireTime
 		}
 
-		documentBody = res.Body
+		if remoteDoc.Document == nil {
+			remoteDoc.Document, err = DocumentFromReader(res.Body)
+			if err != nil {
+				return nil, NewJsonLdError(LoadingDocumentFailed, err)
+			}
+		}
 	}
-	if err != nil {
-		return nil, NewJsonLdError(LoadingDocumentFailed, err)
-	}
-	document, err := DocumentFromReader(documentBody)
-	if err != nil {
-		return nil, err
-	}
-	remoteDoc := &RemoteDocument{DocumentURL: finalURL, Document: document, ContextURL: contextURL}
 
 	// If we went down a branch that marked shouldCache true then lets add the cache entry into
 	// the cache
