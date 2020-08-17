@@ -96,6 +96,8 @@ func NewMockServer(base string, testFolder string) *MockServer {
 				if contentType == "" {
 					if strings.HasSuffix(u, ".jsonld") {
 						contentType = "application/ld+json"
+					} else if strings.HasSuffix(u, ".html") {
+						contentType = "text/html"
 					} else {
 						contentType = "application/json"
 					}
