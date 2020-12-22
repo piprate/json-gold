@@ -21,6 +21,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/piprate/json-gold/ld/internal/jsoncanonicalizer"
 )
 
 // Node is the value of a subject, predicate or object
@@ -297,8 +299,25 @@ func objectToRDF(item interface{}, issuer *IdentifierIssuer, graphName string, t
 				if datatype != RDFJSONLiteral {
 					return NewLiteral(value.(string), datatype.(string), ""), triples
 				} else {
-					// TODO: add JSON Canonicalization
-					return NewLiteral("JSON literals not supported", datatype.(string), ""), triples
+					var jsonLiteralValByte []byte
+					switch value.(type) {
+					case string:
+						jsonLiteralValByte = []byte(value.(string))
+					case map[string]interface{}:
+						byteVal, err := json.Marshal(value.(map[string]interface{}))
+						if err != nil {
+							return NewLiteral("JSON Marshal error "+err.Error(), datatype.(string), ""), triples
+						}
+
+						jsonLiteralValByte = byteVal
+					}
+
+					canonicalJSON, err := jsoncanonicalizer.Transform(jsonLiteralValByte)
+					if err != nil {
+						return NewLiteral("JSON Canonicalization error "+err.Error(), datatype.(string), ""), triples
+					}
+
+					return NewLiteral(string(canonicalJSON), datatype.(string), ""), triples
 				}
 			}
 		}
