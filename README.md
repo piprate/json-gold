@@ -46,7 +46,7 @@ Good coverage, except:
 
 Good coverage, except:
 
-- JSON literals (`@json`) aren't supported
+- partial support for JSON literals (`@json`)
 - `rdfDirection` option is not yet supported (including _i18n-datatype_ and _compound-literal_ forms)
 
 #### HTML based processing
