@@ -3,7 +3,6 @@ package ld_test
 import (
 	"log"
 	"sort"
-	"strconv"
 	"strings"
 
 	. "github.com/piprate/json-gold/ld"
@@ -71,7 +70,9 @@ func mapBlankNodes(quads []*Quad, actualBlankNodes []string, mappedBlankNodes []
 
 func sortNQuads(input string) string {
 	temp := strings.Split(input, "\n")
-	temp = temp[:len(temp)-1]
+	if temp[len(temp)-1] == "" {
+		temp = temp[:len(temp)-1]
+	}
 	sort.Strings(temp)
 	temp = append(temp, "")
 	return strings.Join(temp, "\n")
@@ -92,10 +93,16 @@ func Isomorphic(expectedStr, actualStr string) bool {
 
 	serializer := &NQuadRDFSerializer{}
 
-	expectedStr, _ = strconv.Unquote(expectedStr)
-	actualStr, _ = strconv.Unquote(actualStr)
-	expectedDS, _ := serializer.Parse(expectedStr)
-	actualDS, _ := serializer.Parse(actualStr)
+	expectedDS, err := serializer.Parse(expectedStr)
+	if err != nil {
+		log.Printf("Error when parsing expected quads: %s\n", err.Error())
+		return false
+	}
+	actualDS, err := serializer.Parse(actualStr)
+	if err != nil {
+		log.Printf("Error when parsing actual quads: %s\n", err.Error())
+		return false
+	}
 
 	if len(expectedDS.Graphs) != len(actualDS.Graphs) {
 		log.Println("Number of graphs doesn't match")

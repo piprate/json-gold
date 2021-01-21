@@ -39,14 +39,14 @@ func NumberToJSON(ieeeF64 float64) (res string, err error) {
 	}
 
 	// Special case: eliminate "-0" as mandated by the ES6-JSON/JCS specifications
-	if ieeeF64 == 0 {  // Right, this line takes both -0 and 0
+	if ieeeF64 == 0 { // Right, this line takes both -0 and 0
 		return "0", nil
 	}
 
 	// Deal with the sign separately
 	var sign string = ""
 	if ieeeF64 < 0 {
-		ieeeF64 =-ieeeF64
+		ieeeF64 = -ieeeF64
 		sign = "-"
 	}
 
@@ -70,13 +70,13 @@ func NumberToJSON(ieeeF64 float64) (res string, err error) {
 			es6Formatted = gform
 		}
 		// Go outputs "1e+09" which must be rewritten as "1e+9"
-		if es6Formatted[exponent + 2] == '0' {
-			es6Formatted = es6Formatted[:exponent + 2] + es6Formatted[exponent + 3:]
+		if es6Formatted[exponent+2] == '0' {
+			es6Formatted = es6Formatted[:exponent+2] + es6Formatted[exponent+3:]
 		}
 	} else if strings.IndexByte(es6Formatted, '.') < 0 && len(es6Formatted) >= 12 {
 		i := len(es6Formatted)
-		for es6Formatted[i - 1] == '0' {
-			i--;
+		for es6Formatted[i-1] == '0' {
+			i--
 		}
 		if i != len(es6Formatted) {
 			fix := strconv.FormatFloat(ieeeF64, 'f', 0, 64)
@@ -84,7 +84,7 @@ func NumberToJSON(ieeeF64 float64) (res string, err error) {
 				// "f" with precision 0 occasionally produces another result which also is
 				// the correct one although it must be rounded to match the -1 precision
 				// (which fortunately seems to be correct with respect to trailing zeroes)
-				es6Formatted = fix[:i - 1] + string(fix[i - 1] + 1) + es6Formatted[i:]
+				es6Formatted = fix[:i-1] + string(fix[i-1]+1) + es6Formatted[i:]
 			}
 		}
 	}

@@ -29,17 +29,17 @@ import (
 )
 
 type nameValueType struct {
-	name string
+	name    string
 	sortKey []uint16
-	value string
+	value   string
 }
 
 // JSON standard escapes (modulo \u)
-var asciiEscapes  = []byte{'\\', '"', 'b',  'f',  'n',  'r',  't'}
+var asciiEscapes = []byte{'\\', '"', 'b', 'f', 'n', 'r', 't'}
 var binaryEscapes = []byte{'\\', '"', '\b', '\f', '\n', '\r', '\t'}
 
 // JSON literals
-var literals      = []string{"true", "false", "null"}
+var literals = []string{"true", "false", "null"}
 
 func Transform(jsonData []byte) (result []byte, e error) {
 
@@ -90,7 +90,7 @@ func Transform(jsonData []byte) (result []byte, e error) {
 		for {
 			c := nextChar()
 			if isWhiteSpace(c) {
-				continue;
+				continue
 			}
 			return c
 		}
@@ -160,8 +160,8 @@ func Transform(jsonData []byte) (result []byte, e error) {
 				nextChar()
 				break
 			}
-			if (c == '"') {
-				break;
+			if c == '"' {
+				break
 			}
 			if c < ' ' {
 				setError("Unterminated string literal")
@@ -215,7 +215,7 @@ func Transform(jsonData []byte) (result []byte, e error) {
 		for globalError == nil {
 			c := testNextNonWhiteSpaceChar()
 			if c == ',' || c == ']' || c == '}' {
-				break;
+				break
 			}
 			c = nextChar()
 			if isWhiteSpace(c) {
@@ -314,7 +314,7 @@ func Transform(jsonData []byte) (result []byte, e error) {
 			scanFor('"')
 			rawUTF8 := parseQuotedString()
 			if globalError != nil {
-				break;
+				break
 			}
 			// Sort keys on UTF-16 code units
 			// Since UTF-8 doesn't have endianess this is just a value transformation
@@ -370,7 +370,7 @@ func Transform(jsonData []byte) (result []byte, e error) {
 	for index < jsonDataLength {
 		if !isWhiteSpace(jsonData[index]) {
 			setError("Improperly terminated JSON object")
-			break;
+			break
 		}
 		index++
 	}
