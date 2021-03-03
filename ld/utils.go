@@ -17,6 +17,7 @@ package ld
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -145,7 +146,12 @@ func MergeValue(obj map[string]interface{}, key string, value interface{}) {
 
 // IsAbsoluteIri returns true if the given value is an absolute IRI, false if not.
 func IsAbsoluteIri(value string) bool {
-	return ParseURL(value).Protocol != ""
+	if strings.HasPrefix(value, "_:") {
+		return true
+	}
+
+	u, err := url.Parse(value)
+	return err == nil && u.IsAbs()
 }
 
 // IsSubject returns true if the given value is a subject with properties.

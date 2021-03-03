@@ -25,7 +25,6 @@ var (
 	ignoredKeywordPattern = regexp.MustCompile("^@[a-zA-Z]+$")
 	invalidPrefixPattern  = regexp.MustCompile(":|/")
 	iriLikeTermPattern = regexp.MustCompile(`(?::[^:])|\/`)
-	termPrefixPattern = regexp.MustCompile(`.*[:/\?#\[\]@]$`)
 
 	nonTermDefKeys = map[string]bool{
 		"@base":      true,
@@ -693,7 +692,18 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 				// definition["_prefix"] = !termHasColon && regexExp.Match([]byte(res)) && (simpleTerm || c.processingMode(1.0))
 				//
 				// but the test https://json-ld.org/test-suite/tests/compact-manifest.jsonld#t0038 fails. TODO investigate
-				definition["_prefix"] = !termHasColon && (termPrefixPattern.Match([]byte(res)) && simpleTerm || c.processingMode(1.0))
+
+				termHasSuffix := false
+				if len(res) > 0 {
+					switch res[len(res)-1] {
+					case ':', '/', '?', '#', '[', ']','@':
+						termHasSuffix = true
+					default:
+						termHasSuffix = false
+					}
+				}
+
+				definition["_prefix"] = !termHasColon && termHasSuffix && (simpleTerm || c.processingMode(1.0))
 			} else {
 				return NewJsonLdError(InvalidIRIMapping,
 					"resulting IRI mapping should be a keyword, absolute IRI or blank node")
