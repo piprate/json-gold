@@ -1,5 +1,11 @@
 # JSON-goLD Change Log
 
+## v0.4.0 - 2021-03-03
+
+- Partial support for JSON literals (`@json`)
+- Performance improvements
+- Minor bug fixes
+
 ## v0.3.0 - 2020-01-08
 
 - Substantial conformance to the latest W3C Recommendation for JSON-LD 1.1 specification.
