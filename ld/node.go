@@ -206,7 +206,7 @@ func RdfToObject(n Node, useNativeTypes bool) (map[string]interface{}, error) {
 				d, _ := strconv.ParseFloat(value, 64)
 				if !math.IsNaN(d) && !math.IsInf(d, 0) {
 					if datatype == XSDInteger {
-						i := int(d)
+						i := int64(d)
 						if fmt.Sprintf("%d", i) == value {
 							rval["@value"] = i
 						}
@@ -281,9 +281,9 @@ func objectToRDF(item interface{}, issuer *IdentifierIssuer, graphName string, t
 				}
 			} else {
 				if datatype == nil {
-					return NewLiteral(fmt.Sprintf("%d", int(floatVal)), XSDInteger, ""), triples
+					return NewLiteral(fmt.Sprintf("%d", int64(floatVal)), XSDInteger, ""), triples
 				} else {
-					return NewLiteral(fmt.Sprintf("%d", int(floatVal)), datatype.(string), ""), triples
+					return NewLiteral(fmt.Sprintf("%d", int64(floatVal)), datatype.(string), ""), triples
 				}
 			}
 		} else if langVal, hasLang := itemMap["@language"]; hasLang {
