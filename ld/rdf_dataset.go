@@ -52,7 +52,7 @@ func NewQuad(subject Node, predicate Node, object Node, graph string) *Quad {
 }
 
 // Equal returns true if this quad is equal to the given quad.
-func (q Quad) Equal(o *Quad) bool {
+func (q *Quad) Equal(o *Quad) bool {
 	if o == nil {
 		return false
 	}
@@ -64,7 +64,7 @@ func (q Quad) Equal(o *Quad) bool {
 	return q.Subject.Equal(o.Subject) && q.Predicate.Equal(o.Predicate) && q.Object.Equal(o.Object)
 }
 
-func (q Quad) Valid() bool {
+func (q *Quad) Valid() bool {
 	if q.Subject != nil {
 		if InvalidNode(q.Subject) {
 			return false
