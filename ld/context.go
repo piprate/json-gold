@@ -24,7 +24,7 @@ import (
 var (
 	ignoredKeywordPattern = regexp.MustCompile("^@[a-zA-Z]+$")
 	invalidPrefixPattern  = regexp.MustCompile(":|/")
-	iriLikeTermPattern = regexp.MustCompile(`(?::[^:])|\/`)
+	iriLikeTermPattern    = regexp.MustCompile(`(?::[^:])|\/`)
 
 	nonTermDefKeys = map[string]bool{
 		"@base":      true,
@@ -696,7 +696,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 				termHasSuffix := false
 				if len(res) > 0 {
 					switch res[len(res)-1] {
-					case ':', '/', '?', '#', '[', ']','@':
+					case ':', '/', '?', '#', '[', ']', '@':
 						termHasSuffix = true
 					default:
 						termHasSuffix = false

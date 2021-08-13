@@ -279,11 +279,12 @@ func (na *NormalisationAlgorithm) Main(dataset *RDFDataset, opts *JsonLdOptions)
 			return nil, NewJsonLdError(UnknownFormat, opts.Format)
 		}
 	}
-	rval := ""
+	var rval []byte
 	for _, n := range na.lines {
-		rval += n
+		rval = append(rval, []byte(n)...)
 	}
-	return ParseNQuads(rval)
+
+	return ParseNQuads(string(rval))
 }
 
 // Sort interface

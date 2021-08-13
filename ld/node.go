@@ -59,12 +59,12 @@ func NewLiteral(value string, datatype string, language string) *Literal {
 }
 
 // GetValue returns the node's value.
-func (l Literal) GetValue() string {
+func (l *Literal) GetValue() string {
 	return l.Value
 }
 
 // Equal returns true id this node is equal to the given node.
-func (l Literal) Equal(n Node) bool {
+func (l *Literal) Equal(n Node) bool {
 	ol, ok := n.(*Literal)
 	if !ok {
 		return false
@@ -100,12 +100,12 @@ func NewIRI(iri string) *IRI {
 }
 
 // GetValue returns the node's value.
-func (iri IRI) GetValue() string {
+func (iri *IRI) GetValue() string {
 	return iri.Value
 }
 
 // Equal returns true id this node is equal to the given node.
-func (iri IRI) Equal(n Node) bool {
+func (iri *IRI) Equal(n Node) bool {
 	if oiri, ok := n.(*IRI); ok {
 		return iri.Value == oiri.Value
 	}
@@ -128,12 +128,12 @@ func NewBlankNode(attribute string) *BlankNode {
 }
 
 // GetValue returns the node's value.
-func (bn BlankNode) GetValue() string {
+func (bn *BlankNode) GetValue() string {
 	return bn.Attribute
 }
 
 // Equal returns true id this node is equal to the given node.
-func (bn BlankNode) Equal(n Node) bool {
+func (bn *BlankNode) Equal(n Node) bool {
 	if obn, ok := n.(*BlankNode); ok {
 		return bn.Attribute == obn.Attribute
 	}
