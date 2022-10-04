@@ -1,5 +1,14 @@
 # JSON-goLD Change Log
 
+## v0.4.2 - 2022-10-04
+
+- Move initialization of rxURL from global to function scope to reduce stack size usage while initialization
+
+## v0.4.1 - 2021-12-20
+
+- Bug fix: float to int conversion in 32-bit systems while transforming object to RDF
+- Performance improvements for processing big documents
+
 ## v0.4.0 - 2021-03-03
 
 - Partial support for JSON literals (`@json`)

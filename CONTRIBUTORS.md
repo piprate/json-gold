@@ -7,5 +7,6 @@ This library was originally written by Stan Nazarenko (@kazarena) with Pull Requ
 * Joel Gustafson (@joeltg)
 * Dmitriy Kinoshenko (@kdimak)
 * Andrew Ortman (@andrewortman)
+* Abdulbois (@Abdulbois)
 
 All future contributors will be recorded in this file.
