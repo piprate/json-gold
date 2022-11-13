@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 // Copyright 2015-2017 Piprate Limited

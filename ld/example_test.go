@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -63,27 +63,25 @@ func (mux muxRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 		r.URL.Host)
 }
 
-func mockW3CGitHubOrg(r *http.Request) (resp *http.Response, err error) {
+func mockW3CGitHubOrg(r *http.Request) (*http.Response, error) {
 	if r.URL.Host != "w3c.github.io" {
-		err = fmt.Errorf("mock client only handle w3c.github.io, not %s",
+		return nil, fmt.Errorf("mock client only handle w3c.github.io, not %s",
 			r.URL.Host)
-		return
 	}
 	if !strings.HasPrefix(r.URL.Path, "/json-ld-api/tests/") {
-		err = fmt.Errorf("mock client only handle /test-suite/tests/*, not %s",
+		return nil, fmt.Errorf("mock client only handle /test-suite/tests/*, not %s",
 			r.URL.Path)
-		return
 	}
 	path := strings.TrimPrefix(r.URL.Path, "/json-ld-api/tests/")
 	f, err := os.Open("./testdata/" + path)
 	if err != nil {
-		return nil, fmt.Errorf("error openning testdata for mock transport: %s",
+		return nil, fmt.Errorf("error opening testdata for mock transport: %w",
 			err)
 	}
 
 	s, err := f.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("error getting file stat in mock transport: %s",
+		return nil, fmt.Errorf("error getting file stat in mock transport: %w",
 			err)
 	}
 
@@ -94,7 +92,7 @@ func mockW3CGitHubOrg(r *http.Request) (resp *http.Response, err error) {
 	header.Add("Date", s.ModTime().Format(time.RFC1123))
 
 	// mock response
-	resp = &http.Response{
+	return &http.Response{
 		Status:        http.StatusText(http.StatusOK),
 		StatusCode:    http.StatusOK,
 		Proto:         r.Proto,
@@ -104,15 +102,13 @@ func mockW3CGitHubOrg(r *http.Request) (resp *http.Response, err error) {
 		Request:       r,
 		Header:        header,
 		Body:          f,
-	}
-	return
+	}, nil
 }
 
-func mockSchemaOrg(r *http.Request) (resp *http.Response, err error) {
+func mockSchemaOrg(r *http.Request) (*http.Response, error) {
 	if r.URL.Host != "schema.org" {
-		err = fmt.Errorf("mock client only handle schema.org, not %s",
+		return nil, fmt.Errorf("mock client only handle schema.org, not %s",
 			r.URL.Host)
-		return
 	}
 
 	path := r.URL.Path
@@ -122,13 +118,13 @@ func mockSchemaOrg(r *http.Request) (resp *http.Response, err error) {
 
 	f, err := os.Open("./testdata/schema.org" + path)
 	if err != nil {
-		return nil, fmt.Errorf("error openning testdata for mock transport: %s",
+		return nil, fmt.Errorf("error openning testdata for mock transport: %w",
 			err)
 	}
 
 	s, err := f.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("error getting file stat in mock transport: %s",
+		return nil, fmt.Errorf("error getting file stat in mock transport: %w",
 			err)
 	}
 
@@ -139,7 +135,7 @@ func mockSchemaOrg(r *http.Request) (resp *http.Response, err error) {
 	header.Add("Date", s.ModTime().Format(time.RFC1123))
 
 	// mock response
-	resp = &http.Response{
+	return &http.Response{
 		Status:        http.StatusText(http.StatusOK),
 		StatusCode:    http.StatusOK,
 		Proto:         r.Proto,
@@ -149,16 +145,7 @@ func mockSchemaOrg(r *http.Request) (resp *http.Response, err error) {
 		Request:       r,
 		Header:        header,
 		Body:          f,
-	}
-	return
-}
-
-func mockNetwork(options *ld.JsonLdOptions, transport roundTripFunc) *ld.JsonLdOptions {
-	mockClient := &http.Client{
-		Transport: transport,
-	}
-	options.DocumentLoader = ld.NewDefaultDocumentLoader(mockClient)
-	return options
+	}, nil
 }
 
 func ExampleJsonLdProcessor_Expand_online() {
@@ -561,7 +548,7 @@ func ExampleJsonLdProcessor_Normalize() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
 	options.Format = "application/n-quads"
-	options.Algorithm = "URDNA2015"
+	options.Algorithm = ld.AlgorithmURDNA2015
 
 	doc := map[string]interface{}{
 		"@context": map[string]interface{}{

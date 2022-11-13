@@ -4,7 +4,6 @@ package ld_test
 // when running the official test suites for JSON-LD, Framing and Normalisation.
 //
 // Structure: <relative path to manifest file> ==> list of test ID prefixes to skip
-//
 var skippedTests = map[string][]string{
 	"testdata/compact-manifest.jsonld": {
 		"#tin",   // TODO

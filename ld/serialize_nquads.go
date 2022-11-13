@@ -109,20 +109,20 @@ func toNQuad(triple *Quad, graphName string) string {
 }
 
 func unescape(str string) string {
-	str = strings.Replace(str, "\\\\", "\\", -1)
-	str = strings.Replace(str, "\\\"", "\"", -1)
-	str = strings.Replace(str, "\\n", "\n", -1)
-	str = strings.Replace(str, "\\r", "\r", -1)
-	str = strings.Replace(str, "\\t", "\t", -1)
+	str = strings.ReplaceAll(str, "\\\\", "\\")
+	str = strings.ReplaceAll(str, "\\\"", "\"")
+	str = strings.ReplaceAll(str, "\\n", "\n")
+	str = strings.ReplaceAll(str, "\\r", "\r")
+	str = strings.ReplaceAll(str, "\\t", "\t")
 	return str
 }
 
 func escape(str string) string {
-	str = strings.Replace(str, "\\", "\\\\", -1)
-	str = strings.Replace(str, "\"", "\\\"", -1)
-	str = strings.Replace(str, "\n", "\\n", -1)
-	str = strings.Replace(str, "\r", "\\r", -1)
-	str = strings.Replace(str, "\t", "\\t", -1)
+	str = strings.ReplaceAll(str, "\\", "\\\\")
+	str = strings.ReplaceAll(str, "\"", "\\\"")
+	str = strings.ReplaceAll(str, "\n", "\\n")
+	str = strings.ReplaceAll(str, "\r", "\\r")
+	str = strings.ReplaceAll(str, "\t", "\\t")
 	return str
 }
 
@@ -144,8 +144,8 @@ const (
 		"\u3001-\uD7FF" +
 		"\uF900-\uFDCF" +
 		"\uFDF0-\uFFFD"
-		// TODO:
-		//"\u10000-\uEFFFF"
+	// TODO:
+	//"\u10000-\uEFFFF"
 
 	pnCharsU = pnCharsBase + "_"
 
@@ -161,10 +161,10 @@ const (
 		"(?:(?:[" + pnChars + ".])*(?:[" + pnChars + "]))?" +
 		")"
 
-		//   '(_:' +
-		//     '(?:[' + PN_CHARS_U + '0-9])' +
-		//     '(?:(?:[' + PN_CHARS + '.])*(?:[' + PN_CHARS + ']))?' +
-		//   ')';
+	//   '(_:' +
+	//     '(?:[' + PN_CHARS_U + '0-9])' +
+	//     '(?:(?:[' + PN_CHARS + '.])*(?:[' + PN_CHARS + ']))?' +
+	//   ')';
 
 	bnode = blankNodeLabel
 
@@ -180,22 +180,11 @@ const (
 	graph    = "(?:\\.|(?:(?:" + iri + "|" + bnode + ")" + wso + "\\.))"
 )
 
-var regexWSO = regexp.MustCompile(wso)
-
-var regexEOLN = regexp.MustCompile("(?:\\r\\n)|(?:\\n)|(?:\\r)")
-
 var regexEmpty = regexp.MustCompile("^" + wso + "$")
-
-// define quad part regexes
-
-var regexSubject = regexp.MustCompile("(?:" + iri + "|" + bnode + ")" + ws)
-var regexProperty = regexp.MustCompile(iri + ws)
-var regexObject = regexp.MustCompile("(?:" + iri + "|" + bnode + "|" + literal + ")" + wso)
-var regexGraph = regexp.MustCompile("(?:\\.|(?:(?:" + iri + "|" + bnode + ")" + wso + "\\.))")
 
 // full quad regex
 
-var regexQuad = regexp.MustCompile("^" + wso + subject + property + object + graph + wso + "$")
+var regexQuad = regexp.MustCompile("^" + wso + subject + property + object + graph + wso + "$") //nolint:gocritic
 
 type lineScanner interface {
 	Bytes() []byte

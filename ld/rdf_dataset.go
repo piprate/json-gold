@@ -292,7 +292,7 @@ func (ds *RDFDataset) GetQuads(graphName string) []*Quad {
 	return ds.Graphs[graphName]
 }
 
-var canonicalDoubleRegEx = regexp.MustCompile("(\\d)0*E\\+?0*(\\d)")
+var canonicalDoubleRegEx = regexp.MustCompile(`(\d)0*E\+?0*(\d)`)
 
 // GetCanonicalDouble returns a canonical string representation of a float64 number.
 func GetCanonicalDouble(v float64) string {
@@ -331,10 +331,10 @@ func validIRI(val string) bool {
 }
 
 /*
-  ===========
-  The URL validation logic below was borrowed from github.com/asaskevich/govalidator package.
-  The original code is distributed under MIT license. Copyright (c) 2014 Alex Saskevich
-  ===========
+===========
+The URL validation logic below was borrowed from github.com/asaskevich/govalidator package.
+The original code is distributed under MIT license. Copyright (c) 2014 Alex Saskevich
+===========
 */
 var (
 	IP           = `(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`

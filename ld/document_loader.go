@@ -107,7 +107,7 @@ func (dl *DefaultDocumentLoader) LoadDocument(u string) (*RemoteDocument, error)
 		}
 	} else {
 
-		req, err := http.NewRequest("GET", u, nil)
+		req, err := http.NewRequest("GET", u, http.NoBody)
 		if err != nil {
 			return nil, NewJsonLdError(LoadingDocumentFailed, err)
 		}
@@ -148,7 +148,7 @@ func (dl *DefaultDocumentLoader) LoadDocument(u string) (*RemoteDocument, error)
 			// and a link with rel=alternate and type='application/ld+json' is found,
 			// use that instead
 			alternateLink := parsedLinkHeader["alternate"]
-			if alternateLink != nil &&
+			if len(alternateLink) > 0 &&
 				alternateLink[0]["type"] == ApplicationJSONLDType &&
 				!rApplicationJSON.MatchString(contentType) {
 
@@ -172,15 +172,15 @@ var rParams = regexp.MustCompile("(.*?)=(?:(?:\"([^\"]*?)\")|([^\"]*?))\\s*(?:(?
 
 // ParseLinkHeader parses a link header. The results will be keyed by the value of "rel".
 //
-// Link: <http://json-ld.org/contexts/person.jsonld>; \
-//   rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"
+//	Link: <http://json-ld.org/contexts/person.jsonld>; \
+//	  rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"
 //
-// Parses as: {
-//   'http://www.w3.org/ns/json-ld#context': {
-//     target: http://json-ld.org/contexts/person.jsonld,
-//     rel:    http://www.w3.org/ns/json-ld#context
-//   }
-// }
+//	Parses as: {
+//	  'http://www.w3.org/ns/json-ld#context': {
+//	    target: http://json-ld.org/contexts/person.jsonld,
+//	    rel:    http://www.w3.org/ns/json-ld#context
+//	  }
+//	}
 //
 // If there is more than one "rel" with the same IRI, then entries in the
 // resulting map for that "rel" will be lists.
@@ -266,10 +266,10 @@ func (cdl *CachingDocumentLoader) AddDocument(u string, doc interface{}) {
 // from location different from the original URL (most importantly, from local files).
 //
 // Example:
-//     l.PreloadWithMapping(map[string]string{
-//         "http://www.example.com/context.json": "/home/me/cache/example_com_context.json",
-//     })
 //
+//	l.PreloadWithMapping(map[string]string{
+//	    "http://www.example.com/context.json": "/home/me/cache/example_com_context.json",
+//	})
 func (cdl *CachingDocumentLoader) PreloadWithMapping(urlMap map[string]string) error {
 	for srcURL, mappedURL := range urlMap {
 		doc, err := cdl.nextLoader.LoadDocument(mappedURL)
@@ -316,7 +316,7 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 
 	// First we check if we hit in the cache, and the cache entry is valid
 	// We need to check if expireTime >= now, so we negate the comparison below
-	if ok && (entry.neverExpires || !entry.expireTime.Before(now)) {
+	if ok && (entry.neverExpires || entry.expireTime.After(now)) {
 		return entry.remoteDocument, nil
 	}
 
@@ -351,7 +351,7 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 		shouldCache = true
 	} else {
 
-		req, err := http.NewRequest("GET", u, nil)
+		req, err := http.NewRequest("GET", u, http.NoBody)
 		if err != nil {
 			return nil, NewJsonLdError(LoadingDocumentFailed, err)
 		}
@@ -390,7 +390,7 @@ func (rcdl *RFC7324CachingDocumentLoader) LoadDocument(u string) (*RemoteDocumen
 			// and a link with rel=alternate and type='application/ld+json' is found,
 			// use that instead
 			alternateLink := parsedLinkHeader["alternate"]
-			if alternateLink != nil &&
+			if len(alternateLink) > 0 &&
 				alternateLink[0]["type"] == ApplicationJSONLDType &&
 				!rApplicationJSON.MatchString(contentType) {
 

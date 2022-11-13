@@ -16,10 +16,11 @@ package ld_test
 
 import (
 	"bytes"
+	"testing"
+
 	. "github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestLoadDocument(t *testing.T) {
@@ -30,13 +31,15 @@ func TestLoadDocument(t *testing.T) {
 	assert.Equal(t, "t1", rd.Document.(map[string]interface{})["@type"])
 }
 
-func loadBenchData(t testing.TB) *RDFDataset {
+func loadBenchData(tb testing.TB) *RDFDataset {
+	tb.Helper()
+
 	dl := NewDefaultDocumentLoader(nil)
 	rd, err := dl.LoadDocument("testdata/compact-manifest.jsonld")
-	require.Nil(t, err)
+	require.Nil(tb, err)
 	proc := NewJsonLdProcessor()
 	triples, err := proc.ToRDF(rd, NewJsonLdOptions(""))
-	require.Nil(t, err)
+	require.Nil(tb, err)
 	return triples.(*RDFDataset)
 }
 

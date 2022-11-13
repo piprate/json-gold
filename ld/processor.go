@@ -21,12 +21,11 @@ import (
 
 // JsonLdProcessor implements the JsonLdProcessor interface, see
 // http://www.w3.org/TR/json-ld-api/#the-jsonldprocessor-interface
-//
-type JsonLdProcessor struct {
+type JsonLdProcessor struct { //nolint:stylecheck
 }
 
 // NewJsonLdProcessor creates an instance of JsonLdProcessor.
-func NewJsonLdProcessor() *JsonLdProcessor {
+func NewJsonLdProcessor() *JsonLdProcessor { //nolint:stylecheck
 	return &JsonLdProcessor{}
 }
 
@@ -428,10 +427,11 @@ var rdfSerializers = map[string]RDFSerializer{
 //
 // dataset: a serialized string of RDF in a format specified by the format option or an RDF dataset to convert.
 // opts: the options to use:
-//     [format] the format if input is not an array: 'application/n-quads' for N-Quads (default).
-//     [useRdfType] true to use rdf:type, false to use @type (default: false).
-//     [useNativeTypes] true to convert XSD types into native types (boolean, integer, double),
-//     false not to (default: true).
+//
+// [format] the format if input is not an array: 'application/n-quads' for N-Quads (default).
+// [useRdfType] true to use rdf:type, false to use @type (default: false).
+// [useNativeTypes] true to convert XSD types into native types (boolean, integer, double),
+// false not to (default: true).
 func (jldp *JsonLdProcessor) FromRDF(dataset interface{}, opts *JsonLdOptions) (interface{}, error) {
 
 	if opts == nil {
@@ -485,9 +485,9 @@ func (jldp *JsonLdProcessor) fromRDF(input interface{}, opts *JsonLdOptions, ser
 //
 // input: the JSON-LD input.
 // opts: the options to use:
-//     [base] the base IRI to use.
-//     [format] the format to use to output a string: 'application/n-quads' for N-Quads (default).
 //
+// [base] the base IRI to use.
+// [format] the format to use to output a string: 'application/n-quads' for N-Quads (default).
 func (jldp *JsonLdProcessor) ToRDF(input interface{}, opts *JsonLdOptions) (interface{}, error) {
 
 	if opts == nil {
@@ -547,7 +547,7 @@ func (jldp *JsonLdProcessor) Normalize(input interface{}, opts *JsonLdOptions) (
 		opts = opts.Copy()
 	}
 
-	if opts.Algorithm != "URDNA2015" && opts.Algorithm != "URGNA2012" {
+	if opts.Algorithm != AlgorithmURDNA2015 && opts.Algorithm != AlgorithmURGNA2012 {
 		return nil, NewJsonLdError(InvalidInput, fmt.Sprintf("Unknown normalization algorithm: %s",
 			opts.Algorithm))
 	}

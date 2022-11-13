@@ -242,7 +242,7 @@ func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 		// Otherwise, if embed is @last, remove any existing embedded node from parent associated
 		// with graph name in state. Requires sorting of subjects.
 		if embed == EmbedLast {
-			if _, containsId := state.uniqueEmbeds[state.graph][id]; containsId {
+			if _, containsID := state.uniqueEmbeds[state.graph][id]; containsID {
 				removeEmbed(state, id)
 			}
 			state.uniqueEmbeds[state.graph][id] = &EmbedNode{
@@ -260,7 +260,7 @@ func (api *JsonLdApi) matchFrame(state *FramingContext, subjects []string,
 
 		// subject is also the name of a graph
 		if _, isAlsoGraph := state.graphMap[id]; isAlsoGraph {
-			recurse := false
+			var recurse bool
 			var subframe map[string]interface{}
 			if _, hasGraph := frame["@graph"]; !hasGraph {
 				recurse = state.graph != "@merged"
@@ -501,13 +501,14 @@ func validateFrame(frame interface{}) error {
 
 func getFrameValue(frame map[string]interface{}, name string) interface{} {
 	value := frame[name]
-	if valueList, isList := value.([]interface{}); isList {
-		if len(valueList) > 0 {
-			value = valueList[0]
+	switch v := value.(type) {
+	case []interface{}:
+		if len(v) > 0 {
+			value = v[0]
 		}
-	} else if valueMap, isMap := value.(map[string]interface{}); isMap {
-		if v, containsValue := valueMap["@value"]; containsValue {
-			value = v
+	case map[string]interface{}:
+		if valueVal, containsValue := v["@value"]; containsValue {
+			value = valueVal
 		}
 	}
 	return value
@@ -668,10 +669,10 @@ func FilterSubject(state *FramingContext, subject map[string]interface{}, frame 
 	// check ducktype
 	wildcard := true
 	matchesSome := false
+	matchThis := false
 
 	for _, k := range GetOrderedKeys(frame) {
 		v := frame[k]
-		matchThis := false
 
 		var nodeValues []interface{}
 		if kVal, found := subject[k]; found {
@@ -696,7 +697,7 @@ func FilterSubject(state *FramingContext, subject map[string]interface{}, frame 
 				// if @id is not a wildcard and is not empty, then match
 				// or not on specific value
 				frameID := Arrayify(frame["@id"])
-				if len(frameID) >= 0 {
+				if len(frameID) > 0 {
 					_, isString := frameID[0].(string)
 					if !isEmptyObject(frameID[0]) || isString {
 						return inArray(nodeValues[0], frameID), nil
@@ -845,14 +846,14 @@ func nodeMatch(state *FramingContext, pattern, value map[string]interface{}, req
 	return ok
 }
 
-// ValueMatch returns true if it is a value and matches the value pattern
+// valueMatch returns true if it is a value and matches the value pattern
 //
-// * `pattern` is empty
-// * @values are the same, or `pattern[@value]` is a wildcard,
-// * @types are the same or `value[@type]` is not None
+//   - `pattern` is empty
+//   - @values are the same, or `pattern[@value]` is a wildcard,
+//   - @types are the same or `value[@type]` is not None
 //     and `pattern[@type]` is `{}` or `value[@type]` is None
 //     and `pattern[@type]` is None or `[]`, and
-// * @languages are the same or `value[@language]` is not None
+//   - @languages are the same or `value[@language]` is not None
 //     and `pattern[@language]` is `{}`, or `value[@language]` is None
 //     and `pattern[@language]` is None or `[]`
 func valueMatch(pattern, value map[string]interface{}) bool {

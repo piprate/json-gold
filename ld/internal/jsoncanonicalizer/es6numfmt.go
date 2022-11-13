@@ -44,7 +44,7 @@ func NumberToJSON(ieeeF64 float64) (res string, err error) {
 	}
 
 	// Deal with the sign separately
-	var sign string = ""
+	var sign = ""
 	if ieeeF64 < 0 {
 		ieeeF64 = -ieeeF64
 		sign = "-"
