@@ -159,8 +159,8 @@ func IsLiteral(node Node) bool {
 	return isLiteral
 }
 
-var patternInteger = regexp.MustCompile("^[\\-+]?[0-9]+$")
-var patternDouble = regexp.MustCompile("^(\\+|-)?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([Ee](\\+|-)?[0-9]+)?$")
+var patternInteger = regexp.MustCompile(`^[\-+]?\d+$`)
+var patternDouble = regexp.MustCompile(`^(\+|-)?(\d+(\.\d*)?|\.\d+)([Ee](\+|-)?\d+)?$`)
 
 // RdfToObject converts an RDF triple object to a JSON-LD object.
 func RdfToObject(n Node, useNativeTypes bool) (map[string]interface{}, error) {
@@ -300,11 +300,11 @@ func objectToRDF(item interface{}, issuer *IdentifierIssuer, graphName string, t
 					return NewLiteral(value.(string), datatype.(string), ""), triples
 				} else {
 					var jsonLiteralValByte []byte
-					switch value.(type) {
+					switch v := value.(type) {
 					case string:
-						jsonLiteralValByte = []byte(value.(string))
+						jsonLiteralValByte = []byte(v)
 					case map[string]interface{}:
-						byteVal, err := json.Marshal(value.(map[string]interface{}))
+						byteVal, err := json.Marshal(v)
 						if err != nil {
 							return NewLiteral("JSON Marshal error "+err.Error(), datatype.(string), ""), triples
 						}
@@ -328,7 +328,7 @@ func objectToRDF(item interface{}, issuer *IdentifierIssuer, graphName string, t
 		return parseList(item.(map[string]interface{})["@list"].([]interface{}), issuer, graphName, triples)
 	} else {
 		// convert string/node object to RDF
-		id := ""
+		var id string
 		if itemMap, isMap := item.(map[string]interface{}); isMap {
 			id = itemMap["@id"].(string)
 			if IsRelativeIri(id) {

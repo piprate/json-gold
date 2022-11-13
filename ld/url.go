@@ -23,7 +23,7 @@ import (
 // JsonLdUrl represents a URL split into individual components
 // for easy manipulation.
 // TODO: This implementation was taken from Java. Do we really need it in Go?
-type JsonLdUrl struct {
+type JsonLdUrl struct { //nolint:stylecheck
 	Href      string
 	Protocol  string
 	Host      string
@@ -45,14 +45,14 @@ type JsonLdUrl struct {
 	Authority      string
 }
 
-var parser = regexp.MustCompile("^(?:([^:\\/?#]+):)?(?:\\/\\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\\/?#]*)(?::(\\d*))?))?((((?:[^?#\\/]*\\/)*)([^?#]*))(?:\\?([^#]*))?(?:#(.*))?)")
+var parser = regexp.MustCompile(`^(?:([^:/?#]+):)?(?://((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:/?#]*)(?::(\d*))?))?((((?:[^?#/]*/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)`)
 
 // ParseURL parses a string URL into JsonLdUrl struct.
-func ParseURL(url string) *JsonLdUrl {
-	rval := JsonLdUrl{Href: url}
+func ParseURL(urlStr string) *JsonLdUrl {
+	rval := JsonLdUrl{Href: urlStr}
 
-	if parser.MatchString(url) {
-		matches := parser.FindStringSubmatch(url)
+	if parser.MatchString(urlStr) {
+		matches := parser.FindStringSubmatch(urlStr)
 		if matches[1] != "" {
 			rval.Protocol = matches[1]
 		}

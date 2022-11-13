@@ -15,11 +15,16 @@
 package ld
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" //nolint:gosec
 	"crypto/sha256"
 	hashPkg "hash"
 	"sort"
 	"strings"
+)
+
+const (
+	AlgorithmURDNA2015 = "URDNA2015"
+	AlgorithmURGNA2012 = "URGNA2012"
 )
 
 func (api *JsonLdApi) Normalize(dataset *RDFDataset, opts *JsonLdOptions) (interface{}, error) {
@@ -253,7 +258,7 @@ func (na *NormalisationAlgorithm) Normalize(dataset *RDFDataset) {
 		var name string
 		nameVal := quad.Graph
 		if nameVal != nil {
-			name = nameVal.(Node).GetValue()
+			name = nameVal.GetValue()
 		}
 		na.lines[i] = toNQuad(quad, name)
 	}
@@ -354,8 +359,8 @@ func (na *NormalisationAlgorithm) modifyFirstDegreeComponent(id string, componen
 	if !IsBlankNode(component) {
 		return component
 	}
-	val := ""
-	if na.version == "URDNA2015" {
+	var val string
+	if na.version == AlgorithmURDNA2015 {
 		if component.GetValue() == id {
 			val = "_:a"
 		} else {
@@ -375,7 +380,7 @@ func (na *NormalisationAlgorithm) modifyFirstDegreeComponent(id string, componen
 	return NewBlankNode(val)
 }
 
-//4.7) Hash Related Blank Node
+// 4.7) Hash Related Blank Node
 func (na *NormalisationAlgorithm) hashRelatedBlankNode(related string, quad *Quad, issuer *IdentifierIssuer, position string) string {
 	// 1) Set the identifier to use for related, preferring first the
 	// canonical identifier for related if issued, second the identifier
@@ -548,10 +553,10 @@ func (na *NormalisationAlgorithm) hashNDegreeQuads(id string, issuer *Identifier
 
 // helper to create appropriate hash object
 func (na *NormalisationAlgorithm) createHash() hashPkg.Hash {
-	if na.version == "URDNA2015" {
+	if na.version == AlgorithmURDNA2015 {
 		return sha256.New()
 	} else {
-		return sha1.New()
+		return sha1.New() //nolint:gosec
 	}
 }
 
@@ -566,7 +571,7 @@ func (na *NormalisationAlgorithm) hashNQuads(nquads []string) string {
 
 // helper for getting a related predicate
 func (na *NormalisationAlgorithm) getRelatedPredicate(quad *Quad) string {
-	if na.version == "URDNA2015" {
+	if na.version == AlgorithmURDNA2015 {
 		return "<" + quad.Predicate.GetValue() + ">"
 	} else {
 		return quad.Predicate.GetValue()
@@ -585,7 +590,7 @@ func (na *NormalisationAlgorithm) createHashToRelated(id string, issuer *Identif
 
 	// 3) For each quad in quads:
 	var related, position string
-	if na.version == "URDNA2015" {
+	if na.version == AlgorithmURDNA2015 {
 		for _, quad := range quads {
 			// 3.1) For each component in quad, if component is the subject,
 			// object, and graph name and it is a blank node that is not
@@ -675,9 +680,7 @@ type Permutator struct {
 func NewPermutator(list []string) *Permutator {
 	p := &Permutator{}
 	p.list = make([]string, len(list))
-	for i, elem := range list {
-		p.list[i] = elem
-	}
+	copy(p.list, list)
 	sort.Strings(p.list)
 	p.done = false
 	p.left = make(map[string]bool, len(list))
@@ -696,9 +699,7 @@ func (p *Permutator) HasNext() bool {
 // Next gets the next permutation. Call HasNext() to ensure there is another one first.
 func (p *Permutator) Next() []string {
 	rval := make([]string, len(p.list))
-	for i, elem := range p.list {
-		rval[i] = elem
-	}
+	copy(rval, p.list)
 
 	// Calculate the next permutation using Steinhaus-Johnson-Trotter
 	// permutation algorithm

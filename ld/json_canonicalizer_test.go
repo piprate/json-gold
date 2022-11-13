@@ -55,7 +55,7 @@ func TestJSONCanonicalizerFunc_Transform(t *testing.T) {
 
 	proc := NewJsonLdProcessor()
 	ldOptions := NewJsonLdOptions("")
-	ldOptions.Algorithm = "URDNA2015"
+	ldOptions.Algorithm = AlgorithmURDNA2015
 	ldOptions.Format = "application/n-quads"
 
 	view, err := proc.Normalize(docMap, ldOptions)

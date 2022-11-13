@@ -23,7 +23,7 @@ type ErrorCode string
 
 // JsonLdError is a JSON-LD error as defined in the spec.
 // See the allowed values and error messages below.
-type JsonLdError struct {
+type JsonLdError struct { //nolint:stylecheck
 	Code    ErrorCode
 	Details interface{}
 }
@@ -95,6 +95,6 @@ func (e JsonLdError) Error() string {
 }
 
 // NewJsonLdError creates a new instance of JsonLdError.
-func NewJsonLdError(code ErrorCode, details interface{}) *JsonLdError {
+func NewJsonLdError(code ErrorCode, details interface{}) *JsonLdError { //nolint:stylecheck
 	return &JsonLdError{Code: code, Details: details}
 }

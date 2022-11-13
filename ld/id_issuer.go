@@ -38,7 +38,7 @@ func NewIdentifierIssuer(prefix string) *IdentifierIssuer {
 
 // Clone copies this IdentifierIssuer.
 func (ii *IdentifierIssuer) Clone() *IdentifierIssuer {
-	copy := &IdentifierIssuer{
+	cpy := &IdentifierIssuer{
 		prefix:        ii.prefix,
 		counter:       ii.counter,
 		existing:      make(map[string]string, len(ii.existing)),
@@ -46,20 +46,20 @@ func (ii *IdentifierIssuer) Clone() *IdentifierIssuer {
 	}
 	i := 0
 	for k, v := range ii.existing {
-		copy.existing[k] = v
-		copy.existingOrder[i] = ii.existingOrder[i]
+		cpy.existing[k] = v
+		cpy.existingOrder[i] = ii.existingOrder[i]
 		i++
 	}
 
-	return copy
+	return cpy
 }
 
 // GetId Gets the new identifier for the given old identifier, where if no old
 // identifier is given a new identifier will be generated.
-func (ii *IdentifierIssuer) GetId(oldId string) string {
-	if oldId != "" {
+func (ii *IdentifierIssuer) GetId(oldID string) string { //nolint:stylecheck
+	if oldID != "" {
 		// return existing old identifier
-		if ex, present := ii.existing[oldId]; present {
+		if ex, present := ii.existing[oldID]; present {
 			return ex
 		}
 	}
@@ -67,16 +67,16 @@ func (ii *IdentifierIssuer) GetId(oldId string) string {
 	id := ii.prefix + fmt.Sprintf("%d", ii.counter)
 	ii.counter++
 
-	if oldId != "" {
-		ii.existing[oldId] = id
-		ii.existingOrder = append(ii.existingOrder, oldId)
+	if oldID != "" {
+		ii.existing[oldID] = id
+		ii.existingOrder = append(ii.existingOrder, oldID)
 	}
 
 	return id
 }
 
 // HasId returns True if the given old identifier has already been assigned a new identifier.
-func (ii *IdentifierIssuer) HasId(oldId string) bool {
-	_, hasKey := ii.existing[oldId]
+func (ii *IdentifierIssuer) HasId(oldID string) bool { //nolint:stylecheck
+	_, hasKey := ii.existing[oldID]
 	return hasKey
 }

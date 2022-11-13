@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 // Copyright 2015-2017 Piprate Limited
@@ -24,7 +25,7 @@ func main() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
 	options.Format = "application/n-quads"
-	options.Algorithm = "URDNA2015"
+	options.Algorithm = ld.AlgorithmURDNA2015
 
 	doc := map[string]interface{}{
 		"@context": map[string]interface{}{

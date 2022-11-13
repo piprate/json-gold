@@ -297,7 +297,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				isSetContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@set")
 				isLanguageContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@language")
 				isIndexContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@index")
-				isIdContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@id")
+				isIDContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@id")
 				isTypeContainer := activeCtx.HasContainerMapping(itemActiveProperty, "@type")
 
 				// if itemActiveProperty is a @nest property, add values to nestResult, otherwise result
@@ -369,7 +369,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				// graph object compaction
 				if isGraph {
 					asArray := !compactArrays || isSetContainer
-					if isGraphContainer && (isIdContainer || isIndexContainer && IsSimpleGraph(expandedItemMap)) {
+					if isGraphContainer && (isIDContainer || isIndexContainer && IsSimpleGraph(expandedItemMap)) {
 						var mapObject map[string]interface{}
 						if v, present := nestResult[itemActiveProperty]; present {
 							mapObject = v.(map[string]interface{})
@@ -380,10 +380,10 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 						// index on @id or @index or alias of @none
 						k := "@index"
-						if isIdContainer {
+						if isIDContainer {
 							k = "@id"
 						}
-						mapKey := ""
+						var mapKey string
 						if v, found := expandedItemMap[k]; found {
 							mapKey = v.(string)
 						} else {
@@ -449,7 +449,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 						AddValue(nestResult, itemActiveProperty, compactedItem, asArray, false, true, false)
 					}
-				} else if isLanguageContainer || isIndexContainer || isIdContainer || isTypeContainer {
+				} else if isLanguageContainer || isIndexContainer || isIDContainer || isTypeContainer {
 
 					var mapObject map[string]interface{}
 					if v, present := nestResult[itemActiveProperty]; present {
@@ -518,7 +518,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 								}
 							}
 						}
-					} else if isIdContainer {
+					} else if isIDContainer {
 						idKey, err := activeCtx.CompactIri("@id", nil, false, false)
 						if err != nil {
 							return nil, err
@@ -556,7 +556,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 						// if compactedItem contains a single entry whose key maps to @id, re-compact without @type
 						if len(compactedItemMap) == 1 {
-							if idVal, hasId := expandedItemMap["@id"]; hasId {
+							if idVal, hasID := expandedItemMap["@id"]; hasID {
 								compactedItem, err = api.Compact(activeCtx, itemActiveProperty,
 									map[string]interface{}{
 										"@id": idVal,

@@ -15,16 +15,17 @@
 package ld_test
 
 import (
+	"testing"
+
 	. "github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestJsonLdUrl(t *testing.T) {
-	parsedUrl := ParseURL("http://www.example.com")
+	parsedURL := ParseURL("http://www.example.com")
 
-	assert.Equal(t, "http:", parsedUrl.Protocol)
-	assert.Equal(t, "www.example.com", parsedUrl.Host)
+	assert.Equal(t, "http:", parsedURL.Protocol)
+	assert.Equal(t, "www.example.com", parsedURL.Host)
 }
 
 func TestRemoveBase(t *testing.T) {

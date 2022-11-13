@@ -17,7 +17,6 @@ package ld_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -66,8 +65,8 @@ type MockServer struct {
 	TestFolder string
 
 	ContentType string
-	HttpLink    []string
-	HttpStatus  int
+	HTTPLink    []string
+	HTTPStatus  int
 	RedirectTo  string
 
 	server *httptest.Server
@@ -84,10 +83,10 @@ func NewMockServer(base string, testFolder string) *MockServer {
 
 	var ts *httptest.Server
 	mockFunc := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if mockServer.HttpStatus != 0 {
+		if mockServer.HTTPStatus != 0 {
 			// must be a redirect
 			w.Header().Set("Location", mockServer.Base+mockServer.RedirectTo)
-			w.WriteHeader(mockServer.HttpStatus)
+			w.WriteHeader(mockServer.HTTPStatus)
 		} else {
 			u := r.URL.String()
 
@@ -104,11 +103,11 @@ func NewMockServer(base string, testFolder string) *MockServer {
 				}
 
 				fileName := filepath.Join(mockServer.TestFolder, u[len(mockServer.Base):])
-				inputBytes, err := ioutil.ReadFile(fileName)
+				inputBytes, err := os.ReadFile(fileName)
 				if err == nil {
 					w.Header().Set("Content-Type", contentType)
-					if mockServer.HttpLink != nil {
-						w.Header().Set("Link", strings.Join(mockServer.HttpLink, ", "))
+					if mockServer.HTTPLink != nil {
+						w.Header().Set("Link", strings.Join(mockServer.HTTPLink, ", "))
 					}
 					w.WriteHeader(http.StatusOK)
 					_, _ = w.Write(inputBytes)
@@ -121,8 +120,8 @@ func NewMockServer(base string, testFolder string) *MockServer {
 
 		// reset the context for the second call so that it succeeds.
 		// currently there are no tests where it needs to work in a different way
-		mockServer.HttpStatus = 0
-		mockServer.HttpLink = nil
+		mockServer.HTTPStatus = 0
+		mockServer.HTTPLink = nil
 	})
 
 	if strings.HasPrefix(base, "https") {
@@ -133,25 +132,25 @@ func NewMockServer(base string, testFolder string) *MockServer {
 
 	// get httptest.Server's URL
 
-	tsUrl, err := url.Parse(ts.URL)
+	tsURL, err := url.Parse(ts.URL)
 	if err != nil {
 		log.Fatalln("failed to parse httptest.Server URL:", err)
 	}
 
 	// update base URL with httptest.Server's host
 
-	baseUrl, err := url.Parse(base)
+	baseURL, err := url.Parse(base)
 	if err != nil {
 		log.Fatalln("failed to parse base URL:", err)
 	}
-	baseUrl.Host = tsUrl.Host
-	mockServer.Base = baseUrl.Path
+	baseURL.Host = tsURL.Host
+	mockServer.Base = baseURL.Path
 
 	client := ts.Client()
 
 	client.Transport = RewriteHostTransport{
 		Transport: client.Transport,
-		Host:      tsUrl.Host,
+		Host:      tsURL.Host,
 	}
 
 	mockServer.server = ts
@@ -162,8 +161,8 @@ func NewMockServer(base string, testFolder string) *MockServer {
 
 func (ms *MockServer) SetExpectedBehaviour(contentType string, httpLink []string, httpStatus int, redirectTo string) {
 	ms.ContentType = contentType
-	ms.HttpLink = httpLink
-	ms.HttpStatus = httpStatus
+	ms.HTTPLink = httpLink
+	ms.HTTPStatus = httpStatus
 	ms.RedirectTo = redirectTo
 }
 
@@ -174,7 +173,7 @@ func (ms *MockServer) Close() {
 }
 
 type TestDefinition struct {
-	Id               string
+	ID               string
 	Name             string
 	Type             string
 	EvaluationType   string
@@ -189,7 +188,7 @@ type TestDefinition struct {
 func TestSuite(t *testing.T) {
 	testDir := "testdata"
 
-	globalManifestBytes, err := ioutil.ReadFile(filepath.Join(testDir, "manifest.jsonld"))
+	globalManifestBytes, err := os.ReadFile(filepath.Join(testDir, "manifest.jsonld"))
 	assert.NoError(t, err)
 
 	var globalManifest map[string]interface{}
@@ -216,26 +215,26 @@ func TestSuite(t *testing.T) {
 	earlReport := NewEarlReport()
 
 	for _, manifestName := range manifestList {
-		inputBytes, err := ioutil.ReadFile(manifestName)
+		inputBytes, err := os.ReadFile(manifestName)
 		assert.NoError(t, err)
 
 		var manifest map[string]interface{}
 		err = json.Unmarshal(inputBytes, &manifest)
 		assert.NoError(t, err)
 
-		baseIri := ""
+		baseIRI := ""
 		testListKey := "entries"
 		if baseValue, hasBase := manifest["baseIri"]; hasBase {
-			baseIri = baseValue.(string)
+			baseIRI = baseValue.(string)
 			// it must be a JSON-LD test manifest
 			testListKey = "sequence"
 		}
 		manifestPart := strings.Split(strings.Split(manifestName, "/")[1], ".")[0]
-		manifestURI := baseIri + manifestPart
+		manifestURI := baseIRI + manifestPart
 		manifestBaseDir := filepath.Dir(manifestName)
 
 		// start a mock HTTP server
-		mockServer := NewMockServer(baseIri, manifestBaseDir)
+		mockServer := NewMockServer(baseIRI, manifestBaseDir)
 		defer mockServer.Close()
 
 		testsToSkip := skippedTests[manifestName]
@@ -244,41 +243,43 @@ func TestSuite(t *testing.T) {
 
 		for _, testData := range manifest[testListKey].([]interface{}) {
 			testMap := testData.(map[string]interface{})
-			testId := ""
-			testType := ""
-			testEvaluationType := "jld:PositiveEvaluationTest"
-			inputURL := ""
-			inputFileName := ""
+
+			var (
+				testID             string
+				testType           string
+				testEvaluationType string
+				inputURL           string
+				inputFileName      string
+			)
 			expectedFileName := ""
-			if baseIri != "" {
+			if baseIRI != "" {
 				// JSON-LD test manifest
-				testId = testMap["@id"].(string)
+				testID = testMap["@id"].(string)
 
 				testTypes := testMap["@type"].([]interface{})
 				testType = testTypes[len(testTypes)-1].(string)
 
 				testEvaluationType = testMap["@type"].([]interface{})[0].(string)
-				inputURL = baseIri + testMap["input"].(string)
+				inputURL = baseIRI + testMap["input"].(string)
 				inputFileName = testMap["input"].(string)
 				if testEvaluationType != "jld:PositiveSyntaxTest" && testEvaluationType != "jld:NegativeEvaluationTest" {
 					expectedFileName = testMap["expect"].(string)
 				}
 			} else {
 				// Normalisation test manifest
-				testId = testMap["id"].(string)
+				testID = testMap["id"].(string)
 				testType = testMap["type"].(string)
+				testEvaluationType = "jld:PositiveEvaluationTest"
 				inputFileName = testMap["action"].(string)
 				expectedFileName = testMap["result"].(string)
 			}
 
 			skip := false
 
-			if testsToSkip != nil {
-				for _, prefix := range testsToSkip {
-					if strings.HasPrefix(testId, prefix) {
-						skip = true
-						break
-					}
+			for _, prefix := range testsToSkip {
+				if strings.HasPrefix(testID, prefix) {
+					skip = true
+					break
 				}
 			}
 
@@ -286,13 +287,13 @@ func TestSuite(t *testing.T) {
 				skip = skipVal.(bool)
 			}
 
-			testName := testId
+			testName := testID
 			if strings.HasPrefix(testName, "#") {
 				testName = manifestURI + testName
 			}
 
 			td := &TestDefinition{
-				Id:               testId,
+				ID:               testID,
 				Name:             testName,
 				Type:             testType,
 				EvaluationType:   testEvaluationType,
@@ -314,7 +315,7 @@ func TestSuite(t *testing.T) {
 			// (see url.URL.ResolveReference(). Skipping for now, as other JSON-LD implementations do.
 			purpose := td.Raw["purpose"]
 			if purpose != nil && strings.Contains(purpose.(string), "RFC3986") {
-				log.Println("Skipping RFC3986 test", td.Id, ":", td.Name)
+				log.Println("Skipping RFC3986 test", td.ID, ":", td.Name)
 
 				earlReport.addAssertion(td.Name, true, false)
 
@@ -322,7 +323,7 @@ func TestSuite(t *testing.T) {
 			}
 
 			if td.Skip {
-				log.Println("Test marked as skipped:", td.Id, ":", td.Name)
+				log.Println("Test marked as skipped:", td.ID, ":", td.Name)
 
 				if os.Getenv("SKIP_MODE") == "fail" {
 					earlReport.addAssertion(td.Name, false, false)
@@ -338,16 +339,16 @@ func TestSuite(t *testing.T) {
 			options := NewJsonLdOptions("")
 
 			var returnContentType string
-			var returnHttpStatus int
+			var returnHTTPStatus int
 			var returnRedirectTo string
-			var returnHttpLink []string
+			var returnHTTPLink []string
 
 			if td.Option != nil {
 				testOpts := td.Option
 
 				if value, hasValue := testOpts["specVersion"]; hasValue {
 					if value == JsonLd_1_0 {
-						log.Println("Skipping JSON-LD 1.0 test:", td.Id, ":", td.Name)
+						log.Println("Skipping JSON-LD 1.0 test:", td.ID, ":", td.Name)
 						continue
 					}
 				}
@@ -387,24 +388,24 @@ func TestSuite(t *testing.T) {
 					returnContentType = value.(string)
 				}
 				if value, hasValue := testOpts["httpStatus"]; hasValue {
-					returnHttpStatus = int(value.(float64))
+					returnHTTPStatus = int(value.(float64))
 				}
 				if value, hasValue := testOpts["redirectTo"]; hasValue {
 					returnRedirectTo = value.(string)
 				}
 				if value, hasValue := testOpts["httpLink"]; hasValue {
-					returnHttpLink = make([]string, 0)
+					returnHTTPLink = make([]string, 0)
 					if valueList, isList := value.([]interface{}); isList {
 						for _, link := range valueList {
-							returnHttpLink = append(returnHttpLink, link.(string))
+							returnHTTPLink = append(returnHTTPLink, link.(string))
 						}
 					} else {
-						returnHttpLink = append(returnHttpLink, value.(string))
+						returnHTTPLink = append(returnHTTPLink, value.(string))
 					}
 				}
 			}
 
-			mockServer.SetExpectedBehaviour(returnContentType, returnHttpLink, returnHttpStatus, returnRedirectTo)
+			mockServer.SetExpectedBehaviour(returnContentType, returnHTTPLink, returnHTTPStatus, returnRedirectTo)
 
 			options.DocumentLoader = mockServer.DocumentLoader
 
@@ -413,10 +414,10 @@ func TestSuite(t *testing.T) {
 
 			switch td.Type {
 			case "jld:ExpandTest":
-				log.Println("Running Expand test", td.Id, ":", td.Name)
+				log.Println("Running Expand test", td.ID, ":", td.Name)
 				result, opError = proc.Expand(td.InputURL, options)
 			case "jld:CompactTest":
-				log.Println("Running Compact test", td.Id, ":", td.Name)
+				log.Println("Running Compact test", td.ID, ":", td.Name)
 
 				contextFilename := td.Raw["context"].(string)
 				contextDoc, err := dl.LoadDocument(filepath.Join(manifestBaseDir, contextFilename))
@@ -424,7 +425,7 @@ func TestSuite(t *testing.T) {
 
 				result, opError = proc.Compact(td.InputURL, contextDoc.Document, options)
 			case "jld:FlattenTest":
-				log.Println("Running Flatten test", td.Id, ":", td.Name)
+				log.Println("Running Flatten test", td.ID, ":", td.Name)
 
 				var ctxDoc interface{}
 				if ctxVal, hasContext := td.Raw["context"]; hasContext {
@@ -436,7 +437,7 @@ func TestSuite(t *testing.T) {
 
 				result, opError = proc.Flatten(td.InputURL, ctxDoc, options)
 			case "jld:FrameTest":
-				log.Println("Running Frame test", td.Id, ":", td.Name)
+				log.Println("Running Frame test", td.ID, ":", td.Name)
 
 				frameFilename := td.Raw["frame"].(string)
 				frameDoc, err := dl.LoadDocument(filepath.Join(manifestBaseDir, frameFilename))
@@ -444,41 +445,41 @@ func TestSuite(t *testing.T) {
 
 				result, opError = proc.Frame(td.InputURL, frameDoc.Document, options)
 			case "jld:FromRDFTest":
-				log.Println("Running FromRDF test", td.Id, ":", td.Name)
+				log.Println("Running FromRDF test", td.ID, ":", td.Name)
 
-				inputBytes, err := ioutil.ReadFile(td.InputFileName)
+				inputBytes, err := os.ReadFile(td.InputFileName)
 				assert.NoError(t, err)
 				input := string(inputBytes)
 
 				result, opError = proc.FromRDF(input, options)
 			case "jld:ToRDFTest":
-				log.Println("Running ToRDF test", td.Id, ":", td.Name)
+				log.Println("Running ToRDF test", td.ID, ":", td.Name)
 
 				options.Format = "application/n-quads"
 				result, opError = proc.ToRDF(td.InputURL, options)
 			case "jld:HtmlTest":
-				log.Println("Running HTML test", td.Id, ":", td.Name)
+				log.Println("Running HTML test", td.ID, ":", td.Name)
 				// TODO
 				result, opError = proc.Expand(td.InputURL, options)
 			case "rdfn:Urgna2012EvalTest":
-				log.Println("Running URGNA2012 test", td.Id, ":", td.Name)
+				log.Println("Running URGNA2012 test", td.ID, ":", td.Name)
 
-				inputBytes, err := ioutil.ReadFile(td.InputFileName)
+				inputBytes, err := os.ReadFile(td.InputFileName)
 				assert.NoError(t, err)
 				input := string(inputBytes)
 				options.InputFormat = "application/n-quads"
 				options.Format = "application/n-quads"
-				options.Algorithm = "URGNA2012"
+				options.Algorithm = AlgorithmURGNA2012
 				result, opError = proc.Normalize(input, options)
 			case "rdfn:Urdna2015EvalTest":
 				log.Println("Running URDNA2015 test", td.Name)
 
-				inputBytes, err := ioutil.ReadFile(td.InputFileName)
+				inputBytes, err := os.ReadFile(td.InputFileName)
 				assert.NoError(t, err)
 				input := string(inputBytes)
 				options.InputFormat = "application/n-quads"
 				options.Format = "application/n-quads"
-				options.Algorithm = "URDNA2015"
+				options.Algorithm = AlgorithmURDNA2015
 				result, opError = proc.Normalize(input, options)
 			default:
 				break SequenceLoop
@@ -506,7 +507,7 @@ func TestSuite(t *testing.T) {
 					_ = json.Unmarshal(resultBytes, &result)
 				} else if expectedType == ".nq" {
 					// load as N-Quads
-					expectedBytes, err := ioutil.ReadFile(td.ExpectedFileName)
+					expectedBytes, err := os.ReadFile(td.ExpectedFileName)
 					assert.NoError(t, err)
 
 					// we sort for the actual and the expected results to ignore differences in the order.
@@ -526,14 +527,14 @@ func TestSuite(t *testing.T) {
 				}
 
 				if opError != nil {
-					result = string(opError.(*JsonLdError).Code)
+					result = string(opError.(*JsonLdError).Code) //nolint:errorlint
 				} else {
 					//PrintDocument("RESULT", result)
 					result = ""
 				}
 			} else if td.EvaluationType == "jld:PositiveSyntaxTest" {
 				if opError != nil {
-					result = string(opError.(*JsonLdError).Code)
+					result = string(opError.(*JsonLdError).Code) //nolint:errorlint
 				} else {
 					result = ""
 				}
@@ -568,7 +569,7 @@ func TestSuite(t *testing.T) {
 					_, _ = os.Stdout.WriteString(expected.(string))
 					_, _ = os.Stdout.WriteString("\n")
 				}
-				log.Println("Error when running", td.Id, "for", td.Type)
+				log.Println("Error when running", td.ID, "for", td.Type)
 				earlReport.addAssertion(td.Name, false, false)
 				if os.Getenv("FULL_RUN") != "true" {
 					return
