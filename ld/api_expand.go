@@ -360,7 +360,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		// 7.3)
 		if expandedProperty == "" || (!strings.Contains(expandedProperty, ":") && !IsKeyword(expandedProperty)) {
 			if activeCtx.options != nil && activeCtx.options.SafeMode {
-				return NewJsonLdError(InvalidInput, "property didn't expand into absolute IRI or keyword")
+				return NewJsonLdError(InvalidProperty, "Dropping property that did not expand into an absolute IRI or keyword.")
 			} else {
 				continue
 			}
