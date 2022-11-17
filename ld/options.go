@@ -65,6 +65,7 @@ type JsonLdOptions struct { //nolint:stylecheck
 	Algorithm     string
 	UseNamespaces bool
 	OutputForm    string
+	SafeMode      bool
 }
 
 // NewJsonLdOptions creates and returns new instance of JsonLdOptions with the given base.
@@ -88,6 +89,7 @@ func NewJsonLdOptions(base string) *JsonLdOptions { //nolint:stylecheck
 		Algorithm:             AlgorithmURGNA2012,
 		UseNamespaces:         false,
 		OutputForm:            "",
+		SafeMode:              false,
 	}
 }
 

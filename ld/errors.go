@@ -78,13 +78,14 @@ const (
 	IRIConfusedWithPrefix       ErrorCode = "IRI confused with prefix"
 
 	// non spec related errors
-	SyntaxError    ErrorCode = "syntax error"
-	NotImplemented ErrorCode = "not implemented"
-	UnknownFormat  ErrorCode = "unknown format"
-	InvalidInput   ErrorCode = "invalid input"
-	ParseError     ErrorCode = "parse error"
-	IOError        ErrorCode = "io error"
-	UnknownError   ErrorCode = "unknown error"
+	SyntaxError     ErrorCode = "syntax error"
+	NotImplemented  ErrorCode = "not implemented"
+	UnknownFormat   ErrorCode = "unknown format"
+	InvalidInput    ErrorCode = "invalid input"
+	ParseError      ErrorCode = "parse error"
+	IOError         ErrorCode = "io error"
+	InvalidProperty ErrorCode = "invalid property"
+	UnknownError    ErrorCode = "unknown error"
 )
 
 func (e JsonLdError) Error() string {

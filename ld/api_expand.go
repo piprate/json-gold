@@ -359,7 +359,11 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		var expandedValue interface{}
 		// 7.3)
 		if expandedProperty == "" || (!strings.Contains(expandedProperty, ":") && !IsKeyword(expandedProperty)) {
-			continue
+			if activeCtx.options != nil && activeCtx.options.SafeMode {
+				return NewJsonLdError(InvalidProperty, "Dropping property that did not expand into an absolute IRI or keyword.")
+			} else {
+				continue
+			}
 		}
 		// 7.4)
 		if IsKeyword(expandedProperty) {
