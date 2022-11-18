@@ -1,5 +1,12 @@
 # JSON-goLD Change Log
 
+## v0.5.0 - 2022-11-18
+
+- Add GitHub workflows for CI
+- Bump the package to Go 1.18
+- Address linter feedback, including regexes
+- New option: Safe Mode. If set to `true`, Expansion operation will fail if it encounters properties that aren't defined in the context
+
 ## v0.4.2 - 2022-10-04
 
 - Move initialization of rxURL from global to function scope to reduce stack size usage while initialization

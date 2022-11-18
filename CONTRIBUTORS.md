@@ -8,5 +8,6 @@ This library was originally written by Stan Nazarenko (@kazarena) with Pull Requ
 * Dmitriy Kinoshenko (@kdimak)
 * Andrew Ortman (@andrewortman)
 * Abdulbois (@Abdulbois)
+* @wijatplay3
 
 All future contributors will be recorded in this file.
