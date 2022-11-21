@@ -115,5 +115,6 @@ func (opt *JsonLdOptions) Copy() *JsonLdOptions {
 		Algorithm:             opt.Algorithm,
 		UseNamespaces:         opt.UseNamespaces,
 		OutputForm:            opt.OutputForm,
+		SafeMode:              opt.SafeMode,
 	}
 }
