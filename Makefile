@@ -1,4 +1,4 @@
-.PHONY: all vet lint test fmt help
+.PHONY: all vet lint test test-cov fmt help
 
 all: lint test
 
@@ -7,6 +7,9 @@ vet:
 
 test: vet
 	go test github.com/piprate/json-gold/...
+
+test-cov: vet
+	go test github.com/piprate/json-gold/... -race -coverprofile=coverage.txt -covermode=atomic
 
 lint:
 	golangci-lint run
@@ -27,5 +30,6 @@ help:
 	@echo ' lint             - Run golangci-lint             '
 	@echo ' vet              - Run vet                       '
 	@echo ' test             - Run all tests                 '
+	@echo ' test-cov         - Run all tests + coverage      '
 	@echo '--------------------------------------------------'
 	@echo ''

@@ -1,9 +1,8 @@
-# JSON-goLD [![Documentations][shield-godoc]][godoc] [![Travis CI results][shield-travis]][travis]
+# JSON-goLD
 
-[travis]: https://travis-ci.org/piprate/json-gold
-[shield-travis]: https://api.travis-ci.org/piprate/json-gold.svg?branch=master
-[godoc]: https://godoc.org/github.com/piprate/json-gold/ld
-[shield-godoc]: https://img.shields.io/badge/godoc-reference-5272B4.svg
+[![GoDoc](https://godoc.org/github.com/piprate/json-gold?status.svg)](https://pkg.go.dev/github.com/piprate/json-gold)
+[![ci](https://github.com/piprate/json-gold/actions/workflows/ci.yml/badge.svg)](https://github.com/piprate/json-gold/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/piprate/json-gold/branch/master/graph/badge.svg?token=JvEEDMmppm)](https://codecov.io/gh/piprate/json-gold)
 
 This library is an implementation of the [JSON-LD 1.1](http://json-ld.org/) specification in Go.
 It supports both URDNA2015 and URGNA2012 RDF dataset normalisation algorithms.
