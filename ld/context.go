@@ -191,7 +191,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			rd, err := c.options.DocumentLoader.LoadDocument(uri)
 			if err != nil {
 				return nil, NewJsonLdError(LoadingRemoteContextFailed,
-					fmt.Sprintf("Dereferencing a URL did not result in a valid JSON-LD context: %s", uri))
+					fmt.Errorf("dereferencing a URL did not result in a valid JSON-LD context (%s): %w", uri, err))
 			}
 			remoteContextMap, isMap := rd.Document.(map[string]interface{})
 			context, hasContextKey := remoteContextMap["@context"]
@@ -252,7 +252,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			rd, err := c.options.DocumentLoader.LoadDocument(uri)
 			if err != nil {
 				return nil, NewJsonLdError(LoadingRemoteContextFailed,
-					fmt.Sprintf("Dereferencing a URL did not result in a valid JSON-LD context: %s", uri))
+					fmt.Errorf("dereferencing a URL did not result in a valid JSON-LD context (%s): %w", uri, err))
 			}
 			importCtxDocMap, isMap := rd.Document.(map[string]interface{})
 			context, hasContextKey := importCtxDocMap["@context"]

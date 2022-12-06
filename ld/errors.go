@@ -95,6 +95,12 @@ func (e JsonLdError) Error() string {
 	return fmt.Sprintf("%v", e.Code)
 }
 
+// Unwrap returns JsonLdError.Details if it is an error, otherwise nil.
+func (e JsonLdError) Unwrap() error {
+	cause, _ := e.Details.(error)
+	return cause
+}
+
 // NewJsonLdError creates a new instance of JsonLdError.
 func NewJsonLdError(code ErrorCode, details interface{}) *JsonLdError { //nolint:stylecheck
 	return &JsonLdError{Code: code, Details: details}
