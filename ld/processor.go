@@ -457,7 +457,10 @@ func (jldp *JsonLdProcessor) FromRDF(dataset interface{}, opts *JsonLdOptions) (
 
 func (jldp *JsonLdProcessor) fromRDF(input interface{}, opts *JsonLdOptions, serializer RDFSerializer) (interface{}, error) {
 
-	dataset, _ := serializer.Parse(input)
+	dataset, err := serializer.Parse(input)
+	if err != nil {
+		return nil, err
+	}
 
 	// convert from RDF
 	api := NewJsonLdApi()
