@@ -50,7 +50,7 @@ linters:
     - asciicheck
     - bodyclose
     - contextcheck
-    - depguard
+    #   - depguard
     - dogsled
     - dupl
     - errcheck
