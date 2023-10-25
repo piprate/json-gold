@@ -218,6 +218,14 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			return nil, NewJsonLdError(InvalidLocalContext, context)
 		}
 
+		// dereference @context key if present
+		if nestedContext := contextMap["@context"]; nestedContext != nil {
+			contextMap, isMap = nestedContext.(map[string]interface{})
+			if !isMap {
+				return nil, NewJsonLdError(InvalidLocalContext, nestedContext)
+			}
+		}
+
 		pm, hasProcessingMode := c.values["processingMode"]
 
 		if versionValue, versionPresent := contextMap["@version"]; versionPresent {
