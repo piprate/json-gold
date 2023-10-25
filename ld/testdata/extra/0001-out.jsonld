@@ -1,0 +1,8 @@
+[
+  {
+    "@id": "https://foo.bar/baz",
+    "@type": [
+      "http://schema.org/#PropertyValue"
+    ]
+  }
+]

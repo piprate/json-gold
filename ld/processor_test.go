@@ -210,6 +210,12 @@ func TestSuite(t *testing.T) {
 		filepath.Join(testDir, "normalization", "manifest-urdna2015.jsonld"),
 	)
 
+	// extra tests that aren't covered by the official test suite
+
+	manifestList = append(manifestList,
+		filepath.Join(testDir, "extra-manifest.jsonld"),
+	)
+
 	dl := NewDefaultDocumentLoader(nil)
 	proc := NewJsonLdProcessor()
 	earlReport := NewEarlReport()
