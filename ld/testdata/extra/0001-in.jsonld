@@ -1,0 +1,11 @@
+{
+  "@context": [
+    {
+      "@context": {
+         "PropertyValue": "http://schema.org/#PropertyValue"
+      }
+    }
+  ],
+  "@id":"https://foo.bar/baz",
+  "@type":"PropertyValue"
+}

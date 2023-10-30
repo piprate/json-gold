@@ -202,12 +202,13 @@ func TestSuite(t *testing.T) {
 		manifestList = append(manifestList, filepath.Join(testDir, val.(string)))
 	}
 
-	// Framing and Normalisation test suites
-
 	manifestList = append(manifestList,
+		// Framing and Normalisation test suites
 		filepath.Join(testDir, "frame-manifest.jsonld"),
 		filepath.Join(testDir, "normalization", "manifest-urgna2012.jsonld"),
 		filepath.Join(testDir, "normalization", "manifest-urdna2015.jsonld"),
+		// extra tests that aren't covered by the official test suite
+		filepath.Join(testDir, "extra-manifest.jsonld"),
 	)
 
 	dl := NewDefaultDocumentLoader(nil)

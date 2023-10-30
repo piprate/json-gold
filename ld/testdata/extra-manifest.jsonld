@@ -1,0 +1,18 @@
+{
+  "@context": ["context.jsonld", {"@base": "extra-manifest"}],
+  "@id": "",
+  "@type": "mf:Manifest",
+  "name": "Expansion",
+  "description": "JSON-LD Expansion tests.",
+  "baseIri": "https://w3c.github.io/json-ld-api/tests/",
+  "sequence": [
+    {
+      "@id": "#ext0001",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "resolve nested contexts #76",
+      "purpose": "Ensure nested contexts are dereferenced",
+      "input": "extra/0001-in.jsonld",
+      "expect": "extra/0001-out.jsonld"
+    }
+  ]
+}
