@@ -292,11 +292,11 @@ func (ds *RDFDataset) GetQuads(graphName string) []*Quad {
 	return ds.Graphs[graphName]
 }
 
-var canonicalDoubleRegEx = regexp.MustCompile(`(\d)0*E\+?0*(\d)`)
+var canonicalDoubleRegEx = regexp.MustCompile(`(\d)0*E\+?(-)?0*(\d)`)
 
 // GetCanonicalDouble returns a canonical string representation of a float64 number.
 func GetCanonicalDouble(v float64) string {
-	return canonicalDoubleRegEx.ReplaceAllString(fmt.Sprintf("%1.15E", v), "${1}E${2}")
+	return canonicalDoubleRegEx.ReplaceAllString(fmt.Sprintf("%1.15E", v), "${1}E${2}${3}")
 }
 
 var (

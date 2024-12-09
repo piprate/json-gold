@@ -23,4 +23,7 @@ import (
 
 func TestGetCanonicalDouble(t *testing.T) {
 	assert.Equal(t, "5.3E0", GetCanonicalDouble(5.3))
+	assert.Equal(t, "-7.5E1", GetCanonicalDouble(-75))
+	assert.Equal(t, "7.5E-1", GetCanonicalDouble(0.75))
+	assert.Equal(t, "-7.5E-1", GetCanonicalDouble(-0.75))
 }
