@@ -1,4 +1,5 @@
 // Copyright 2015-2017 Piprate Limited
+// Copyright 2025 Siemens AG
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,6 +48,12 @@ type Context struct {
 	inverse         map[string]interface{}
 	protected       map[string]bool
 	previousContext *Context
+	fastCurieMap    map[string]interface{}
+}
+
+type FastCurieEntry struct {
+	iri   string
+	terms []string
 }
 
 // NewContext creates and returns a new Context object.
@@ -60,6 +67,7 @@ func NewContext(values map[string]interface{}, options *JsonLdOptions) *Context 
 		options:         options,
 		termDefinitions: make(map[string]interface{}),
 		protected:       make(map[string]bool),
+		fastCurieMap:    make(map[string]any),
 	}
 
 	context.values["@base"] = options.Base
@@ -79,6 +87,7 @@ func (c *Context) AsMap() map[string]interface{} {
 		"termDefinitions": c.termDefinitions,
 		"inverse":         c.inverse,
 		"protected":       c.protected,
+		"fastCurieMap":    c.fastCurieMap,
 	}
 	if c.previousContext != nil {
 		res["previousContext"] = c.previousContext.AsMap()
@@ -628,6 +637,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	termHasColon := colIndex > 0
 
 	definition["@reverse"] = false
+	definition["termHasColon"] = termHasColon
 
 	// 11)
 	if reverseValue, present := val["@reverse"]; present {
@@ -1391,32 +1401,47 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 	compactIRI := ""
 
 	// 5)
-	for term, termDefinitionVal := range c.termDefinitions {
-		if termDefinitionVal == nil {
-			continue
+	partialMatches := make([]FastCurieEntry, 0)
+	iriMap := c.fastCurieMap
+	// check for partial matches of against `iri`, which means look until
+	// iri.length - 1, not full length
+	maxPartialLength := len(iri) - 1
+	for i := 0; i < maxPartialLength; i++ {
+		iriAny, ok := iriMap[string(iri[i])]
+		if !ok {
+			break
 		}
-
-		// 5.1)
-		if strings.Contains(term, ":") {
-			continue
+		iriMap = iriAny.(map[string]interface{})
+		if arrAny, ok := iriMap[""]; ok {
+			entry := arrAny.([]FastCurieEntry)[0]
+			partialMatches = append(partialMatches, entry)
 		}
+	}
+	// check partial matches in reverse order to prefer longest ones first
+	for i := len(partialMatches) - 1; i >= 0; i-- {
+		entry := partialMatches[i]
+		for _, term := range entry.terms {
+			termDefinitionAny, ok := c.termDefinitions[term]
+			if !ok {
+				continue
+			}
+			termDef := termDefinitionAny.(map[string]interface{})
 
-		// 5.2)
-		termDefinition := termDefinitionVal.(map[string]interface{})
-		idStr := termDefinition["@id"].(string)
-		if iri == idStr || !strings.HasPrefix(iri, idStr) {
-			continue
-		}
+			// a CURIE is usable if:
+			// 1. it has no mapping, OR
+			// 2. value is null, which means we're not compacting an @value, AND
+			//   the mapping matches the IRI
+			curie := term + ":" + iri[len(entry.iri):]
+			prefix, hasPrefix := termDef["_prefix"]
+			curieMapping, hasCurie := c.termDefinitions[curie]
 
-		// 5.3)
-		candidate := term + ":" + iri[len(idStr):]
-		// 5.4)
-		candidateVal, containsCandidate := c.termDefinitions[candidate]
-		prefix, hasPrefix := termDefinition["_prefix"]
-		if (compactIRI == "" || CompareShortestLeast(candidate, compactIRI)) && hasPrefix && prefix.(bool) &&
-			(!containsCandidate ||
-				(iri == candidateVal.(map[string]interface{})["@id"] && value == nil)) {
-			compactIRI = candidate
+			isUsableCurie := hasPrefix && prefix.(bool) && (!hasCurie || value == nil && curieMapping.(map[string]any)["@id"].(string) == iri)
+
+			// select curie if it is shorter or the same length but lexicographically
+			// less than the current choice
+			if isUsableCurie && (compactIRI == "" || CompareShortestLeast(curie, compactIRI)) {
+				compactIRI = curie
+			}
 		}
 	}
 
@@ -1424,6 +1449,8 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 		return compactIRI, nil
 	}
 
+	// If iri could be confused with a compact IRI using a term in this context,
+	// signal an error
 	for term, td := range c.termDefinitions {
 		if tdMap, isMap := td.(map[string]interface{}); isMap {
 			prefix, hasPrefix := tdMap["_prefix"]
@@ -1433,10 +1460,12 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 		}
 	}
 
+	// compact IRI relative to base
 	if !relativeToVocab {
 		return RemoveBase(c.values["@base"], iri), nil
 	}
 
+	// return IRI as is
 	return iri, nil
 }
 
@@ -1499,6 +1528,9 @@ func (c *Context) GetInverse() map[string]interface{} {
 	terms := GetKeys(c.termDefinitions)
 	sort.Sort(ShortestLeast(terms))
 
+	// variables for building fast CURIE map
+	irisToTerms := make(map[string][]string, 0)
+
 	for _, term := range terms {
 		definitionVal := c.termDefinitions[term]
 		// 3.1)
@@ -1528,11 +1560,31 @@ func (c *Context) GetInverse() map[string]interface{} {
 		// 3.4 + 3.5)
 		var containerMap map[string]interface{}
 		containerMapVal, present := c.inverse[iri]
+		isKeyword := IsKeyword(iri)
+		termHasColon := definition["termHasColon"].(bool)
 		if !present {
 			containerMap = make(map[string]interface{})
 			c.inverse[iri] = containerMap
+
+			if !isKeyword && !termHasColon {
+				// init IRI to term map and fast CURIE map
+				irisToTerms[iri] = []string{term}
+				entry := FastCurieEntry{iri: iri, terms: irisToTerms[iri]}
+				letter := string(iri[0])
+				if val, ok := c.fastCurieMap[letter]; ok {
+					arr := val.([]FastCurieEntry)
+					arr = append(arr, entry)
+					c.fastCurieMap[letter] = arr
+				} else {
+					c.fastCurieMap[letter] = []FastCurieEntry{entry}
+				}
+			}
 		} else {
 			containerMap = containerMapVal.(map[string]interface{})
+			if !isKeyword && !termHasColon {
+				// add IRI to term match
+				irisToTerms[iri] = append(irisToTerms[iri], term)
+			}
 		}
 
 		// 3.6 + 3.7)
@@ -1649,8 +1701,46 @@ func (c *Context) GetInverse() map[string]interface{} {
 		}
 	}
 
+	// build fast CURIE map
+	for key := range c.fastCurieMap {
+		buildIriMap(c.fastCurieMap, key, 1)
+	}
+
 	// 4)
 	return c.inverse
+}
+
+// buildIriMap runs a recursive algorithm to build a lookup map for quickly finding
+// potential CURIEs.
+//
+// iriMap is the map to build.
+// key is the current key in the map to work on.
+// idx is the index into the IRI to compare.
+func buildIriMap(iriMap map[string]interface{}, key string, idx int) {
+	entries := iriMap[key].([]FastCurieEntry)
+	next := make(map[string]interface{}, 0)
+	iriMap[key] = next
+
+	for _, entry := range entries {
+		letter := ""
+		iri := entry.iri
+		if idx < len(iri) {
+			letter = string(iri[idx])
+		}
+		if val, ok := next[letter]; ok {
+			arr := val.([]FastCurieEntry)
+			arr = append(arr, entry)
+			next[letter] = arr
+		} else {
+			next[letter] = []FastCurieEntry{entry}
+		}
+	}
+	for key := range next {
+		if key == "" {
+			continue
+		}
+		buildIriMap(next, key, idx+1)
+	}
 }
 
 // SelectTerm picks the preferred compaction term from the inverse context entry.
