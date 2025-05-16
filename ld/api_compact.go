@@ -1,4 +1,5 @@
 // Copyright 2015-2017 Piprate Limited
+// Copyright 2025 Siemens AG
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,9 +49,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 	}
 
 	// use any scoped context on activeProperty
-	td := activeCtx.GetTermDefinition(activeProperty)
-	if ctx, hasCtx := td["@context"]; hasCtx {
-		newCtx, err := activeCtx.parse(ctx, make([]string, 0), false, true, false, true)
+	if td := activeCtx.GetTermDefinition(activeProperty); td != nil && td.hasContext {
+		newCtx, err := activeCtx.parse(td.context, make([]string, 0), false, true, false, true)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +66,10 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				return nil, err
 			}
 
-			propType := activeCtx.GetTermDefinition(activeProperty)["@type"]
+			propType := ""
+			if td := activeCtx.GetTermDefinition(activeProperty); td != nil {
+				propType = td.typ
+			}
 			if _, isMap := compactedValue.(map[string]interface{}); !isMap || propType == "@json" {
 				return compactedValue, nil
 			}
@@ -94,9 +97,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 		}
 
 		// apply property-scoped context after reverting term-scoped context
-		propertyScopedCtx := inputCtx.GetTermDefinition(activeProperty)["@context"]
-		if propertyScopedCtx != nil {
-			newCtx, err := activeCtx.parse(propertyScopedCtx, nil, false, true, false, true)
+		if td := inputCtx.GetTermDefinition(activeProperty); td != nil && td.context != nil {
+			newCtx, err := activeCtx.parse(td.context, nil, false, true, false, true)
 			if err != nil {
 				return nil, err
 			}
@@ -122,9 +124,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 			// process in lexicographical order, see https://github.com/json-ld/json-ld.org/issues/616
 			sort.Strings(types)
 			for _, tt := range types {
-				td := inputCtx.GetTermDefinition(tt)
-				if ctx, hasCtx := td["@context"]; hasCtx {
-					newCtx, err := activeCtx.parse(ctx, nil, false, false, false, false)
+				if td := inputCtx.GetTermDefinition(tt); td != nil && td.hasContext {
+					newCtx, err := activeCtx.parse(td.context, nil, false, false, false, false)
 					if err != nil {
 						return nil, err
 					}
@@ -273,15 +274,15 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				}
 
 				nestResult := result
-				nestProperty, hasNest := activeCtx.GetTermDefinition(itemActiveProperty)["@nest"]
-				if hasNest {
-					if err := api.checkNestProperty(activeCtx, nestProperty.(string)); err != nil {
+				if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.nest != "" {
+					nestProperty := td.nest
+					if err := api.checkNestProperty(activeCtx, nestProperty); err != nil {
 						return nil, err
 					}
-					if _, isMap := result[nestProperty.(string)].(map[string]interface{}); !isMap {
-						result[nestProperty.(string)] = make(map[string]interface{})
+					if _, isMap := result[nestProperty].(map[string]interface{}); !isMap {
+						result[nestProperty] = make(map[string]interface{})
 					}
-					nestResult = result[nestProperty.(string)].(map[string]interface{})
+					nestResult = result[nestProperty].(map[string]interface{})
 				}
 
 				AddValue(nestResult, itemActiveProperty, make([]interface{}, 0), true, false, true, false)
@@ -302,15 +303,16 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 				// if itemActiveProperty is a @nest property, add values to nestResult, otherwise result
 				nestResult := result
-				nestProperty, hasNest := activeCtx.GetTermDefinition(itemActiveProperty)["@nest"]
-				if hasNest {
-					if err := api.checkNestProperty(activeCtx, nestProperty.(string)); err != nil {
+
+				if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.nest != "" {
+					nestProperty := td.nest
+					if err := api.checkNestProperty(activeCtx, nestProperty); err != nil {
 						return nil, err
 					}
-					if _, isMap := result[nestProperty.(string)].(map[string]interface{}); !isMap {
-						result[nestProperty.(string)] = make(map[string]interface{})
+					if _, isMap := result[nestProperty].(map[string]interface{}); !isMap {
+						result[nestProperty] = make(map[string]interface{})
 					}
-					nestResult = result[nestProperty.(string)].(map[string]interface{})
+					nestResult = result[nestProperty].(map[string]interface{})
 				}
 
 				// get @list value if appropriate
@@ -471,12 +473,13 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 							mapKey = v.(string)
 						}
 					} else if isIndexContainer {
-						indexKey := activeCtx.GetTermDefinition(itemActiveProperty)["@index"]
-						if indexKey == nil {
-							indexKey = "@index"
+
+						indexKey := "@index"
+						if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.index != "" {
+							indexKey = td.index
 						}
 
-						containerKey, err := activeCtx.CompactIri(indexKey.(string), nil, true, false)
+						containerKey, err := activeCtx.CompactIri(indexKey, nil, true, false)
 						if err != nil {
 							return nil, err
 						}
@@ -490,7 +493,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 							var propsArray []interface{}
 							compactedItemMap, isMap := compactedItem.(map[string]interface{})
 							if isMap {
-								props, found := compactedItemMap[indexKey.(string)]
+								props, found := compactedItemMap[indexKey]
 								if found {
 									propsArray = Arrayify(props)
 								} else {
@@ -510,11 +513,11 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 							} else {
 								switch len(others) {
 								case 0:
-									delete(compactedItemMap, indexKey.(string))
+									delete(compactedItemMap, indexKey)
 								case 1:
-									compactedItemMap[indexKey.(string)] = others[0]
+									compactedItemMap[indexKey] = others[0]
 								default:
-									compactedItemMap[indexKey.(string)] = others
+									compactedItemMap[indexKey] = others
 								}
 							}
 						}
