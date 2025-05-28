@@ -31,8 +31,6 @@ linters-settings:
       - whyNoLint
   gofmt:
     simplify: false
-  govet:
-    check-shadowing: false
   nolintlint:
     require-explanation: false
     require-specific: true
@@ -55,7 +53,6 @@ linters:
     - dupl
     - errcheck
     - errorlint
-    - exportloopref
     - exhaustive
     #   - goconst
     - gocritic
