@@ -551,17 +551,7 @@ func CloneDocument(value interface{}) interface{} {
 }
 
 // GetKeys returns all keys in the given object
-func GetKeys(m map[string]interface{}) []string {
-	keys := make([]string, 0, len(m))
-	for key := range m {
-		keys = append(keys, key)
-	}
-
-	return keys
-}
-
-// GetKeysString returns all keys in the given map[string]string
-func GetKeysString(m map[string]string) []string {
+func GetKeys[T any](m map[string]T) []string {
 	keys := make([]string, 0, len(m))
 	for key := range m {
 		keys = append(keys, key)
