@@ -84,7 +84,7 @@ func toNQuad(triple *Quad, graphName string) string {
 	} else if IsBlankNode(o) {
 		quad += o.GetValue()
 	} else {
-		literal := o.(*Literal)
+		literal := o.(Literal)
 		escaped := escape(literal.GetValue())
 		quad += "\"" + escaped + "\""
 		if literal.Datatype == RDFLangString {
@@ -237,6 +237,9 @@ func ParseNQuadsFrom(o interface{}) (*RDFDataset, error) {
 	// build RDF dataset
 	dataset := NewRDFDataset()
 
+	// maintain a set of triples for each graph to check for duplicates
+	triplesByGraph := make(map[string]map[Quad]struct{})
+
 	scanner, err := newScannerFor(o)
 	if err != nil {
 		return nil, err
@@ -302,21 +305,19 @@ func ParseNQuadsFrom(o interface{}) (*RDFDataset, error) {
 
 		// initialise graph in dataset
 		triples, present := dataset.Graphs[name]
+		if triplesByGraph[name] == nil {
+			triplesByGraph[name] = make(map[Quad]struct{})
+		}
+
 		if !present {
 			dataset.Graphs[name] = []*Quad{triple}
 		} else {
 			// add triple if unique to its graph
-			containsTriple := false
-			for _, elem := range triples {
-				if triple.Equal(elem) {
-					containsTriple = true
-					break
-				}
-			}
-			if !containsTriple {
+			if _, hasTriple := triplesByGraph[name][*triple]; !hasTriple {
 				dataset.Graphs[name] = append(triples, triple)
 			}
 		}
+		triplesByGraph[name][*triple] = struct{}{}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, NewJsonLdError(IOError, err)

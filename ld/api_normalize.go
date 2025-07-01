@@ -244,13 +244,13 @@ func (na *NormalisationAlgorithm) Normalize(dataset *RDFDataset) {
 		// node identifiers using the canonical identifiers previously issued by
 		// canonical issuer.
 		// Note: We optimize away the copy here.
-		for _, attrNode := range []Node{quad.Subject, quad.Object, quad.Graph} {
-			if attrNode != nil {
-				attrValue := attrNode.GetValue()
-				if IsBlankNode(attrNode) && strings.Index(attrValue, "_:c14n") != 0 {
-					bn := attrNode.(*BlankNode)
-					bn.Attribute = na.canonicalIssuer.GetId(attrValue)
-				}
+		for _, nodePtr := range []*Node{&quad.Subject, &quad.Object, &quad.Graph} {
+			if *nodePtr == nil {
+				continue
+			}
+			attrValue := (*nodePtr).GetValue()
+			if IsBlankNode(*nodePtr) && !strings.HasPrefix(attrValue, "_:c14n") {
+				*nodePtr = NewBlankNode(na.canonicalIssuer.GetId(attrValue))
 			}
 		}
 

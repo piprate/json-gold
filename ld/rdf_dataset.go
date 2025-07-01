@@ -306,11 +306,11 @@ var (
 func InvalidNode(node Node) bool {
 
 	switch v := node.(type) {
-	case *IRI:
+	case IRI:
 		if !validIRI(v.Value) {
 			return true
 		}
-	case *Literal:
+	case Literal:
 		if v.Language != "" && !validLanguageRegex.MatchString(v.Language) {
 			return true
 		}

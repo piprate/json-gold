@@ -31,7 +31,7 @@ type Node interface {
 	// GetValue returns the node's value.
 	GetValue() string
 
-	// Equal returns true id this node is equal to the given node.
+	// Equal returns true if this node is equal to the given node.
 	Equal(n Node) bool
 }
 
@@ -43,8 +43,8 @@ type Literal struct {
 }
 
 // NewLiteral creates a new instance of Literal.
-func NewLiteral(value string, datatype string, language string) *Literal {
-	l := &Literal{
+func NewLiteral(value string, datatype string, language string) Literal {
+	l := Literal{
 		Value:    value,
 		Language: language,
 	}
@@ -59,12 +59,12 @@ func NewLiteral(value string, datatype string, language string) *Literal {
 }
 
 // GetValue returns the node's value.
-func (l *Literal) GetValue() string {
+func (l Literal) GetValue() string {
 	return l.Value
 }
 
-// Equal returns true id this node is equal to the given node.
-func (l *Literal) Equal(n Node) bool {
+// Equal returns true if this node is equal to the given node.
+func (l Literal) Equal(n Node) bool {
 	ol, ok := n.(*Literal)
 	if !ok {
 		return false
@@ -91,8 +91,8 @@ type IRI struct {
 }
 
 // NewIRI creates a new instance of IRI.
-func NewIRI(iri string) *IRI {
-	i := &IRI{
+func NewIRI(iri string) IRI {
+	i := IRI{
 		Value: iri,
 	}
 
@@ -100,12 +100,12 @@ func NewIRI(iri string) *IRI {
 }
 
 // GetValue returns the node's value.
-func (iri *IRI) GetValue() string {
+func (iri IRI) GetValue() string {
 	return iri.Value
 }
 
-// Equal returns true id this node is equal to the given node.
-func (iri *IRI) Equal(n Node) bool {
+// Equal returns true if this node is equal to the given node.
+func (iri IRI) Equal(n Node) bool {
 	if oiri, ok := n.(*IRI); ok {
 		return iri.Value == oiri.Value
 	}
@@ -119,8 +119,8 @@ type BlankNode struct {
 }
 
 // NewBlankNode creates a new instance of BlankNode.
-func NewBlankNode(attribute string) *BlankNode {
-	bn := &BlankNode{
+func NewBlankNode(attribute string) BlankNode {
+	bn := BlankNode{
 		Attribute: attribute,
 	}
 
@@ -128,12 +128,12 @@ func NewBlankNode(attribute string) *BlankNode {
 }
 
 // GetValue returns the node's value.
-func (bn *BlankNode) GetValue() string {
+func (bn BlankNode) GetValue() string {
 	return bn.Attribute
 }
 
-// Equal returns true id this node is equal to the given node.
-func (bn *BlankNode) Equal(n Node) bool {
+// Equal returns true if this node is equal to the given node.
+func (bn BlankNode) Equal(n Node) bool {
 	if obn, ok := n.(*BlankNode); ok {
 		return bn.Attribute == obn.Attribute
 	}
@@ -143,19 +143,19 @@ func (bn *BlankNode) Equal(n Node) bool {
 
 // IsBlankNode returns true if the given node is a blank node
 func IsBlankNode(node Node) bool {
-	_, isBlankNode := node.(*BlankNode)
+	_, isBlankNode := node.(BlankNode)
 	return isBlankNode
 }
 
 // IsIRI returns true if the given node is an IRI node
 func IsIRI(node Node) bool {
-	_, isIRI := node.(*IRI)
+	_, isIRI := node.(IRI)
 	return isIRI
 }
 
 // IsLiteral returns true if the given node is a literal node
 func IsLiteral(node Node) bool {
-	_, isLiteral := node.(*Literal)
+	_, isLiteral := node.(Literal)
 	return isLiteral
 }
 
@@ -173,7 +173,7 @@ func RdfToObject(n Node, useNativeTypes bool) (map[string]interface{}, error) {
 		}, nil
 	}
 
-	literal := n.(*Literal)
+	literal := n.(Literal)
 
 	// convert literal object to JSON-LD
 	rval := map[string]interface{}{
