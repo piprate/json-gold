@@ -53,8 +53,8 @@ func DeepCompare(v1 interface{}, v2 interface{}, listOrderMatters bool) bool {
 		if len(m1) != len(m2) {
 			return false
 		}
-		for _, key := range GetKeys(m1) {
-			if val2, present := m2[key]; !present || !DeepCompare(m1[key], val2, listOrderMatters) {
+		for key, val1 := range m1 {
+			if val2, present := m2[key]; !present || !DeepCompare(val1, val2, listOrderMatters) {
 				return false
 			}
 		}
@@ -112,6 +112,8 @@ func normalizeValue(v interface{}) string {
 	}
 	if isFloat {
 		return fmt.Sprintf("%f", floatVal)
+	} else if str, isString := v.(string); isString {
+		return str
 	} else {
 		return fmt.Sprintf("%s", v)
 	}
