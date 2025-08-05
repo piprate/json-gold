@@ -158,7 +158,7 @@ func (api *JsonLdApi) FromRDF(dataset *RDFDataset, opts *JsonLdOptions) ([]inter
 			}
 
 			// 3.5.6+7)
-			MergeValue(node.Values, predicate, value)
+			mergeValue(node.Values, predicate, value, dataset.parsedWithoutDuplicates)
 
 			// 3.5.8)
 			if IsBlankNode(object) || IsIRI(object) {
