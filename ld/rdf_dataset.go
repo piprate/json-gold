@@ -98,6 +98,9 @@ type RDFDataset struct {
 	Graphs map[string][]*Quad
 
 	context map[string]string
+
+	// indicates that this dataset has had no duplicates (guaranteed by the serializer) at the time it's been parsed
+	parsedWithoutDuplicates bool
 }
 
 // RDFSerializer can serialize and de-serialize RDFDatasets.
