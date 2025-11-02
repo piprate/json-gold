@@ -239,6 +239,7 @@ func ParseNQuadsFrom(o interface{}) (*RDFDataset, error) {
 
 	// maintain a set of triples for each graph to check for duplicates
 	triplesByGraph := make(map[string]map[Quad]struct{})
+	dataset.parsedWithoutDuplicates = true // the following code ensures that no duplicate quads are added
 
 	scanner, err := newScannerFor(o)
 	if err != nil {
