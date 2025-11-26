@@ -617,21 +617,18 @@ func removeEmbed(state *FramingContext, id string) {
 func removeDependents(embeds map[string]*EmbedNode, id string) {
 	// get embed keys as a separate array to enable deleting keys in map
 	for idDep, e := range embeds {
-		var p map[string]interface{}
-		if e.parent != nil {
-			var isMap bool
-			p, isMap = e.parent.(map[string]interface{})
-			if !isMap {
-				continue
-			}
-		} else {
-			p = make(map[string]interface{})
+		if e.parent == nil {
+			continue
 		}
-
-		pid := p["@id"].(string)
-		if id == pid {
-			delete(embeds, idDep)
-			removeDependents(embeds, idDep)
+		p, isMap := e.parent.(map[string]interface{})
+		if !isMap {
+			continue
+		}
+		if pid, hasID := p["@id"]; hasID {
+			if id == pid.(string) {
+				delete(embeds, idDep)
+				removeDependents(embeds, idDep)
+			}
 		}
 	}
 }
