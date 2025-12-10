@@ -88,7 +88,7 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 		// Get any property-scoped context for activeProperty
 		var propertyScopedCtx interface{}
 		if td := activeCtx.GetTermDefinition(activeProperty); td != nil {
-			propertyScopedCtx = td.context
+			propertyScopedCtx = td.Context
 		}
 
 		// second, determine if any type-scoped context should be reverted; it
@@ -182,8 +182,8 @@ func (api *JsonLdApi) Expand(activeCtx *Context, activeProperty string, element 
 				}
 
 				for _, tt := range types {
-					if td := typeScopedContext.GetTermDefinition(tt); td != nil && td.hasContext {
-						newCtx, err := activeCtx.parse(td.context, nil, false, false, false, false)
+					if td := typeScopedContext.GetTermDefinition(tt); td != nil && td.HasContext {
+						newCtx, err := activeCtx.parse(td.Context, nil, false, false, false, false)
 						if err != nil {
 							return nil, err
 						}
@@ -669,10 +669,10 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		// use potential scoped context for key
 		termCtx := activeCtx
 		td := activeCtx.GetTermDefinition(key)
-		if td != nil && td.hasContext {
+		if td != nil && td.HasContext {
 			// TODO: fix calling a private method
 			//termCtx, err = activeCtx.Parse(ctx)
-			termCtx, err = activeCtx.parse(td.context, make([]string, 0), false, true, false, true)
+			termCtx, err = activeCtx.parse(td.Context, make([]string, 0), false, true, false, true)
 			if err != nil {
 				return err
 			}
@@ -682,7 +682,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		if termCtx.HasContainerMapping(key, "@language") && isMap {
 			var expandedValueList []interface{}
 
-			dir, hasDir := td.direction, td.hasDirection
+			dir, hasDir := td.Direction, td.HasDirection
 
 			for _, language := range GetOrderedKeys(valueMap) {
 				expandedLanguage, err := termCtx.ExpandIri(language, false, true, nil, nil)
@@ -710,7 +710,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 						if dir != nil {
 							v["@direction"] = dir
 						}
-					} else if defaultDir := termCtx.values.direction; defaultDir != "" {
+					} else if defaultDir := termCtx.Values.Direction; defaultDir != "" {
 						v["@direction"] = defaultDir
 					}
 					expandedValueList = append(expandedValueList, v)
@@ -720,8 +720,8 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 		} else if termCtx.HasContainerMapping(key, "@index") && isMap { // 7.6)
 			asGraph := termCtx.HasContainerMapping(key, "@graph")
 			indexKey := "@index"
-			if tdKey := termCtx.GetTermDefinition(key); tdKey != nil && tdKey.index != "" {
-				indexKey = tdKey.index
+			if tdKey := termCtx.GetTermDefinition(key); tdKey != nil && tdKey.Index != "" {
+				indexKey = tdKey.Index
 			}
 			var propertyIndex string
 			if indexKey != "@index" {
@@ -761,7 +761,7 @@ func (api *JsonLdApi) expandObject(activeCtx *Context, activeProperty string, ex
 				if err != nil {
 					return err
 				}
-			} else if tdKey != nil && tdKey.typ == "@json" {
+			} else if tdKey != nil && tdKey.Type == "@json" {
 				expandedValue = map[string]interface{}{
 					"@type":  "@json",
 					"@value": value,
@@ -913,8 +913,8 @@ func (api *JsonLdApi) expandIndexMap(activeCtx *Context, activeProperty string, 
 
 		indexCtx := activeCtx
 		// if indexKey is @type, there may be a context defined for it
-		if td := activeCtx.GetTermDefinition(key); indexKey == "@type" && td != nil && td.hasContext {
-			newCtx, err := activeCtx.Parse(td.context)
+		if td := activeCtx.GetTermDefinition(key); indexKey == "@type" && td != nil && td.HasContext {
+			newCtx, err := activeCtx.Parse(td.Context)
 			if err != nil {
 				return nil, err
 			}

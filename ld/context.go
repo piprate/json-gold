@@ -43,75 +43,78 @@ var (
 // Context represents a JSON-LD context and provides easy access to specific
 // keys and operations.
 type Context struct {
-	values          *Values
+	Values          *Values
+	TermDefinitions map[string]*TermDefinition
+	Protected       map[string]bool // @protected terms
+
 	options         *JsonLdOptions
-	termDefinitions map[string]*TermDefinition
-	inverse         map[string]interface{}
-	protected       map[string]bool
+	inverse         map[string]interface{} // cache for inverse context
 	previousContext *Context
 	fastCurieMap    map[string]interface{}
 }
 
 type Values struct {
-	vocab          *string
-	base           string
-	direction      string
-	version        *float64
-	processingMode string
-	typ            string
-	language       string
-	hasLanguage    bool
+	Vocab       *string  // @vocab
+	Base        string   // @base IRI against which to resolve those relative IRI references which are otherwise interpreted relative to the document
+	Direction   string   // @direction
+	Version     *float64 // @version
+	Language    string   // @language
+	HasLanguage bool     // whether @language is set
+
+	processingMode string // JSON-LD processingMode based on @version and/or JsonLdOptions
 }
 
+// TermDefinition is an expanded term definition, see § 9.15.1 (https://www.w3.org/TR/json-ld11/#expanded-term-definition).
 type TermDefinition struct {
-	id           string
-	reverse      bool
-	container    []string
-	typ          string
-	nest         string
-	context      interface{}
-	hasContext   bool // nil is not the same as having explicitly "null" in the JSON-LD context
-	prefix       *bool
-	index        string
-	protected    bool
-	direction    *string
-	hasDirection bool
-	language     *string
-	hasLanguage  bool
-	termHasColon bool
+	ID           string   // The @id mapping for the term
+	Reverse      bool     // Indicates if the term is defined with @reverse
+	Container    []string // The @container mapping for the term
+	Type         string   // The @type mapping for the term
+	Nest         string   // If the expanded term definition contains the @nest keyword, its value MUST be either @nest, or a term which expands to @nest.
+	Context      any      // The @context mapping for the term
+	HasContext   bool     // Indicates if the @context key is set (might be set to "null" which has a different semantic than being just absent, i.e. nil)
+	Prefix       *bool    // Indicates if the term is a prefix (@prefix)
+	Index        string   // If the expanded term definition contains the @index keyword, its value MUST be an IRI, a compact IRI, or a term.
+	Protected    bool     // Indicates if the term is protected (@protected)
+	Direction    *string  // The @direction mapping for the term
+	HasDirection bool     // Indicates if the @direction key is set (might be set to "null" which has a different semantic than being just absent, i.e. nil)
+	Language     *string  // The @language mapping for the term (optional)
+	HasLanguage  bool     // Indicates if the term explicitly specifies a language
+
+	termHasColon bool // whether the term contains a colon (:)
 }
 
 func (td *TermDefinition) Copy() *TermDefinition {
 	var result TermDefinition
-	result.id = td.id
-	result.reverse = td.reverse
-	result.container = td.container
-	result.typ = td.typ
-	result.context = td.context
-	result.hasContext = td.hasContext
-	result.prefix = td.prefix
-	result.nest = td.nest
-	result.index = td.index
-	result.protected = td.protected
-	result.direction = td.direction
-	result.hasDirection = td.hasDirection
-	result.language = td.language
-	result.hasLanguage = td.hasLanguage
+	result.ID = td.ID
+	result.Reverse = td.Reverse
+	result.Container = td.Container
+	result.Type = td.Type
+	result.Context = td.Context
+	result.HasContext = td.HasContext
+	result.Prefix = td.Prefix
+	result.Nest = td.Nest
+	result.Index = td.Index
+	result.Protected = td.Protected
+	result.Direction = td.Direction
+	result.HasDirection = td.HasDirection
+	result.Language = td.Language
+	result.HasLanguage = td.HasLanguage
 	return &result
 }
 
 func DeepCompareTermDef(lhs *TermDefinition, rhs *TermDefinition, listOrderMatters bool) bool {
-	return lhs.id == rhs.id &&
-		lhs.reverse == rhs.reverse &&
-		lhs.typ == rhs.typ &&
-		lhs.hasContext == rhs.hasContext &&
-		lhs.nest == rhs.nest &&
-		lhs.index == rhs.index &&
-		lhs.protected == rhs.protected &&
-		reflect.DeepEqual(lhs.container, rhs.container) &&
-		reflect.DeepEqual(lhs.direction, rhs.direction) && lhs.hasDirection == rhs.hasDirection &&
-		reflect.DeepEqual(lhs.language, rhs.language) && lhs.hasLanguage == rhs.hasLanguage &&
-		DeepCompare(lhs.context, rhs.context, listOrderMatters)
+	return lhs.ID == rhs.ID &&
+		lhs.Reverse == rhs.Reverse &&
+		lhs.Type == rhs.Type &&
+		lhs.HasContext == rhs.HasContext &&
+		lhs.Nest == rhs.Nest &&
+		lhs.Index == rhs.Index &&
+		lhs.Protected == rhs.Protected &&
+		reflect.DeepEqual(lhs.Container, rhs.Container) &&
+		reflect.DeepEqual(lhs.Direction, rhs.Direction) && lhs.HasDirection == rhs.HasDirection &&
+		reflect.DeepEqual(lhs.Language, rhs.Language) && lhs.HasLanguage == rhs.HasLanguage &&
+		DeepCompare(lhs.Context, rhs.Context, listOrderMatters)
 }
 
 type FastCurieEntry struct {
@@ -126,37 +129,37 @@ func NewContext(values map[string]interface{}, options *JsonLdOptions) *Context 
 	}
 
 	context := &Context{
-		values:          &Values{},
+		Values:          &Values{},
 		options:         options,
-		termDefinitions: make(map[string]*TermDefinition),
-		protected:       make(map[string]bool),
+		TermDefinitions: make(map[string]*TermDefinition),
+		Protected:       make(map[string]bool),
 		fastCurieMap:    make(map[string]any),
 	}
 
-	context.values.base = options.Base
+	context.Values.Base = options.Base
 
 	if values != nil {
 		if val, ok := values["@vocab"]; ok {
 			s := val.(string)
-			context.values.vocab = &s
+			context.Values.Vocab = &s
 		}
 		if val, ok := values["@language"]; ok {
-			context.values.language = val.(string)
-			context.values.hasLanguage = true
+			context.Values.Language = val.(string)
+			context.Values.HasLanguage = true
 		}
 	}
 
-	context.values.processingMode = options.ProcessingMode
+	context.Values.processingMode = options.ProcessingMode
 
 	return context
 }
 
 func (c *Context) AsMap() map[string]interface{} {
 	res := map[string]interface{}{
-		"values":          c.values,
-		"termDefinitions": c.termDefinitions,
+		"values":          c.Values,
+		"termDefinitions": c.TermDefinitions,
 		"inverse":         c.inverse,
-		"protected":       c.protected,
+		"protected":       c.Protected,
 		"fastCurieMap":    c.fastCurieMap,
 	}
 	if c.previousContext != nil {
@@ -168,17 +171,17 @@ func (c *Context) AsMap() map[string]interface{} {
 // CopyContext creates a full copy of the given context.
 func CopyContext(ctx *Context) *Context {
 	context := NewContext(nil, ctx.options)
-	if ctx.values != nil {
-		values := *ctx.values
-		context.values = &values
+	if ctx.Values != nil {
+		values := *ctx.Values
+		context.Values = &values
 	}
 
-	for k, v := range ctx.termDefinitions {
-		context.termDefinitions[k] = v
+	for k, v := range ctx.TermDefinitions {
+		context.TermDefinitions[k] = v
 	}
 
-	for k, v := range ctx.protected {
-		context.protected[k] = v
+	for k, v := range ctx.Protected {
+		context.Protected[k] = v
 	}
 
 	// do not copy c.inverse, because it will be regenerated
@@ -242,7 +245,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		if context == nil {
 			// We can't nullify if there are protected terms and we're
 			// not allowing overrides (e.g. processing a property term scoped context)
-			if !overrideProtected && len(result.protected) != 0 {
+			if !overrideProtected && len(result.Protected) != 0 {
 				return nil, NewJsonLdError(InvalidContextNullification,
 					"tried to nullify a context with protected terms outside of a term definition.")
 			}
@@ -261,7 +264,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			result = ctx
 		// 3.2)
 		case string:
-			uri := Resolve(result.values.base, ctx)
+			uri := Resolve(result.Values.Base, ctx)
 			// 3.2.2
 			for _, remoteCtx := range remoteContexts {
 				if remoteCtx == uri {
@@ -309,7 +312,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			}
 		}
 
-		pm := c.values.processingMode
+		pm := c.Values.processingMode
 
 		if versionValue, versionPresent := contextMap["@version"]; versionPresent {
 			if versionValue != 1.1 {
@@ -318,14 +321,14 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			if pm == JsonLd_1_0 {
 				return nil, NewJsonLdError(ProcessingModeConflict, fmt.Sprintf("@version: %v not compatible with %s", versionValue, pm))
 			}
-			result.values.processingMode = JsonLd_1_1
+			result.Values.processingMode = JsonLd_1_1
 			ver := versionValue.(float64)
-			result.values.version = &ver
+			result.Values.Version = &ver
 		} else if pm == "" {
 			// if not set explicitly, set processingMode to "json-ld-1.0"
-			result.values.processingMode = JsonLd_1_0
+			result.Values.processingMode = JsonLd_1_0
 		} else {
-			result.values.processingMode = pm
+			result.Values.processingMode = pm
 		}
 
 		// handle @import
@@ -337,7 +340,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 			if !isString {
 				return nil, NewJsonLdError(InvalidImportValue, "@import must be a string")
 			}
-			uri := Resolve(result.values.base, importStr)
+			uri := Resolve(result.Values.Base, importStr)
 
 			rd, err := c.options.DocumentLoader.LoadDocument(uri)
 			if err != nil {
@@ -372,16 +375,16 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		baseValue, basePresent := contextMap["@base"]
 		if !parsingARemoteContext && basePresent {
 			if baseValue == nil {
-				result.values.base = ""
+				result.Values.Base = ""
 			} else if baseString, isString := baseValue.(string); isString {
 				if IsAbsoluteIri(baseString) {
-					result.values.base = baseString
+					result.Values.Base = baseString
 				} else {
-					baseURI := result.values.base
+					baseURI := result.Values.Base
 					if !IsAbsoluteIri(baseURI) {
 						return nil, NewJsonLdError(InvalidBaseIRI, baseURI)
 					}
-					result.values.base = Resolve(baseURI, baseString)
+					result.Values.Base = Resolve(baseURI, baseString)
 				}
 			} else {
 				return nil, NewJsonLdError(InvalidBaseIRI, "the value of @base in a @context must be a string or null")
@@ -391,11 +394,11 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		// handle @language
 		if languageValue, languagePresent := contextMap["@language"]; languagePresent {
 			if languageValue == nil {
-				result.values.hasLanguage = false
-				result.values.language = ""
+				result.Values.HasLanguage = false
+				result.Values.Language = ""
 			} else if languageString, isString := languageValue.(string); isString {
-				result.values.hasLanguage = true
-				result.values.language = strings.ToLower(languageString)
+				result.Values.HasLanguage = true
+				result.Values.Language = strings.ToLower(languageString)
 			} else {
 				return nil, NewJsonLdError(InvalidDefaultLanguage, languageValue)
 			}
@@ -404,10 +407,10 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		// handle @direction
 		if directionValue, directionPresent := contextMap["@direction"]; directionPresent {
 			if directionValue == nil {
-				result.values.direction = ""
+				result.Values.Direction = ""
 			} else if directionString, isString := directionValue.(string); isString {
 				if directionString == "rtl" || directionString == "ltr" {
-					result.values.direction = strings.ToLower(directionString)
+					result.Values.Direction = strings.ToLower(directionString)
 				} else {
 					return nil, NewJsonLdError(InvalidBaseDirection, directionValue)
 				}
@@ -425,7 +428,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 		if propagateValue, propagatePresent := contextMap["@propagate"]; propagatePresent {
 			if c.processingMode(1.0) {
 				return nil, NewJsonLdError(InvalidContextEntry,
-					fmt.Sprintf("@propagate not compatible with %s", c.values.processingMode))
+					fmt.Sprintf("@propagate not compatible with %s", c.Values.processingMode))
 			}
 			if _, isBool := propagateValue.(bool); isBool {
 				defined["@propagate"] = true
@@ -436,7 +439,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 
 		if vocabValue, vocabPresent := contextMap["@vocab"]; vocabPresent {
 			if vocabValue == nil {
-				result.values.vocab = nil
+				result.Values.Vocab = nil
 			} else if vocabString, isString := vocabValue.(string); isString {
 				if !IsAbsoluteIri(vocabString) && c.processingMode(1.0) {
 					return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be an absolute IRI in 1.0 mode")
@@ -445,7 +448,7 @@ func (c *Context) parse(localContext interface{}, remoteContexts []string, parsi
 				if err != nil {
 					return nil, err
 				}
-				result.values.vocab = &expandedVocab
+				result.Values.Vocab = &expandedVocab
 			} else {
 				return nil, NewJsonLdError(InvalidVocabMapping, "@vocab must be a string or null")
 			}
@@ -502,7 +505,7 @@ func (c *Context) CompactValue(activeProperty string, value map[string]interface
 
 	propType := ""
 	if td := c.GetTermDefinition(activeProperty); td != nil {
-		propType = td.typ
+		propType = td.Type
 	}
 
 	languageVal := ""
@@ -614,7 +617,7 @@ func (c *Context) CompactValue(activeProperty string, value map[string]interface
 
 // processingMode returns true if the given version is compatible with the current processing mode
 func (c *Context) processingMode(version float64) bool {
-	mode := c.values.processingMode
+	mode := c.Values.processingMode
 	if version >= 1.1 {
 		if mode != "" {
 			return mode >= fmt.Sprintf("json-ld-%v", version)
@@ -649,7 +652,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	mapValue, isMap := value.(map[string]interface{})
 	idValue, hasID := mapValue["@id"]
 	if value == nil || (isMap && hasID && idValue == nil) {
-		c.termDefinitions[term] = nil
+		c.TermDefinitions[term] = nil
 		defined[term] = true
 		return nil
 	}
@@ -686,9 +689,9 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	}
 
 	// keep reference to previous mapping for potential `@protected` check
-	prevDefinition := c.termDefinitions[term]
+	prevDefinition := c.TermDefinitions[term]
 
-	delete(c.termDefinitions, term)
+	delete(c.TermDefinitions, term)
 
 	// casting the value so it doesn't have to be done below everytime
 	val := mapValue
@@ -722,7 +725,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	colIndex := strings.Index(term, ":")
 	termHasColon := colIndex > 0
 
-	definition.reverse = false
+	definition.Reverse = false
 	definition.termHasColon = termHasColon
 
 	// 11)
@@ -752,8 +755,8 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			return nil
 		}
 
-		definition.id = id
-		definition.reverse = true
+		definition.ID = id
+		definition.Reverse = true
 	} else if idValue, hasID := val["@id"]; hasID { // 13)
 		idStr, isString := idValue.(string)
 		if !isString {
@@ -775,7 +778,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 				if res == "@context" {
 					return NewJsonLdError(InvalidKeywordAlias, "cannot alias @context")
 				}
-				definition.id = res
+				definition.ID = res
 
 				if iriLikeTermPattern.MatchString(term) {
 					defined[term] = true
@@ -808,7 +811,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 				}
 
 				prefix := !termHasColon && termHasSuffix && (simpleTerm || c.processingMode(1.0))
-				definition.prefix = &prefix
+				definition.Prefix = &prefix
 			} else {
 				return NewJsonLdError(InvalidIRIMapping,
 					"resulting IRI mapping should be a keyword, absolute IRI or blank node")
@@ -817,7 +820,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		// 14)
 	}
 
-	if definition.id == "" {
+	if definition.ID == "" {
 		if termHasColon {
 			prefix := term[0:colIndex]
 			if _, containsPrefix := context[prefix]; containsPrefix {
@@ -825,15 +828,15 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 					return err
 				}
 			}
-			if termDef, hasTermDef := c.termDefinitions[prefix]; hasTermDef {
+			if termDef, hasTermDef := c.TermDefinitions[prefix]; hasTermDef {
 				suffix := term[colIndex+1:]
-				definition.id = termDef.id + suffix
+				definition.ID = termDef.ID + suffix
 			} else {
-				definition.id = term
+				definition.ID = term
 			}
 			// 15)
-		} else if vocabValue := c.values.vocab; vocabValue != nil {
-			definition.id = *vocabValue + term
+		} else if vocabValue := c.Values.Vocab; vocabValue != nil {
+			definition.ID = *vocabValue + term
 		} else if term != "@type" {
 			return NewJsonLdError(InvalidIRIMapping, "relative term definition without vocab mapping")
 		}
@@ -842,8 +845,8 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	// handle term protection
 	valProtected, protectedFound := mapValue["@protected"]
 	if (protectedFound && valProtected.(bool)) || (defined["@protected"] && !(protectedFound && !valProtected.(bool))) {
-		c.protected[term] = true
-		definition.protected = true
+		c.Protected[term] = true
+		definition.Protected = true
 	}
 
 	defined[term] = true
@@ -878,7 +881,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		}
 
 		// add @type to mapping
-		definition.typ = typeStr
+		definition.Type = typeStr
 	}
 
 	// 16)
@@ -940,11 +943,11 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 
 			if _, hasType := containerValueMap["@type"]; hasType {
 				// if mapping does not have an @type, set it to @id
-				if definition.typ == "" {
-					definition.typ = "@id"
+				if definition.Type == "" {
+					definition.Type = "@id"
 				}
 
-				if definition.typ != "@id" && definition.typ != "@vocab" {
+				if definition.Type != "@id" && definition.Type != "@vocab" {
 					return NewJsonLdError(InvalidTypeMapping,
 						"container: @type requires @type to be @id or @vocab")
 				}
@@ -975,7 +978,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			return NewJsonLdError(InvalidContainerMapping, "@set not allowed with @list")
 		}
 
-		if definition.reverse {
+		if definition.Reverse {
 
 			for key := range containerValueMap {
 				if key != "@index" && key != "@set" {
@@ -985,17 +988,17 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			}
 		}
 
-		definition.container = container
+		definition.Container = container
 
 		if term == "@type" {
-			definition.id = "@type"
+			definition.ID = "@type"
 		}
 	}
 
 	// property indexing
 	if indexVal, hasIndex := val["@index"]; hasIndex {
 		_, hasContainer := val["@container"]
-		tdHasContainer := definition.container != nil
+		tdHasContainer := definition.Container != nil
 		if !hasContainer || !tdHasContainer {
 			return NewJsonLdError(InvalidTermDefinition,
 				fmt.Sprintf("@index without @index in @container: %s on term %s", indexVal, term))
@@ -1005,13 +1008,13 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			return NewJsonLdError(InvalidTermDefinition,
 				fmt.Sprintf("@index must expand to an IRI: %s on term %s", indexVal, term))
 		}
-		definition.index = indexStr
+		definition.Index = indexStr
 	}
 
 	// scoped contexts
 	if ctxVal, hasCtx := val["@context"]; hasCtx {
-		definition.context = ctxVal
-		definition.hasContext = true
+		definition.Context = ctxVal
+		definition.HasContext = true
 	}
 
 	// 17)
@@ -1019,11 +1022,11 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	if languageVal, hasLanguage := val["@language"]; hasLanguage && !hasType {
 		if language, isString := languageVal.(string); isString {
 			s := strings.ToLower(language)
-			definition.language = &s
-			definition.hasLanguage = true
+			definition.Language = &s
+			definition.HasLanguage = true
 		} else if languageVal == nil {
-			definition.language = nil
-			definition.hasLanguage = true
+			definition.Language = nil
+			definition.HasLanguage = true
 		} else {
 			return NewJsonLdError(InvalidLanguageMapping, "@language must be a string or null")
 		}
@@ -1038,21 +1041,21 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 		if !isBool {
 			return NewJsonLdError(InvalidPrefixValue, "@context value for @prefix must be boolean")
 		}
-		if IsKeyword(definition.id) {
+		if IsKeyword(definition.ID) {
 			return NewJsonLdError(InvalidTermDefinition, "keywords may not be used as prefixes")
 		}
-		definition.prefix = &prefix
+		definition.Prefix = &prefix
 	}
 
 	// handle direction
 	if directionVal, hasDirection := val["@direction"]; hasDirection {
 		if dir, isString := directionVal.(string); isString {
 			s := strings.ToLower(dir)
-			definition.direction = &s
-			definition.hasDirection = true
+			definition.Direction = &s
+			definition.HasDirection = true
 		} else if directionVal == nil {
-			definition.direction = nil
-			definition.hasDirection = true
+			definition.Direction = nil
+			definition.HasDirection = true
 		} else {
 			return NewJsonLdError(InvalidBaseDirection,
 				fmt.Sprintf("direction must be null, 'ltr', or 'rtl', was %s on term %s", directionVal, term))
@@ -1066,20 +1069,20 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 			return NewJsonLdError(InvalidNestValue,
 				"@context @nest value must be a string which is not a keyword other than @nest")
 		}
-		definition.nest = nest
+		definition.Nest = nest
 	}
 
 	// disallow aliasing @context and @preserve
-	if id := definition.id; id == "@context" || id == "@preserve" {
+	if id := definition.ID; id == "@context" || id == "@preserve" {
 		return NewJsonLdError(InvalidKeywordAlias, "@context and @preserve cannot be aliased")
 	}
 
 	// Check for overriding protected terms
 	if prevDefinition != nil {
-		if protectedVal := prevDefinition.protected; protectedVal && !overrideProtected {
+		if protectedVal := prevDefinition.Protected; protectedVal && !overrideProtected {
 			// force new term to continue to be protected and see if the mappings would be equal
-			c.protected[term] = true
-			definition.protected = true
+			c.Protected[term] = true
+			definition.Protected = true
 			if !DeepCompareTermDef(prevDefinition, definition, false) {
 				return NewJsonLdError(ProtectedTermRedefinition, "invalid JSON-LD syntax; tried to redefine a protected term")
 			}
@@ -1087,7 +1090,7 @@ func (c *Context) createTermDefinition(context map[string]interface{}, term stri
 	}
 
 	// 18)
-	c.termDefinitions[term] = definition
+	c.TermDefinitions[term] = definition
 
 	return nil
 }
@@ -1131,9 +1134,9 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 		}
 	}
 	// 3)
-	if termDef, hasTermDef := c.termDefinitions[value]; vocab && hasTermDef {
+	if termDef, hasTermDef := c.TermDefinitions[value]; vocab && hasTermDef {
 		if termDef != nil {
-			return termDef.id, nil
+			return termDef.ID, nil
 		}
 
 		return "", nil
@@ -1161,9 +1164,9 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 		// 4.4)
 		// If active context contains a term definition for prefix, return the result of concatenating
 		// the IRI mapping associated with prefix and suffix.
-		termDef, hasPrefix := c.termDefinitions[prefix]
-		if hasPrefix && termDef.id != "" && termDef.prefix != nil && *termDef.prefix {
-			return termDef.id + suffix, nil
+		termDef, hasPrefix := c.TermDefinitions[prefix]
+		if hasPrefix && termDef.ID != "" && termDef.Prefix != nil && *termDef.Prefix {
+			return termDef.ID + suffix, nil
 		} else if IsAbsoluteIri(value) {
 			// Otherwise, if the value has the form of an absolute IRI, return it
 			return value, nil
@@ -1172,11 +1175,11 @@ func (c *Context) ExpandIri(value string, relative bool, vocab bool, context map
 	}
 
 	// 5)
-	if vocabValue := c.values.vocab; vocab && vocabValue != nil {
+	if vocabValue := c.Values.Vocab; vocab && vocabValue != nil {
 		return *vocabValue + value, nil
 	} else if relative {
 		// 6)
-		baseValue := c.values.base
+		baseValue := c.Values.Base
 		hasBase := baseValue != ""
 		var base string
 		if hasBase {
@@ -1228,8 +1231,8 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 	if relativeToVocab {
 		if _, containsIRI := inverseCtx[iri]; containsIRI {
 			var defaultLanguage string
-			langVal, hasLang := c.values.language, c.values.hasLanguage
-			if dir := c.values.direction; hasLang && dir != "" {
+			langVal, hasLang := c.Values.Language, c.Values.HasLanguage
+			if dir := c.Values.Direction; hasLang && dir != "" {
 				defaultLanguage = fmt.Sprintf("%s_%s", langVal, dir)
 			} else {
 				if hasLang {
@@ -1434,10 +1437,10 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 				if err != nil {
 					return "", err
 				}
-				resultVal, hasResult := c.termDefinitions[result]
+				resultVal, hasResult := c.TermDefinitions[result]
 				check := false
 				if hasResult {
-					resultIDVal, hasResultID := resultVal.id, resultVal.id != ""
+					resultIDVal, hasResultID := resultVal.ID, resultVal.ID != ""
 					check = hasResultID && idVal == resultIDVal
 				}
 				if check {
@@ -1473,7 +1476,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 		}
 
 		// 3)
-		if vocabVal := c.values.vocab; vocabVal != nil {
+		if vocabVal := c.Values.Vocab; vocabVal != nil {
 			// determine if vocab is a prefix of the iri
 			vocab := *vocabVal
 			// 3.1)
@@ -1481,7 +1484,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 				// use suffix as relative iri if it is not a term in the
 				// active context
 				suffix := iri[len(vocab):]
-				if _, hasSuffix := c.termDefinitions[suffix]; !hasSuffix {
+				if _, hasSuffix := c.TermDefinitions[suffix]; !hasSuffix {
 					return suffix, nil
 				}
 			}
@@ -1512,7 +1515,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 	for i := len(partialMatches) - 1; i >= 0; i-- {
 		entry := partialMatches[i]
 		for _, term := range entry.terms {
-			termDefinitionAny, ok := c.termDefinitions[term]
+			termDefinitionAny, ok := c.TermDefinitions[term]
 			if !ok {
 				continue
 			}
@@ -1522,10 +1525,10 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 			// 2. value is null, which means we're not compacting an @value, AND
 			//   the mapping matches the IRI
 			curie := term + ":" + iri[len(entry.iri):]
-			prefix := termDefinitionAny.prefix
-			curieMapping, hasCurie := c.termDefinitions[curie]
+			prefix := termDefinitionAny.Prefix
+			curieMapping, hasCurie := c.TermDefinitions[curie]
 
-			isUsableCurie := prefix != nil && *prefix && (!hasCurie || value == nil && curieMapping.id == iri)
+			isUsableCurie := prefix != nil && *prefix && (!hasCurie || value == nil && curieMapping.ID == iri)
 
 			// select curie if it is shorter or the same length but lexicographically
 			// less than the current choice
@@ -1541,9 +1544,9 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 
 	// If iri could be confused with a compact IRI using a term in this context,
 	// signal an error
-	for term, td := range c.termDefinitions {
+	for term, td := range c.TermDefinitions {
 		if td != nil {
-			prefix := td.prefix
+			prefix := td.Prefix
 			if prefix != nil && *prefix && strings.HasPrefix(iri, term+":") {
 				return "", NewJsonLdError(IRIConfusedWithPrefix, fmt.Sprintf("Absolute IRI %s confused with prefix %s", iri, term))
 			}
@@ -1552,7 +1555,7 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 
 	// compact IRI relative to base
 	if !relativeToVocab {
-		return RemoveBase(c.values.base, iri), nil
+		return RemoveBase(c.Values.Base, iri), nil
 	}
 
 	// return IRI as is
@@ -1570,11 +1573,11 @@ func (c *Context) CompactIri(iri string, value interface{}, relativeToVocab bool
 func (c *Context) GetPrefixes(onlyCommonPrefixes bool) map[string]string {
 	prefixes := make(map[string]string)
 
-	for term, termDefinition := range c.termDefinitions {
-		if strings.Contains(term, ":") || termDefinition == nil || termDefinition.id == "" {
+	for term, termDefinition := range c.TermDefinitions {
+		if strings.Contains(term, ":") || termDefinition == nil || termDefinition.ID == "" {
 			continue
 		}
-		id := termDefinition.id
+		id := termDefinition.ID
 		if strings.HasPrefix(term, "@") || strings.HasPrefix(id, "@") {
 			continue
 		}
@@ -1601,20 +1604,20 @@ func (c *Context) GetInverse() map[string]interface{} {
 
 	// 2)
 	defaultLanguage := "@none"
-	if c.values.hasLanguage {
-		defaultLanguage = c.values.language
+	if c.Values.HasLanguage {
+		defaultLanguage = c.Values.Language
 	}
 
 	// create term selections for each mapping in the context, ordered by
 	// shortest and then lexicographically least
-	terms := GetKeys(c.termDefinitions)
+	terms := GetKeys(c.TermDefinitions)
 	sort.Sort(ShortestLeast(terms))
 
 	// variables for building fast CURIE map
 	irisToTerms := make(map[string][]string, 0)
 
 	for _, term := range terms {
-		definition := c.termDefinitions[term]
+		definition := c.TermDefinitions[term]
 		// 3.1)
 		if definition == nil {
 			continue
@@ -1622,10 +1625,10 @@ func (c *Context) GetInverse() map[string]interface{} {
 
 		// 3.2)
 		var containerJoin string // this implementation was adapted from pyLD
-		if definition.container == nil {
+		if definition.Container == nil {
 			containerJoin = "@none" // see Ruby, as_set?
 		} else {
-			container := definition.container
+			container := definition.Container
 			strList := make([]string, len(container))
 			copy(strList, container)
 			sort.Strings(strList)
@@ -1633,7 +1636,7 @@ func (c *Context) GetInverse() map[string]interface{} {
 		}
 
 		// 3.3)
-		iri := definition.id
+		iri := definition.ID
 
 		// 3.4 + 3.5)
 		var containerMap map[string]interface{}
@@ -1680,12 +1683,12 @@ func (c *Context) GetInverse() map[string]interface{} {
 			typeLanguageMap = typeLanguageMapVal.(map[string]interface{})
 		}
 
-		langVal, hasLang := definition.language, definition.hasLanguage
-		dirVal, hasDir := definition.direction, definition.hasDirection
-		typeVal := definition.typ
+		langVal, hasLang := definition.Language, definition.HasLanguage
+		dirVal, hasDir := definition.Direction, definition.HasDirection
+		typeVal := definition.Type
 
 		// 3.8)
-		if definition.reverse {
+		if definition.Reverse {
 			typeMap := typeLanguageMap["@type"].(map[string]interface{})
 			if _, hasValue := typeMap["@reverse"]; !hasValue {
 				typeMap["@reverse"] = term
@@ -1740,7 +1743,7 @@ func (c *Context) GetInverse() map[string]interface{} {
 			if _, hasLang := languageMap[dir]; !hasLang {
 				languageMap[dir] = term
 			}
-		} else if defDir := c.values.direction; defDir != "" {
+		} else if defDir := c.Values.Direction; defDir != "" {
 			languageMap := typeLanguageMap["@language"].(map[string]interface{})
 			typeMap := typeLanguageMap["@type"].(map[string]interface{})
 			var langDir string
@@ -1862,9 +1865,9 @@ func (c *Context) SelectTerm(iri string, containers []string, typeLanguage strin
 
 // GetContainer retrieves container mapping for the given property.
 func (c *Context) GetContainer(property string) []string {
-	td, ok := c.termDefinitions[property]
-	if ok && td != nil && td.container != nil {
-		return td.container
+	td, ok := c.TermDefinitions[property]
+	if ok && td != nil && td.Container != nil {
+		return td.Container
 	}
 
 	return []string{}
@@ -1872,9 +1875,9 @@ func (c *Context) GetContainer(property string) []string {
 
 // GetContainer retrieves container mapping for the given property.
 func (c *Context) HasContainerMapping(property string, val string) bool {
-	td, ok := c.termDefinitions[property]
-	if ok && td != nil && td.container != nil {
-		for _, container := range td.container {
+	td, ok := c.TermDefinitions[property]
+	if ok && td != nil && td.Container != nil {
+		for _, container := range td.Container {
 			if container == val {
 				return true
 			}
@@ -1890,34 +1893,31 @@ func (c *Context) IsReverseProperty(property string) bool {
 	if td == nil {
 		return false
 	}
-	return td.reverse
+	return td.Reverse
 }
 
 // GetTypeMapping returns type mapping for the given property
 func (c *Context) GetTypeMapping(property string) string {
 	// default type
-	rval := c.values.typ
-
 	td := c.GetTermDefinition(property)
-	if td != nil && td.typ != "" {
-		return td.typ
+	if td != nil && td.Type != "" {
+		return td.Type
 	}
-
-	return rval
+	return ""
 }
 
 // GetLanguageMapping returns language mapping for the given property
 func (c *Context) GetLanguageMapping(property string) string {
 	td := c.GetTermDefinition(property)
-	if td != nil && td.hasLanguage {
-		if td.language != nil {
-			return *td.language
+	if td != nil && td.HasLanguage {
+		if td.Language != nil {
+			return *td.Language
 		}
 		return ""
 	}
 
-	if c.values.hasLanguage {
-		return c.values.language
+	if c.Values.HasLanguage {
+		return c.Values.Language
 	}
 
 	return ""
@@ -1926,14 +1926,14 @@ func (c *Context) GetLanguageMapping(property string) string {
 // GetDirectionMapping returns direction mapping for the given property
 func (c *Context) GetDirectionMapping(property string) string {
 	td := c.GetTermDefinition(property)
-	if td != nil && td.hasDirection {
-		if td.direction != nil {
-			return *td.direction
+	if td != nil && td.HasDirection {
+		if td.Direction != nil {
+			return *td.Direction
 		}
 		return ""
 	}
 
-	if defaultDir := c.values.direction; defaultDir != "" {
+	if defaultDir := c.Values.Direction; defaultDir != "" {
 		return defaultDir
 	}
 
@@ -1942,7 +1942,7 @@ func (c *Context) GetDirectionMapping(property string) string {
 
 // GetTermDefinition returns a term definition for the given key
 func (c *Context) GetTermDefinition(key string) *TermDefinition {
-	if value, ok := c.termDefinitions[key]; ok {
+	if value, ok := c.TermDefinitions[key]; ok {
 		return value
 	}
 	return nil
@@ -1956,7 +1956,7 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 	// If the active property has a type mapping in active context that is @id, return a new JSON object
 	// containing a single key-value pair where the key is @id and the value is the result of using
 	// the IRI Expansion algorithm, passing active context, value, and true for document relative.
-	if td != nil && td.typ == "@id" {
+	if td != nil && td.Type == "@id" {
 		if strVal, isString := value.(string); isString {
 			var err error
 			rval["@id"], err = c.ExpandIri(strVal, true, false, nil, nil)
@@ -1971,7 +1971,7 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 	// If active property has a type mapping in active context that is @vocab, return a new JSON object
 	// containing a single key-value pair where the key is @id and the value is the result of using
 	// the IRI Expansion algorithm, passing active context, value, true for vocab, and true for document relative.
-	if td != nil && td.typ == "@vocab" {
+	if td != nil && td.Type == "@vocab" {
 		if strVal, isString := value.(string); isString {
 			var err error
 			rval["@id"], err = c.ExpandIri(strVal, true, true, nil, nil)
@@ -1987,26 +1987,26 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 	// 3)
 	rval["@value"] = value
 	// 4)
-	if td != nil && td.typ != "" && td.typ != "@id" && td.typ != "@vocab" &&
-		td.typ != "@none" {
-		rval["@type"] = td.typ
+	if td != nil && td.Type != "" && td.Type != "@id" && td.Type != "@vocab" &&
+		td.Type != "@none" {
+		rval["@type"] = td.Type
 	} else if _, isString := value.(string); isString {
 		// 5.1)
-		if containsLang := td != nil && td.hasLanguage; containsLang {
-			langVal := td.language
+		if containsLang := td != nil && td.HasLanguage; containsLang {
+			langVal := td.Language
 			if langVal != nil {
 				rval["@language"] = *langVal
 			}
-		} else if defaultLangVal := c.values.language; c.values.hasLanguage {
+		} else if defaultLangVal := c.Values.Language; c.Values.HasLanguage {
 			rval["@language"] = defaultLangVal
 		}
 
-		if containsDir := td != nil && td.hasDirection; containsDir {
-			dirVal := td.direction
+		if containsDir := td != nil && td.HasDirection; containsDir {
+			dirVal := td.Direction
 			if dirVal != nil {
 				rval["@direction"] = *dirVal
 			}
-		} else if dirVal := c.values.direction; dirVal != "" {
+		} else if dirVal := c.Values.Direction; dirVal != "" {
 			rval["@direction"] = dirVal
 		}
 	}
@@ -2017,32 +2017,32 @@ func (c *Context) ExpandValue(activeProperty string, value interface{}) (interfa
 func (c *Context) Serialize() (map[string]interface{}, error) {
 	ctx := make(map[string]interface{})
 
-	baseVal := c.values.base
+	baseVal := c.Values.Base
 	hasBase := baseVal != ""
 	if hasBase && baseVal != c.options.Base {
 		ctx["@base"] = baseVal
 	}
-	if versionVal := c.values.version; versionVal != nil {
+	if versionVal := c.Values.Version; versionVal != nil {
 		ctx["@version"] = *versionVal
 	}
-	if langVal := c.values.language; c.values.hasLanguage {
+	if langVal := c.Values.Language; c.Values.HasLanguage {
 		ctx["@language"] = langVal
 	}
-	if dirVal := c.values.direction; dirVal != "" {
+	if dirVal := c.Values.Direction; dirVal != "" {
 		ctx["@direction"] = dirVal
 	}
-	if vocabVal := c.values.vocab; vocabVal != nil {
+	if vocabVal := c.Values.Vocab; vocabVal != nil {
 		ctx["@vocab"] = *vocabVal
 	}
-	for term, definition := range c.termDefinitions {
+	for term, definition := range c.TermDefinitions {
 		// Note: definitionVal may be nil for terms which are set to be ignored
 		// (see the definition for null value in JSON-LD spec)
-		langVal, hasLang := definition.language, definition.hasLanguage
-		containerVal, hasContainer := definition.container, definition.container != nil
-		typeMapping := definition.typ
-		if !hasLang && !hasContainer && typeMapping == "" && !definition.reverse {
+		langVal, hasLang := definition.Language, definition.HasLanguage
+		containerVal, hasContainer := definition.Container, definition.Container != nil
+		typeMapping := definition.Type
+		if !hasLang && !hasContainer && typeMapping == "" && !definition.Reverse {
 			var cid interface{}
-			id := definition.id
+			id := definition.ID
 			if id == "" {
 				cid = nil
 				ctx[term] = cid
@@ -2063,12 +2063,12 @@ func (c *Context) Serialize() (map[string]interface{}, error) {
 			}
 		} else {
 			defn := make(map[string]interface{})
-			id := definition.id
+			id := definition.ID
 			cid, err := c.CompactIri(id, nil, false, false)
 			if err != nil {
 				return nil, err
 			}
-			reverseProperty := definition.reverse
+			reverseProperty := definition.Reverse
 			if !(term == cid && !reverseProperty) {
 				if reverseProperty {
 					defn["@reverse"] = cid
