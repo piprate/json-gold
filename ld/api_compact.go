@@ -49,8 +49,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 	}
 
 	// use any scoped context on activeProperty
-	if td := activeCtx.GetTermDefinition(activeProperty); td != nil && td.hasContext {
-		newCtx, err := activeCtx.parse(td.context, make([]string, 0), false, true, false, true)
+	if td := activeCtx.GetTermDefinition(activeProperty); td != nil && td.HasContext {
+		newCtx, err := activeCtx.parse(td.Context, make([]string, 0), false, true, false, true)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 			propType := ""
 			if td := activeCtx.GetTermDefinition(activeProperty); td != nil {
-				propType = td.typ
+				propType = td.Type
 			}
 			if _, isMap := compactedValue.(map[string]interface{}); !isMap || propType == "@json" {
 				return compactedValue, nil
@@ -97,8 +97,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 		}
 
 		// apply property-scoped context after reverting term-scoped context
-		if td := inputCtx.GetTermDefinition(activeProperty); td != nil && td.context != nil {
-			newCtx, err := activeCtx.parse(td.context, nil, false, true, false, true)
+		if td := inputCtx.GetTermDefinition(activeProperty); td != nil && td.Context != nil {
+			newCtx, err := activeCtx.parse(td.Context, nil, false, true, false, true)
 			if err != nil {
 				return nil, err
 			}
@@ -124,8 +124,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 			// process in lexicographical order, see https://github.com/json-ld/json-ld.org/issues/616
 			sort.Strings(types)
 			for _, tt := range types {
-				if td := inputCtx.GetTermDefinition(tt); td != nil && td.hasContext {
-					newCtx, err := activeCtx.parse(td.context, nil, false, false, false, false)
+				if td := inputCtx.GetTermDefinition(tt); td != nil && td.HasContext {
+					newCtx, err := activeCtx.parse(td.Context, nil, false, false, false, false)
 					if err != nil {
 						return nil, err
 					}
@@ -274,8 +274,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				}
 
 				nestResult := result
-				if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.nest != "" {
-					nestProperty := td.nest
+				if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.Nest != "" {
+					nestProperty := td.Nest
 					if err := api.checkNestProperty(activeCtx, nestProperty); err != nil {
 						return nil, err
 					}
@@ -304,8 +304,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 				// if itemActiveProperty is a @nest property, add values to nestResult, otherwise result
 				nestResult := result
 
-				if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.nest != "" {
-					nestProperty := td.nest
+				if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.Nest != "" {
+					nestProperty := td.Nest
 					if err := api.checkNestProperty(activeCtx, nestProperty); err != nil {
 						return nil, err
 					}
@@ -475,8 +475,8 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 					} else if isIndexContainer {
 
 						indexKey := "@index"
-						if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.index != "" {
-							indexKey = td.index
+						if td := activeCtx.GetTermDefinition(itemActiveProperty); td != nil && td.Index != "" {
+							indexKey = td.Index
 						}
 
 						containerKey, err := activeCtx.CompactIri(indexKey, nil, true, false)
