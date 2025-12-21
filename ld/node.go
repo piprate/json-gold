@@ -189,34 +189,39 @@ func RdfToObject(n Node, useNativeTypes bool) (map[string]interface{}, error) {
 		value := literal.Value
 		if useNativeTypes {
 			// use native datatypes for certain xsd types
-			if datatype == XSDString {
-				// don't add xsd:string
-			} else if datatype == XSDBoolean {
-				if value == "true" {
+			switch datatype {
+			case XSDString:
+				// prevent default case from matching, i.e. prevent adding @type for xsd:string
+			case XSDBoolean:
+				switch value {
+				case "true":
 					rval["@value"] = true
-				} else if value == "false" {
+				case "false":
 					rval["@value"] = false
-				} else {
-					// Else do not replace the value, and add the
-					// boolean type in
+				default:
+					// do not replace the value but add the boolean type
 					rval["@type"] = datatype
 				}
-			} else if (datatype == XSDInteger && patternInteger.MatchString(value)) /* http://www.w3.org/TR/xmlschema11-2/#integer */ ||
-				(datatype == XSDDouble && patternDouble.MatchString(value)) /* http://www.w3.org/TR/xmlschema11-2/#nt-doubleRep */ {
-				d, _ := strconv.ParseFloat(value, 64)
-				if !math.IsNaN(d) && !math.IsInf(d, 0) {
-					if datatype == XSDInteger {
-						i := int64(d)
-						if fmt.Sprintf("%d", i) == value {
-							rval["@value"] = i
-						}
-					} else if datatype == XSDDouble {
-						rval["@value"] = d
-					} else {
+			case XSDInteger: // http://www.w3.org/TR/xmlschema11-2/#integer
+				if patternInteger.MatchString(value) {
+					i, err := strconv.ParseInt(value, 10, 64)
+					if err != nil {
 						return nil, NewJsonLdError(ParseError, nil)
 					}
+					rval["@value"] = i
 				}
-			} else {
+			case XSDDouble, XSDFloat: // http://www.w3.org/TR/xmlschema11-2/#nt-doubleRep
+				if patternDouble.MatchString(value) {
+					d, err := strconv.ParseFloat(value, 64)
+					if err != nil {
+						return nil, NewJsonLdError(ParseError, nil)
+					}
+					// ParseFloat successfully parses strings like "NaN", "Inf", and "-Inf" without returning an error
+					if !math.IsNaN(d) && !math.IsInf(d, 0) {
+						rval["@value"] = d
+					}
+				}
+			default:
 				// do not add xsd:string type
 				rval["@type"] = datatype
 			}
