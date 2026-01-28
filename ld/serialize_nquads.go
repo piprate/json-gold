@@ -180,10 +180,7 @@ const (
 	graph    = "(?:\\.|(?:(?:" + iri + "|" + bnode + ")" + wso + "\\.))"
 )
 
-var regexEmpty = regexp.MustCompile("^" + wso + "$")
-
 // full quad regex
-
 var regexQuad = regexp.MustCompile("^" + wso + subject + property + object + graph + wso + "$") //nolint:gocritic
 
 type lineScanner interface {
@@ -253,7 +250,7 @@ func ParseNQuadsFrom(o interface{}) (*RDFDataset, error) {
 		lineNumber++
 
 		// skip empty lines
-		if regexEmpty.Match(line) {
+		if isEmpty(line) {
 			continue
 		}
 
@@ -330,4 +327,13 @@ func ParseNQuadsFrom(o interface{}) (*RDFDataset, error) {
 // ParseNQuads parses RDF in the form of N-Quads.
 func ParseNQuads(input string) (*RDFDataset, error) {
 	return ParseNQuadsFrom(input)
+}
+
+func isEmpty(line []byte) bool {
+	for _, b := range line {
+		if b != ' ' && b != '\t' {
+			return false
+		}
+	}
+	return true
 }
