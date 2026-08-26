@@ -145,13 +145,50 @@ func TestExpandedElementHandlerEscapesPointerTokens(t *testing.T) {
 // A document that is a top-level array indexes from the root.
 func TestExpandedElementHandlerTopLevelArray(t *testing.T) {
 	const doc = `[
-		{"@id": "http://example.com/first"},
-		{"@id": "http://example.com/second"}
+		{"@id": "http://example.com/first", "http://example.com/p": "a"},
+		{"@id": "http://example.com/second", "http://example.com/p": "b"}
 	]`
 
 	seen := collectPointers(t, doc, "")
 	assert.Equal(t, "http://example.com/first", seen["/0"])
 	assert.Equal(t, "http://example.com/second", seen["/1"])
+}
+
+// Value objects and list objects carry no identity, so there is nothing to
+// relate them to and they are not reported.
+func TestExpandedElementHandlerSkipsValueAndListObjects(t *testing.T) {
+	const doc = `{
+		"@context": {"ex": "http://example.com/"},
+		"@id": "ex:subject",
+		"ex:value": {"@value": "explicit", "@language": "en"},
+		"ex:list": {"@list": [{"@id": "ex:a", "ex:p": "x"}, "scalar"]}
+	}`
+
+	seen := collectPointers(t, doc, "")
+
+	assert.Contains(t, seen, "", "the node object itself is reported")
+	assert.NotContains(t, seen, "/ex:value", "a value object has no identity to report")
+	assert.NotContains(t, seen, "/ex:list", "a list object has no identity to report")
+	// The node inside the list is still a node object.
+	assert.Equal(t, "http://example.com/a", seen["/ex:list/@list/0"])
+}
+
+// Expansion discards a node object that says nothing beyond its own @id. It
+// produces no output, so reporting it would describe something that is not
+// there.
+func TestExpandedElementHandlerSkipsDiscardedNodes(t *testing.T) {
+	const doc = `{
+		"@context": {"ex": "http://example.com/"},
+		"@graph": [
+			{"@id": "ex:bare"},
+			{"@id": "ex:kept", "ex:p": "value"}
+		]
+	}`
+
+	seen := collectPointers(t, doc, "")
+
+	assert.NotContains(t, seen, "/@graph/0", "a node with only an @id expands to nothing")
+	assert.Equal(t, "http://example.com/kept", seen["/@graph/1"])
 }
 
 // The handler is optional, and leaving it unset must change nothing about the

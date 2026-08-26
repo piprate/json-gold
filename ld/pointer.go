@@ -19,12 +19,18 @@ import (
 	"strings"
 )
 
-// ElementHandler is called during expansion with the JSON Pointer of a source
-// element and the result of expanding it.
+// ElementHandler is called during expansion with the JSON Pointer of a node
+// object in the source document and the result of expanding it.
 //
 // The pointer follows RFC 6901 and is relative to the document handed to the
 // processor: "" is the document itself, "/@graph/2" the third entry of its
 // @graph, "/@graph/2/name" the "name" entry of that node.
+//
+// It is called for node objects only, and only for those expansion keeps.
+// Value objects and list objects are not reported — they carry no identity to
+// relate anything to — and neither is a node object that expansion discards,
+// such as one consisting of nothing but an @id. What a handler sees is what
+// came out.
 //
 // The handler is a way to relate expansion output back to the input document
 // without the processor having to know why anyone would want that. Locating a
@@ -60,6 +66,20 @@ func jsonPointerIndex(opts *JsonLdOptions, parent string, index int) string {
 		return ""
 	}
 	return parent + "/" + strconv.Itoa(index)
+}
+
+// isNodeObject reports whether an expanded map is a node object rather than a
+// value or list object.
+//
+// After expansion the distinction is exactly this: @value marks a value object
+// and @list a list object, and neither can carry an @id. Everything else that
+// survives expansion is a node object, a graph object included.
+func isNodeObject(expanded map[string]interface{}) bool {
+	if _, isValue := expanded["@value"]; isValue {
+		return false
+	}
+	_, isList := expanded["@list"]
+	return !isList
 }
 
 // escapeJSONPointerToken applies the RFC 6901 escaping rules: "~" becomes "~0"

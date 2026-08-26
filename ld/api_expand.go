@@ -212,13 +212,6 @@ func (api *JsonLdApi) expandElement(activeCtx *Context, activeProperty string, e
 			return nil, err
 		}
 
-		// Report the object before the value-object and drop rules below
-		// rewrite it. What a caller relating output to input needs is the
-		// identity this object expanded to, and that is settled here.
-		if opts.ExpandedElementHandler != nil {
-			opts.ExpandedElementHandler(pointer, resultMap)
-		}
-
 		// 8)
 		if rval, hasValue := resultMap["@value"]; hasValue {
 			// 8.1)
@@ -322,6 +315,13 @@ func (api *JsonLdApi) expandElement(activeCtx *Context, activeProperty string, e
 		}
 		// 13)
 		if resultMap != nil {
+			// Reported here rather than earlier so that a handler sees what
+			// expansion kept: a node discarded by 11) or 12) never reaches
+			// this point. Value and list objects do reach it, and are skipped
+			// — they carry no identity to relate anything to.
+			if opts.ExpandedElementHandler != nil && isNodeObject(resultMap) {
+				opts.ExpandedElementHandler(pointer, resultMap)
+			}
 			return resultMap, nil
 		} else {
 			return nil, nil

@@ -68,8 +68,8 @@ type JsonLdOptions struct { //nolint:stylecheck
 	SafeMode      bool
 
 	// ExpandedElementHandler, when set, is called during expansion for each
-	// node object in the source document, with that object's JSON Pointer and
-	// the result of expanding it. See ElementHandler.
+	// node object expansion keeps, with that object's JSON Pointer and the
+	// result of expanding it. See ElementHandler.
 	//
 	// Nil by default, and nil costs nothing: no pointer is built and no
 	// callback is made.
