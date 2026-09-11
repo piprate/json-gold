@@ -1,0 +1,20 @@
+{
+  "@context": {
+    "VerifiablePresentation": {
+      "@id": "http://example.org/VerifiablePresentation",
+      "@context": {
+        "verifiableCredential": {
+          "@id": "http://example.org/verifiableCredential",
+          "@type": "@id",
+          "@container": "@graph",
+          "@context": null
+        }
+      }
+    }
+  },
+  "@type": "VerifiablePresentation",
+  "verifiableCredential": {
+    "@id": "http://example.org/credential/1",
+    "http://example.org/claim": "value"
+  }
+}

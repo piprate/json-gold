@@ -1,0 +1,8 @@
+{
+  "@context": {
+    "T": "http://example.org/T",
+    "tm": {"@id": "http://example.org/tm", "@container": "@type", "@context": null}
+  },
+  "@id": "http://example.org/s",
+  "tm": {"T": {"http://example.org/p": "v"}}
+}

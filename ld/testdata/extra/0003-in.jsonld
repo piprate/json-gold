@@ -1,0 +1,15 @@
+{
+  "@context": {
+    "ex": "http://example.org/",
+    "none": "@none",
+    "label": {
+      "@id": "ex:label",
+      "@container": "@language",
+      "@context": null
+    }
+  },
+  "@id": "http://example.org/thing",
+  "label": {
+    "none": "unlabelled"
+  }
+}

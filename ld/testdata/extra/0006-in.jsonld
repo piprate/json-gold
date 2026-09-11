@@ -1,0 +1,11 @@
+{
+  "@context": {
+    "ex": "http://example.org/",
+    "parentOf": {
+      "@reverse": "ex:parent",
+      "@context": null
+    }
+  },
+  "@id": "http://example.org/alice",
+  "parentOf": {"@id": "http://example.org/bob"}
+}

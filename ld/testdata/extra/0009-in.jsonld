@@ -1,0 +1,19 @@
+{
+  "@context": {
+    "ex": "http://example.org/",
+    "none": "ex:none",
+    "im": {
+      "@id": "ex:im",
+      "@container": "@index",
+      "@context": {
+        "none": "@none"
+      }
+    }
+  },
+  "@id": "http://example.org/s",
+  "im": {
+    "none": {
+      "http://example.org/p": "v"
+    }
+  }
+}

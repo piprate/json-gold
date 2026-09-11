@@ -1,0 +1,15 @@
+{
+  "@context": {
+    "im": {
+      "@id": "http://example.org/im",
+      "@container": "@index",
+      "@context": null
+    }
+  },
+  "@id": "http://example.org/s",
+  "im": {
+    "A": {
+      "http://example.org/p": "v"
+    }
+  }
+}

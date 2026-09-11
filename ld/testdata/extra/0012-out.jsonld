@@ -1,0 +1,15 @@
+[
+  {
+    "@id": "http://example.org/s",
+    "http://example.org/im": [
+      {
+        "@index": "A",
+        "http://example.org/p": [
+          {
+            "@value": "v"
+          }
+        ]
+      }
+    ]
+  }
+]

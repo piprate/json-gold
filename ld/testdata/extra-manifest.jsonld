@@ -13,6 +13,94 @@
       "purpose": "Ensure nested contexts are dereferenced",
       "input": "extra/0001-in.jsonld",
       "expect": "extra/0001-out.jsonld"
+    },
+    {
+      "@id": "#ext0002",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "container mapping with scoped context",
+      "purpose": "Container mapping comes from the active context",
+      "input": "extra/0002-in.jsonld",
+      "expect": "extra/0002-out.jsonld"
+    },
+    {
+      "@id": "#ext0003",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "language map key with scoped context",
+      "purpose": "Language map keys expand in the active context",
+      "input": "extra/0003-in.jsonld",
+      "expect": "extra/0003-out.jsonld"
+    },
+    {
+      "@id": "#ext0004",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "default base direction with scoped context",
+      "purpose": "Default base direction comes from the active context",
+      "input": "extra/0004-in.jsonld",
+      "expect": "extra/0004-out.jsonld"
+    },
+    {
+      "@id": "#ext0005",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "index mapping with scoped context",
+      "purpose": "Index mapping comes from the active context",
+      "input": "extra/0005-in.jsonld",
+      "expect": "extra/0005-out.jsonld"
+    },
+    {
+      "@id": "#ext0006",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "reverse property with scoped context",
+      "purpose": "Reverse property flag comes from the active context",
+      "input": "extra/0006-in.jsonld",
+      "expect": "extra/0006-out.jsonld"
+    },
+    {
+      "@id": "#ext0007",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@type index map with scoped context",
+      "purpose": "Index map of an @type container expands in the previous context",
+      "input": "extra/0007-in.jsonld",
+      "expect": "extra/0007-out.jsonld"
+    },
+    {
+      "@id": "#ext0008",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@id index map under a type-scoped context",
+      "purpose": "Index map of an @id container expands in the previous context",
+      "input": "extra/0008-in.jsonld",
+      "expect": "extra/0008-out.jsonld"
+    },
+    {
+      "@id": "#ext0009",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@index index map with scoped context",
+      "purpose": "Index map of an @index container expands in the active context",
+      "input": "extra/0009-in.jsonld",
+      "expect": "extra/0009-out.jsonld"
+    },
+    {
+      "@id": "#ext0010",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@list container with scoped context",
+      "purpose": "List container comes from the active context",
+      "input": "extra/0010-in.jsonld",
+      "expect": "extra/0010-out.jsonld"
+    },
+    {
+      "@id": "#ext0011",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@id container with scoped context",
+      "purpose": "Container mapping of an @id container comes from the active context",
+      "input": "extra/0011-in.jsonld",
+      "expect": "extra/0011-out.jsonld"
+    },
+    {
+      "@id": "#ext0012",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ExpandTest"],
+      "name": "@index container with scoped context",
+      "purpose": "Container mapping of an @index container comes from the active context",
+      "input": "extra/0012-in.jsonld",
+      "expect": "extra/0012-out.jsonld"
     }
   ]
 }
