@@ -368,6 +368,7 @@ func ExampleJsonLdProcessor_Flatten() {
 func ExampleJsonLdProcessor_Frame() {
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
+	options.OmitGraph = false
 
 	doc := map[string]interface{}{
 		"@context": map[string]interface{}{

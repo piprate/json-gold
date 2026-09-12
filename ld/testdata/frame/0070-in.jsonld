@@ -1,0 +1,23 @@
+{
+  "@context": {
+    "T": {
+      "@id": "ex:T",
+      "@context": {}
+    },
+    "p1": {
+      "@id": "ex:p1",
+      "@context": {
+        "@protected": true,
+        "p2": {
+          "@id": "ex:p2",
+          "@type": "@id"
+        }
+      }
+    }
+  },
+  "p1": {
+    "@id": "ex:1",
+    "@type": "T",
+    "p2": "ex:test"
+  }
+}

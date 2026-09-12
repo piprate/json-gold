@@ -3,7 +3,7 @@
   "@id": "",
   "@type": "mf:Manifest",
   "name": "Framing",
-  "description": "JSON-LD Framing tests.",
+  "description": "These tests implement the requirements for the JSON-LD [Framing Algorithm](https://www.w3.org/TR/json-ld11-framing/#framing-algorithm).",
   "baseIri": "https://w3c.github.io/json-ld-framing/tests/",
   "sequence": [
     {
@@ -610,6 +610,24 @@
       "input": "frame/0068-in.jsonld",
       "frame": "frame/0068-frame.jsonld",
       "expect": "frame/0068-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0069",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Tests @json in framing",
+      "purpose": "Test collection to better define what is expected when framing over a `@json` field..",
+      "input": "frame/0069-in.jsonld",
+      "frame": "frame/0069-frame.jsonld",
+      "expect": "frame/0069-out.jsonld",
+      "option": {"specVersion": "json-ld-1.1"}
+    }, {
+      "@id": "#t0070",
+      "@type": ["jld:PositiveEvaluationTest", "jld:FrameTest"],
+      "name": "Empty frame with empty context with protected terms.",
+      "purpose": "Empty frame matches all nodes using empty context and protected terms.",
+      "input": "frame/0070-in.jsonld",
+      "frame": "frame/0070-frame.jsonld",
+      "expect": "frame/0070-out.jsonld",
       "option": {"specVersion": "json-ld-1.1"}
     }, {
       "@id": "#teo01",

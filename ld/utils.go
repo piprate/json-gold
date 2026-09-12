@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 )
@@ -28,12 +29,40 @@ func IsKeyword(key interface{}) bool {
 	if _, isString := key.(string); !isString {
 		return false
 	}
-	return key == "@base" || key == "@container" || key == "@context" || key == "@default" || key == "@direction" ||
-		key == "@embed" || key == "@explicit" || key == "@json" || key == "@id" || key == "@included" ||
-		key == "@index" || key == "@first" || key == "@graph" || key == "@import" || key == "@language" ||
-		key == "@list" || key == "@nest" || key == "@none" || key == "@omitDefault" || key == "@prefix" ||
-		key == "@preserve" || key == "@propagate" || key == "@protected" || key == "@requireAll" ||
-		key == "@reverse" || key == "@set" || key == "@type" || key == "@value" || key == "@version" ||
+	return key == "@always" ||
+		key == "@base" ||
+		key == "@container" ||
+		key == "@context" ||
+		key == "@default" ||
+		key == "@direction" ||
+		key == "@embed" ||
+		key == "@explicit" ||
+		key == "@first" ||
+		key == "@json" ||
+		key == "@id" ||
+		key == "@included" ||
+		key == "@index" ||
+		key == "@graph" ||
+		key == "@import" ||
+		key == "@language" ||
+		key == "@last" ||
+		key == "@list" ||
+		key == "@nest" ||
+		key == "@never" ||
+		key == "@none" ||
+		key == "@null" ||
+		key == "@omitDefault" ||
+		key == "@once" ||
+		key == "@prefix" ||
+		key == "@preserve" ||
+		key == "@propagate" ||
+		key == "@protected" ||
+		key == "@requireAll" ||
+		key == "@reverse" ||
+		key == "@set" ||
+		key == "@type" ||
+		key == "@value" ||
+		key == "@version" ||
 		key == "@vocab"
 }
 
@@ -227,6 +256,21 @@ func IsSimpleGraph(v interface{}) bool {
 	return IsGraph(v) && !containsID
 }
 
+// isBlankNodeGraph returns true if the given value is a @graph whose @id is a blank node identifier.
+// Per JSON-LD 1.1, blank-node-named graphs are treated as simple graphs for @container: @graph.
+func isBlankNodeGraph(v interface{}) bool {
+	vMap, isMap := v.(map[string]interface{})
+	if !isMap || !IsGraph(v) {
+		return false
+	}
+	id, hasID := vMap["@id"]
+	if !hasID {
+		return false
+	}
+	idStr, isStr := id.(string)
+	return isStr && strings.HasPrefix(idStr, "_:")
+}
+
 // IsRelativeIri returns true if the given value is a relative IRI, false if not.
 func IsRelativeIri(value string) bool {
 	return !(IsKeyword(value) || IsAbsoluteIri(value))
@@ -297,13 +341,14 @@ func (s ShortestLeast) Less(i, j int) bool {
 
 func inArray(v interface{}, array []interface{}) bool {
 	for _, x := range array {
-		if v == x {
+		if reflect.DeepEqual(v, x) {
 			return true
 		}
 	}
 	return false
 }
 
+// Also called Wildcard https://www.w3.org/TR/json-ld-framing/#dfn-wildcard
 func isEmptyObject(v interface{}) bool {
 	vMap, isMap := v.(map[string]interface{})
 	return isMap && len(vMap) == 0

@@ -14,30 +14,30 @@ Tests driven from a top-level [manifest](manifest.jsonld) and are defined into [
 * [compact](compact-manifest.jsonld) tests have _input_, _expected_ and _context_ documents.
   The _expected_ results can be compared using [JSON-LD object comparison](#json-ld-object-comparison) with the processor output. Additionally, if the `ordered` option is not set, result should be expanded and compared with the expanded _expected_ document also using [JSON-LD object comparison](#json-ld-object-comparison).
 
-  For *NegativeEvaluationTests*, the result is a string associated with the expected error code.
+  For **NegativeEvaluationTests**, the result is a string associated with the expected error code.
 * [expand](expand-manifest.jsonld) tests have _input_ and _expected_ documents.
   The _expected_ results can be compared using [JSON-LD object comparison](#json-ld-object-comparison) with the processor output.
 
   Expansion tests may have a `expandContext` option, which is treated
   as an IRI relative to the manifest.
 
-  For *NegativeEvaluationTests*, the result is a string associated with the expected error code.
+  For **NegativeEvaluationTests**, the result is a string associated with the expected error code.
 * [html](html-manifest.jsonld) tests have _input_ and _expected_ documents and an optional _context_ document.
   The _expected_ results can be compared using [JSON-LD object comparison](#json-ld-object-comparison) with the processor output
   after potentially remapping blank node identifiers (see below).
   Additionally, if the result is compacted and the `ordered` option is not set, result should be expanded and compared with the expanded _expected_ document also using [JSON-LD object comparison](#json-ld-object-comparison).
 
-  For *NegativeEvaluationTests*, the result is a string associated with the expected error code.
+  For **NegativeEvaluationTests**, the result is a string associated with the expected error code.
 * [flatten](flatten-manifest.jsonld) tests have _input_ and _expected_ documents and an optional _context_ document.
   The _expected_ results can be compared using [JSON-LD object comparison](#json-ld-object-comparison) with the processor output
   after potentially remapping blank node identifiers (see below).
   Additionally, if the result is compacted and the `ordered` option is not set, result should be expanded and compared with the expanded _expected_ document also using [JSON-LD object comparison](#json-ld-object-comparison).
 
-  For *NegativeEvaluationTests*, the result is a string associated with the expected error code.
+  For **NegativeEvaluationTests**, the result is a string associated with the expected error code.
 * [remote-doc](remote-doc-manifest.jsonld) tests have _input_ and _expected_ documents.
   The _expected_ results can be compared using [JSON-LD object comparison](#json-ld-object-comparison) with the processor output.
 
-  For *NegativeEvaluationTests*, the result is a string associated with the expected error code.
+  For **NegativeEvaluationTests**, the result is a string associated with the expected error code.
 
   Options may be present to describe the intended HTTP behavior:
   * _contentType_: Content-Type of the returned HTTP payload, defaults to the appropriate type for the _input_ suffix.
@@ -48,6 +48,8 @@ Tests driven from a top-level [manifest](manifest.jsonld) and are defined into [
   The _expected_ results  can be compared using [JSON-LD object comparison](#json-ld-object-comparison) with the processor output.
 * [toRdf](toRdf-manifest.jsonld) tests have _input_ and _expected_ documents.
   The _expected_ results can be compared using [RDF Dataset Isomorphism](https://www.w3.org/TR/rdf11-concepts/#dfn-dataset-isomorphism).
+
+  A **PositiveSyntaxTest** looks specifically for syntax-related issues. A **PositiveSyntaxTest** succeeds when no error is found when processing.
 
   ToRdf tests may have a `expandContext` option, which is treated
   as an IRI relative to the manifest.

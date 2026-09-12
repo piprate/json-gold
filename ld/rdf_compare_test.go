@@ -33,39 +33,66 @@ func perm(a []string, f func([]string) bool, i int) bool {
 	return false
 }
 
-func getBlankNodes(quads []*Quad) []string {
-	blankNodeSet := make(map[string]interface{})
-	for _, quad := range quads {
-		if IsBlankNode(quad.Object) {
-			blankNodeSet[quad.Object.GetValue()] = nil
-			blankNodeSet[quad.Subject.GetValue()] = nil
+// allBlankNodes collects all blank node IDs from every position (subject,
+// object, and graph name) across all graphs in a dataset.
+func allBlankNodes(ds *RDFDataset) []string {
+	set := make(map[string]struct{})
+	for graphName, quads := range ds.Graphs {
+		if strings.HasPrefix(graphName, "_:") {
+			set[graphName] = struct{}{}
+		}
+		for _, q := range quads {
+			if IsBlankNode(q.Subject) {
+				set[q.Subject.GetValue()] = struct{}{}
+			}
+			if IsBlankNode(q.Object) {
+				set[q.Object.GetValue()] = struct{}{}
+			}
+			if q.Graph != nil && IsBlankNode(q.Graph) {
+				set[q.Graph.GetValue()] = struct{}{}
+			}
 		}
 	}
-	return GetKeys(blankNodeSet)
+	return GetKeys(set)
 }
 
-func mapBlankNodes(quads []*Quad, actualBlankNodes []string, mappedBlankNodes []string) []*Quad {
-	nodeMap := make(map[string]string, len(actualBlankNodes))
-	for i := 0; i < len(actualBlankNodes); i++ {
-		nodeMap[actualBlankNodes[i]] = mappedBlankNodes[i]
+// remapDataset returns a new RDFDataset with all blank node IDs replaced
+// according to the mapping actualBlanks[i] -> mappedBlanks[i].  Graph names
+// that are blank nodes are remapped along with nodes in subject/object position.
+func remapDataset(ds *RDFDataset, actualBlanks, mappedBlanks []string) *RDFDataset {
+	nodeMap := make(map[string]string, len(actualBlanks))
+	for i, b := range actualBlanks {
+		nodeMap[b] = mappedBlanks[i]
 	}
-	res := make([]*Quad, 0, len(quads))
-	for _, q := range quads {
-		obj := q.Object
-		if IsBlankNode(q.Object) {
-			obj = NewBlankNode(nodeMap[q.Object.GetValue()])
+
+	remapNode := func(n Node) Node {
+		if IsBlankNode(n) {
+			if mapped, ok := nodeMap[n.GetValue()]; ok {
+				return NewBlankNode(mapped)
+			}
 		}
-		subj := q.Subject
-		if IsBlankNode(q.Subject) {
-			subj = NewBlankNode(nodeMap[q.Subject.GetValue()])
-		}
-		graph := ""
-		if q.Graph != nil {
-			graph = q.Graph.GetValue()
-		}
-		res = append(res, NewQuad(subj, q.Predicate, obj, graph))
+		return n
 	}
-	return res
+
+	newDS := &RDFDataset{Graphs: make(map[string][]*Quad, len(ds.Graphs))}
+	for graphName, quads := range ds.Graphs {
+		newGraphName := graphName
+		if mapped, ok := nodeMap[graphName]; ok {
+			newGraphName = mapped
+		}
+		newQuads := make([]*Quad, 0, len(quads))
+		for _, q := range quads {
+			subj := remapNode(q.Subject)
+			obj := remapNode(q.Object)
+			graph := ""
+			if q.Graph != nil {
+				graph = remapNode(q.Graph).GetValue()
+			}
+			newQuads = append(newQuads, NewQuad(subj, q.Predicate, obj, graph))
+		}
+		newDS.Graphs[newGraphName] = newQuads
+	}
+	return newDS
 }
 
 func sortNQuads(input string) string {
@@ -109,47 +136,29 @@ func Isomorphic(expectedStr, actualStr string) bool {
 		return false
 	}
 
-	for graphName, quads := range expectedDS.Graphs {
-		actualQuads := actualDS.Graphs[graphName]
-		if len(quads) != len(actualQuads) {
-			log.Printf("Number of quads doesn't match in graph %s\n", graphName)
-			return false
-		}
-		expectedBlankNodes := getBlankNodes(quads)
-		actualBlankNodes := getBlankNodes(actualQuads)
-		if len(expectedBlankNodes) != len(actualBlankNodes) {
-			log.Printf("Number of blank nodes doesn't match in graph %s\n", graphName)
-			return false
-		}
-
-		expectedGraphDS := &RDFDataset{
-			Graphs: map[string][]*Quad{
-				graphName: quads,
-			},
-		}
-		expectedObj, _ := serializer.Serialize(expectedGraphDS)
-		expectedGraph := sortNQuads(expectedObj.(string))
-
-		isomorphic := false
-		Perm(expectedBlankNodes, func(perm []string) bool {
-			permutedDS := &RDFDataset{
-				Graphs: map[string][]*Quad{
-					graphName: mapBlankNodes(actualQuads, actualBlankNodes, perm),
-				},
-			}
-			permutedObj, _ := serializer.Serialize(permutedDS)
-			permutedGraph := sortNQuads(permutedObj.(string))
-
-			if DeepCompare(expectedGraph, permutedGraph, true) {
-				isomorphic = true
-				return true
-			}
-			return false
-		})
-		if isomorphic {
-			return true
-		}
+	// Collect blank nodes from all positions (subject, object, graph name)
+	// across the entire dataset so that blank-node graph names are handled too.
+	expectedBlanks := allBlankNodes(expectedDS)
+	actualBlanks := allBlankNodes(actualDS)
+	if len(expectedBlanks) != len(actualBlanks) {
+		log.Println("Number of blank nodes doesn't match")
+		return false
 	}
 
-	return false
+	expectedObj, _ := serializer.Serialize(expectedDS)
+	expectedSorted := sortNQuads(expectedObj.(string))
+
+	isomorphic := false
+	Perm(expectedBlanks, func(perm []string) bool {
+		permutedDS := remapDataset(actualDS, actualBlanks, perm)
+		permutedObj, _ := serializer.Serialize(permutedDS)
+		permutedSorted := sortNQuads(permutedObj.(string))
+
+		if DeepCompare(expectedSorted, permutedSorted, true) {
+			isomorphic = true
+			return true
+		}
+		return false
+	})
+	return isomorphic
 }

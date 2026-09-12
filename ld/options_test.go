@@ -12,7 +12,7 @@ func TestJsonLdOptions_Copy(t *testing.T) {
 		CompactArrays:         true,
 		ProcessingMode:        JsonLd_1_1,
 		DocumentLoader:        NewDefaultDocumentLoader(nil),
-		Embed:                 EmbedLast,
+		Embed:                 EmbedOnce,
 		Explicit:              true,
 		RequireAll:            true,
 		FrameDefault:          true,
