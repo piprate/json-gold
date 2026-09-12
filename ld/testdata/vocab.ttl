@@ -256,6 +256,14 @@
     The HTTP Content-Type used for the input file, in case it is a non-registered type.
     """ ;
   rdfs:domain	 :Option ;
+  rdfs:range   xsd:string .
+
+:extractAllScripts a rdf:Property ;
+  rdfs:label "extract all scripts";
+  rdfs:comment """
+    Whether to extract all script elements from HTML, or just the first encountered.
+    """ ;
+  rdfs:domain	 :Option ;
   rdfs:range   xsd:boolean .
 
 :redirectTo a rdf:Property ;
@@ -265,7 +273,7 @@
     to the designated URL.
     """ ;
   rdfs:domain	 :Option ;
-  rdfs:range   xsd:boolean .
+  rdfs:range   xsd:string .
 
 :httpAccept a rdf:Property ;
   rdfs:label "HTTP Accept";
@@ -273,7 +281,7 @@
     An HTTP Accept header.
     """ ;
   rdfs:domain	 :Option ;
-  rdfs:range   xsd:boolean .
+  rdfs:range   xsd:string .
 
 :httpLink a rdf:Property ;
   rdfs:label "HTTP link";
@@ -281,7 +289,7 @@
     An HTTP Link header to be added to the result of requesting the input file.
     """ ;
   rdfs:domain	 :Option ;
-  rdfs:range   xsd:boolean .
+  rdfs:range   xsd:string .
 
 :httpStatus a rdf:Property ;
   rdfs:label "HTTP status";
@@ -290,7 +298,24 @@
     is typically used along with the `redirectTo` property.
     """ ;
   rdfs:domain	 :Option ;
+  rdfs:range   xsd:integer .
+
+:normative a rdf:Property ;
+  rdfs:label "normative";
+  rdfs:comment """
+    Indicates that this is or is not a test of a normative requirement.
+    Tests without this option are treated as being normative.
+    """ ;
+  rdfs:domain	 :Option ;
   rdfs:range   xsd:boolean .
+
+:processorFeature a rdf:Property ;
+  rdfs:label "processor feature";
+  rdfs:comment """
+    A particular processor feature that may be supported by some implementations.
+  """ ;
+  rdfs:domain	 :Option ;
+  rdfs:range   xsd:string .
 
 :specVersion a rdf:Property ;
   rdfs:label "spec version";

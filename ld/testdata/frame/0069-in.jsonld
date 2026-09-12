@@ -1,0 +1,12 @@
+{
+  "@context": {
+    "ex": "http://example.org/vocab#",
+    "ex:info": {"@type": "@json"}
+  },
+  "@id": "http://example.org/test/#library",
+  "@type": "ex:Library",
+  "ex:info": {
+    "author": "JOHN",
+    "pages": 200
+  }
+}

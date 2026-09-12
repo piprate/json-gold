@@ -3,7 +3,7 @@
   "@id": "",
   "@type": "mf:Manifest",
   "name": "Remote document",
-  "description": "JSON-LD Remote Document tests.",
+  "description": "These tests implement the requirements for JSON-LD [Remote Document and Context Retrieval](https://www.w3.org/TR/json-ld11-api/#remote-document-and-context-retrieval).",
   "baseIri": "https://w3c.github.io/json-ld-api/tests/",
   "sequence": [
     {
@@ -150,7 +150,8 @@
       "name": "Does not redirect if type is application/ld+json",
       "purpose": "Load an alternate link if type is not ld+json and rel=alternate.",
       "option": {
-        "httpLink": "<la02-alternate.jsonld>; rel=\"alternate\"; type=\"application/ld+json\""
+        "httpLink": "<la02-alternate.jsonld>; rel=\"alternate\"; type=\"application/ld+json\"",
+        "processorFeature": "HTML Script Extraction"
       },
       "input": "remote-doc/la02-in.jsonld",
       "expect": "remote-doc/la02-out.jsonld"
@@ -180,7 +181,8 @@
       "name": "Base is that of the alternate URL",
       "purpose": "Load an alternate link if type is not ld+json and rel=alternate.",
       "option": {
-        "httpLink": "<la05-alternate.jsonld>; rel=\"alternate\"; type=\"application/ld+json\""
+        "httpLink": "<la05-alternate.jsonld>; rel=\"alternate\"; type=\"application/ld+json\"",
+        "processorFeature": "HTML Script Extraction"
       },
       "input": "remote-doc/la05-in.html",
       "expect": "remote-doc/la05-out.jsonld"

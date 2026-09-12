@@ -1,0 +1,23 @@
+{
+  "@graph": [
+    {
+      "ex:p1": {
+        "@id": "ex:1",
+        "@type": "ex:T",
+        "ex:p2": {
+          "@id": "ex:test"
+        }
+      }
+    },
+    {
+      "@id": "ex:1",
+      "@type": "ex:T",
+      "ex:p2": {
+        "@id": "ex:test"
+      }
+    },
+    {
+      "@id": "ex:test"
+    }
+  ]
+}
