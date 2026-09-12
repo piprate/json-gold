@@ -244,7 +244,13 @@ func Resolve(baseURI string, pathToResolve string) string {
 		return baseURI
 	}
 
-	uri, _ := url.Parse(baseURI)
+	uri, err := url.Parse(baseURI)
+	if err != nil {
+		// The base cannot be parsed, so there is nothing to resolve against.
+		// This is the same situation as an empty base, handled above.
+		return pathToResolve
+	}
+
 	// query string parsing
 	if strings.HasPrefix(pathToResolve, "?") {
 		// drop fragment from uri if it has one
@@ -253,7 +259,14 @@ func Resolve(baseURI string, pathToResolve string) string {
 		return uri.String()
 	}
 
-	pathToResolveURL, _ := url.Parse(pathToResolve)
+	pathToResolveURL, err := url.Parse(pathToResolve)
+	if err != nil {
+		// Not a URL reference, so it cannot be resolved. Return it unchanged
+		// and let the caller reject it, rather than dereferencing the nil that
+		// url.Parse returns alongside the error.
+		return pathToResolve
+	}
+
 	uri = uri.ResolveReference(pathToResolveURL)
 	// java doesn't discard unnecessary dot segments
 	if uri.Path != "" {

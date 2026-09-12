@@ -53,3 +53,63 @@ func TestRemoveBase(t *testing.T) {
 	)
 	assert.Equal(t, "1", result)
 }
+
+func TestResolve(t *testing.T) {
+	assert.Equal(t, "http://example.com/a/b",
+		Resolve("http://example.com/a/", "b"))
+	assert.Equal(t, "http://example.com/b",
+		Resolve("http://example.com/a", "b"))
+	assert.Equal(t, "http://other.example/b",
+		Resolve("http://example.com/a", "http://other.example/b"))
+	assert.Equal(t, "http://example.com/a?q=1",
+		Resolve("http://example.com/a#frag", "?q=1"))
+	assert.Equal(t, "http://example.com/a", Resolve("http://example.com/a", ""))
+	assert.Equal(t, "b", Resolve("", "b"))
+}
+
+// Resolve discarded the error from url.Parse and dereferenced the nil URL it
+// returns alongside it, so an unparseable base or reference panicked instead of
+// being rejected. Reachable from Expand and ToRDF through an @id, @base or
+// @vocab, i.e. from any untrusted document.
+func TestResolveWithUnparseableInput(t *testing.T) {
+	// An invalid reference: url.Parse fails on the incomplete percent-escape,
+	// and ResolveReference was called with the resulting nil.
+	assert.NotPanics(t, func() {
+		assert.Equal(t, "%", Resolve("http://example.com/", "%"))
+	})
+	assert.NotPanics(t, func() {
+		assert.Equal(t, "%zz", Resolve("http://example.com/", "%zz"))
+	})
+	assert.NotPanics(t, func() {
+		assert.Equal(t, "\x7f", Resolve("http://example.com/", "\x7f"))
+	})
+
+	// An invalid base: uri itself was nil.
+	assert.NotPanics(t, func() {
+		assert.Equal(t, "b", Resolve("%", "b"))
+	})
+	// The query branch returns before the reference is parsed, so an invalid
+	// base reaches it too.
+	assert.NotPanics(t, func() {
+		assert.Equal(t, "?q=1", Resolve("%", "?q=1"))
+	})
+}
+
+// The panic was reachable from the public API, which is what made it a problem
+// for anything parsing documents it did not write.
+func TestExpandWithUnparseableID(t *testing.T) {
+	doc := map[string]interface{}{
+		"@id":                     "%",
+		"http://example.com/prop": "value",
+	}
+
+	assert.NotPanics(t, func() {
+		_, _ = NewJsonLdProcessor().Expand(doc, NewJsonLdOptions("http://example.com/"))
+	})
+
+	opts := NewJsonLdOptions("http://example.com/")
+	opts.Format = "application/n-quads"
+	assert.NotPanics(t, func() {
+		_, _ = NewJsonLdProcessor().ToRDF(doc, opts)
+	})
+}
