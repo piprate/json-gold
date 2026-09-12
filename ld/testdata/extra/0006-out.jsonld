@@ -1,0 +1,12 @@
+[
+  {
+    "@id": "http://example.org/alice",
+    "@reverse": {
+      "http://example.org/parent": [
+        {
+          "@id": "http://example.org/bob"
+        }
+      ]
+    }
+  }
+]

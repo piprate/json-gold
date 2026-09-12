@@ -1,0 +1,23 @@
+{
+  "@context": {
+    "ex": "http://example.org/",
+    "Foo": {
+      "@id": "ex:Foo",
+      "@context": {
+        "idm": {
+          "@id": "ex:idm",
+          "@container": "@id"
+        },
+        "p": "ex:pType"
+      }
+    },
+    "p": "ex:pOuter"
+  },
+  "@id": "http://example.org/s",
+  "@type": "Foo",
+  "idm": {
+    "http://example.org/g": {
+      "p": "v"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+[
+  {
+    "@type": [
+      "http://example.org/VerifiablePresentation"
+    ],
+    "http://example.org/verifiableCredential": [
+      {
+        "@graph": [
+          {
+            "@id": "http://example.org/credential/1",
+            "http://example.org/claim": [
+              {
+                "@value": "value"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

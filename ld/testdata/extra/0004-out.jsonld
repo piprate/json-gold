@@ -1,0 +1,12 @@
+[
+  {
+    "@id": "http://example.org/thing",
+    "http://example.org/label": [
+      {
+        "@value": "hello",
+        "@language": "en",
+        "@direction": "ltr"
+      }
+    ]
+  }
+]

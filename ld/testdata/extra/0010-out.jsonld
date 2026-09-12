@@ -1,0 +1,17 @@
+[
+  {
+    "@id": "http://example.org/s",
+    "http://example.org/l": [
+      {
+        "@list": [
+          {
+            "@value": "a"
+          },
+          {
+            "@value": "b"
+          }
+        ]
+      }
+    ]
+  }
+]

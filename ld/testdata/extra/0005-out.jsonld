@@ -1,0 +1,15 @@
+[
+  {
+    "@id": "http://example.org/thing",
+    "http://example.org/prop": [
+      {
+        "@id": "http://example.org/a",
+        "http://example.org/idx": [
+          {
+            "@value": "A"
+          }
+        ]
+      }
+    ]
+  }
+]

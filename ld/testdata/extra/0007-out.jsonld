@@ -1,0 +1,17 @@
+[
+  {
+    "@id": "http://example.org/s",
+    "http://example.org/tm": [
+      {
+        "@type": [
+          "http://example.org/T"
+        ],
+        "http://example.org/p": [
+          {
+            "@value": "v"
+          }
+        ]
+      }
+    ]
+  }
+]

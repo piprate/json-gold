@@ -1,0 +1,15 @@
+{
+  "@context": {
+    "ex": "http://example.org/",
+    "prop": {
+      "@id": "ex:prop",
+      "@container": "@index",
+      "@index": "ex:idx",
+      "@context": {
+        "prop": {"@id": "ex:prop", "@container": "@index"}
+      }
+    }
+  },
+  "@id": "http://example.org/thing",
+  "prop": {"A": {"@id": "http://example.org/a"}}
+}

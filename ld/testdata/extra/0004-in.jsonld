@@ -1,0 +1,13 @@
+{
+  "@context": {
+    "ex": "http://example.org/",
+    "@direction": "ltr",
+    "label": {
+      "@id": "ex:label",
+      "@container": "@language",
+      "@context": {"@direction": "rtl"}
+    }
+  },
+  "@id": "http://example.org/thing",
+  "label": {"en": "hello"}
+}
