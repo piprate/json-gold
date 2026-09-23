@@ -15,6 +15,7 @@
 package ld_test
 
 import (
+	"net/url"
 	"testing"
 
 	. "github.com/piprate/json-gold/ld"
@@ -52,6 +53,47 @@ func TestRemoveBase(t *testing.T) {
 		"http://example.com/api/things/1",
 	)
 	assert.Equal(t, "1", result)
+}
+
+// With a base ending in '/', the last base segment is empty rather than a
+// directory, so it must not cost a '../'.
+func TestRemoveBaseWithTrailingSlash(t *testing.T) {
+	assert.Equal(t, "../c", RemoveBase("http://example.org/a/b/", "http://example.org/a/c"))
+	assert.Equal(t, "../", RemoveBase("http://example.org/a/b/", "http://example.org/a/"))
+	assert.Equal(t, "../../c", RemoveBase("http://example.org/a/b/c/", "http://example.org/a/c"))
+	assert.Equal(t, "../c?q=1", RemoveBase("http://example.org/a/b/", "http://example.org/a/c?q=1"))
+	assert.Equal(t, "../c#f", RemoveBase("http://example.org/a/b/", "http://example.org/a/c#f"))
+
+	// The result resolves back to the IRI (RFC 3986 section 5.2).
+	resolve := func(base, ref string) string {
+		b, err := url.Parse(base)
+		assert.NoError(t, err)
+		r, err := url.Parse(ref)
+		assert.NoError(t, err)
+		return b.ResolveReference(r).String()
+	}
+	for _, base := range []string{
+		"http://example.org/",
+		"http://example.org/a/",
+		"http://example.org/a/b/",
+		"http://example.org/a/b/c/",
+		"http://example.org/a/b/?q",
+	} {
+		for _, iri := range []string{
+			"http://example.org/",
+			"http://example.org/c",
+			"http://example.org/a/",
+			"http://example.org/a/c",
+			"http://example.org/a/c?q=1",
+			"http://example.org/a/c#f",
+			"http://example.org/a/b/",
+			"http://example.org/a/b/c",
+			"http://example.org/x/y/z",
+		} {
+			rel := RemoveBase(base, iri)
+			assert.Equal(t, iri, resolve(base, rel), "RemoveBase(%q, %q) = %q", base, iri, rel)
+		}
+	}
 }
 
 func TestResolve(t *testing.T) {
