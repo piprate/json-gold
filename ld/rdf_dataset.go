@@ -281,9 +281,14 @@ func (ds *RDFDataset) GraphToRDF(graphName string, graph map[string]interface{},
 	}
 
 	// drop invalid statements (other than IRIs)
+	//
+	// A graph repeats the same IRIs (predicates, types, datatypes) across many
+	// statements, and validating an IRI runs the IsURL regular expression, so
+	// results are remembered for the duration of this call.
+	v := make(iriValidity)
 	sanitisedTriples := make([]*Quad, 0, len(triples))
 	for _, t := range triples {
-		if t.Valid() {
+		if v.validQuad(t) {
 			sanitisedTriples = append(sanitisedTriples, t)
 		}
 	}
@@ -323,6 +328,43 @@ func InvalidNode(node Node) bool {
 	}
 
 	return false
+}
+
+// iriValidity remembers the result of validIRI per IRI. It is local to one
+// GraphToRDF call, so it needs no locking and is bounded by the graph's size.
+type iriValidity map[string]bool
+
+func (v iriValidity) validIRI(val string) bool {
+	if ok, seen := v[val]; seen {
+		return ok
+	}
+	ok := validIRI(val)
+	v[val] = ok
+	return ok
+}
+
+// invalidNode is InvalidNode with IRI results taken from v.
+func (v iriValidity) invalidNode(node Node) bool {
+	switch n := node.(type) {
+	case IRI:
+		return !v.validIRI(n.Value)
+	case Literal:
+		if n.Language != "" && !validLanguageRegex.MatchString(n.Language) {
+			return true
+		}
+		if n.Datatype != "" && !v.validIRI(n.Datatype) {
+			return true
+		}
+	}
+	return false
+}
+
+// validQuad is Quad.Valid with IRI results taken from v.
+func (v iriValidity) validQuad(q *Quad) bool {
+	return (q.Subject == nil || !v.invalidNode(q.Subject)) &&
+		(q.Predicate == nil || !v.invalidNode(q.Predicate)) &&
+		(q.Object == nil || !v.invalidNode(q.Object)) &&
+		(q.Graph == nil || !v.invalidNode(q.Graph))
 }
 
 func validIRI(val string) bool {
