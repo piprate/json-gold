@@ -200,12 +200,9 @@ func RemoveBase(baseobj interface{}, iri string) string {
 	rval := ""
 
 	if len(baseSegments) > 0 {
-		// don't count the last segment if it isn't a path (doesn't end in
-		// '/')
-		// don't count empty first segment, it means base began with '/'
-		if !strings.HasSuffix(base.NormalizedPath, "/") || baseSegments[0] == "" {
-			baseSegments = baseSegments[0 : len(baseSegments)-1]
-		}
+		// don't count the last segment (if it ends with '/' last path doesn't
+		// count and if it doesn't end with '/' it isn't a path)
+		baseSegments = baseSegments[0 : len(baseSegments)-1]
 		for i := 0; i < len(baseSegments); i++ {
 			rval += "../"
 		}
