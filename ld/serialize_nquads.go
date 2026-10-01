@@ -41,8 +41,8 @@ func (s *NQuadRDFSerializer) SerializeTo(w io.Writer, dataset *RDFDataset) error
 			graphName = ""
 		}
 		for _, triple := range triples {
-			quad := toNQuad(triple, graphName)
-			if _, err := fmt.Fprint(w, quad); err != nil {
+			q := toNQuad(triple, graphName)
+			if _, err := fmt.Fprint(w, q); err != nil {
 				return NewJsonLdError(IOError, err)
 			}
 		}
@@ -65,49 +65,49 @@ func toNQuad(triple *Quad, graphName string) string {
 	p := triple.Predicate
 	o := triple.Object
 
-	quad := ""
+	q := ""
 
 	// subject is an IRI or bnode
 	if IsIRI(s) {
-		quad += "<" + escape(s.GetValue()) + ">"
+		q += "<" + escape(s.GetValue()) + ">"
 	} else {
-		quad += s.GetValue()
+		q += s.GetValue()
 	}
 
 	if IsIRI(p) {
-		quad += " <" + escape(p.GetValue()) + "> "
+		q += " <" + escape(p.GetValue()) + "> "
 	} else {
-		quad += " " + escape(p.GetValue()) + " "
+		q += " " + escape(p.GetValue()) + " "
 	}
 
 	// object is IRI, bnode or literal
 	if IsIRI(o) {
-		quad += "<" + escape(o.GetValue()) + ">"
+		q += "<" + escape(o.GetValue()) + ">"
 	} else if IsBlankNode(o) {
-		quad += o.GetValue()
+		q += o.GetValue()
 	} else {
 		literal := o.(Literal)
 		escaped := escape(literal.GetValue())
-		quad += "\"" + escaped + "\""
+		q += "\"" + escaped + "\""
 		if literal.Datatype == RDFLangString {
-			quad += "@" + literal.Language
+			q += "@" + literal.Language
 		} else if literal.Datatype != XSDString {
-			quad += "^^<" + escape(literal.Datatype) + ">"
+			q += "^^<" + escape(literal.Datatype) + ">"
 		}
 	}
 
 	// graph
 	if graphName != "" {
 		if strings.Index(graphName, "_:") != 0 {
-			quad += " <" + escape(graphName) + ">"
+			q += " <" + escape(graphName) + ">"
 		} else {
-			quad += " " + graphName
+			q += " " + graphName
 		}
 	}
 
-	quad += " .\n"
+	q += " .\n"
 
-	return quad
+	return q
 }
 
 func escape(str string) string {

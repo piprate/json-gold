@@ -86,7 +86,9 @@ func TestJsonLdApi_Frame(t *testing.T) {
 	var frame any
 	err = json.Unmarshal([]byte(shaclValidationResultFrame), &frame)
 	require.NoError(t, err)
-	framed, err := NewJsonLdProcessor().Frame(input, frame, nil)
+	opts := NewJsonLdOptions("")
+	opts.OmitGraph = false
+	framed, err := NewJsonLdProcessor().Frame(input, frame, opts)
 	require.NoError(t, err)
 	assert.Equal(t, []any{map[string]any{
 		"sh:resultPath": "https://example.com/hasScrewable",

@@ -397,7 +397,7 @@ func (api *JsonLdApi) Compact(activeCtx *Context, activeProperty string, element
 
 						// add compactedItem to map, using value of "@id" or a new blank node identifier
 						AddValue(mapObject, mapKey, compactedItem, asArray, false, true, false)
-					} else if isGraphContainer && IsSimpleGraph(expandedItemMap) {
+					} else if isGraphContainer && (IsSimpleGraph(expandedItemMap) || isBlankNodeGraph(expandedItemMap)) {
 
 						// container includes @graph but not @id or @index and value is a
 						// simple graph object add compact value

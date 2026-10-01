@@ -386,9 +386,10 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 		bnodesToClear = make([]string, 0)
 	}
 
-	rval, err := activeCtx.Serialize()
-	if err != nil {
-		return nil, err
+	// copy provided @context
+	rval := make(map[string]interface{})
+	if ctxVal, present := frameMap["@context"]; present && ctxVal != nil {
+		rval["@context"] = CloneDocument(ctxVal)
 	}
 
 	graphAlias, err := activeCtx.CompactIri("@graph", nil, false, false)
@@ -409,7 +410,7 @@ func (jldp *JsonLdProcessor) Frame(input interface{}, frame interface{}, opts *J
 		rval[graphAlias] = compacted
 	}
 
-	_, err = RemovePreserve(activeCtx, rval, bnodesToClear, opts.CompactArrays)
+	_, err = RemovePreserve(activeCtx, rval, bnodesToClear, false)
 	if err != nil {
 		return nil, err
 	}
