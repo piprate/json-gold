@@ -25,45 +25,26 @@ import (
 )
 
 // IsKeyword returns whether or not the given value is a keyword.
+//
+// It is called for every key of every object during expansion and conversion
+// to RDF, so it rejects non-keywords by their first byte and matches the rest
+// with a string switch rather than comparing interface values one by one.
 func IsKeyword(key interface{}) bool {
-	if _, isString := key.(string); !isString {
+	s, isString := key.(string)
+	if !isString || len(s) < 2 || s[0] != '@' {
 		return false
 	}
-	return key == "@always" ||
-		key == "@base" ||
-		key == "@container" ||
-		key == "@context" ||
-		key == "@default" ||
-		key == "@direction" ||
-		key == "@embed" ||
-		key == "@explicit" ||
-		key == "@first" ||
-		key == "@json" ||
-		key == "@id" ||
-		key == "@included" ||
-		key == "@index" ||
-		key == "@graph" ||
-		key == "@import" ||
-		key == "@language" ||
-		key == "@last" ||
-		key == "@list" ||
-		key == "@nest" ||
-		key == "@never" ||
-		key == "@none" ||
-		key == "@null" ||
-		key == "@omitDefault" ||
-		key == "@once" ||
-		key == "@prefix" ||
-		key == "@preserve" ||
-		key == "@propagate" ||
-		key == "@protected" ||
-		key == "@requireAll" ||
-		key == "@reverse" ||
-		key == "@set" ||
-		key == "@type" ||
-		key == "@value" ||
-		key == "@version" ||
-		key == "@vocab"
+	switch s {
+	case "@always", "@base", "@container", "@context", "@default",
+		"@direction", "@embed", "@explicit", "@first", "@json",
+		"@id", "@included", "@index", "@graph", "@import",
+		"@language", "@last", "@list", "@nest", "@never",
+		"@none", "@null", "@omitDefault", "@once", "@prefix",
+		"@preserve", "@propagate", "@protected", "@requireAll", "@reverse",
+		"@set", "@type", "@value", "@version", "@vocab":
+		return true
+	}
+	return false
 }
 
 // DeepCompare returns true if v1 equals v2.
